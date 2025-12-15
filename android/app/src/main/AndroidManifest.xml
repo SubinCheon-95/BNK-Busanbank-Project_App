@@ -2,7 +2,9 @@
     <application
         android:label="tkbank"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
+        <!-- 2025/12/15 - 약관 관련 html 불러오기 설정 추가 - 작성자 : 오서정-->
         <activity
             android:name=".MainActivity"
             android:exported="true"
