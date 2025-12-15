@@ -11,6 +11,7 @@ import 'join_step2_screen.dart';
 /// - 필수/선택 약관 구분
 /// - 전체 동의 토글
 /// - 약관 상세 보기
+
 class JoinStep1Screen extends StatefulWidget {
   final String baseUrl;
   final ProductJoinRequest request;
@@ -42,6 +43,16 @@ class _JoinStep1ScreenState extends State<JoinStep1Screen> {
   Future<void> _loadTerms() async {
     try {
       final terms = await _joinService.getTerms(widget.request.productNo!);
+
+      // ✅ 디버깅 로그 추가!
+      print('📋 약관 조회 완료: ${terms.length}개');
+      for (var term in terms) {
+        print('   - termsId: ${term.termsId}');
+        print('   - termsTitle: ${term.termsTitle}');
+        print('   - termsContent 길이: ${term.termsContent.length}');
+        print('   - isRequired: ${term.isRequired}');
+      }
+
       setState(() {
         _terms = terms;
         for (final term in terms) {
@@ -50,6 +61,7 @@ class _JoinStep1ScreenState extends State<JoinStep1Screen> {
         _loading = false;
       });
     } catch (e) {
+      print('❌ 약관 조회 실패: $e');
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -144,8 +156,10 @@ class _JoinStep1ScreenState extends State<JoinStep1Screen> {
                     child: SingleChildScrollView(
                       controller: controller,
                       child: Text(
-                        term.termsContent,
-                        style: const TextStyle(fontSize: 14),
+                        term.termsContent.isNotEmpty
+                            ? term.termsContent
+                            : '약관 내용이 없습니다.',  // ✅ null 체크!
+                        style: const TextStyle(fontSize: 14, height: 1.5),
                       ),
                     ),
                   ),
@@ -186,9 +200,16 @@ class _JoinStep1ScreenState extends State<JoinStep1Screen> {
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
+                : _terms.isEmpty
+                ? const Center(
+              child: Text(
+                '약관 정보가 없습니다.',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            )
                 : ListView(
               children: [
-                // 전체 동의
+                // ✅ 전체 동의 (유지!)
                 Container(
                   color: Colors.grey[100],
                   child: CheckboxListTile(
@@ -201,13 +222,14 @@ class _JoinStep1ScreenState extends State<JoinStep1Screen> {
                         fontSize: 16,
                       ),
                     ),
-                    controlAffinity: ListTileControlAffinity.leading,
+                    controlAffinity:
+                    ListTileControlAffinity.leading,
                   ),
                 ),
 
                 const Divider(height: 1),
 
-                // 개별 약관
+                // ✅ 개별 약관 (수정!)
                 ..._terms.map((term) {
                   return Column(
                     children: [
@@ -220,26 +242,48 @@ class _JoinStep1ScreenState extends State<JoinStep1Screen> {
                         },
                         title: Row(
                           children: [
-                            Text(
-                              term.isRequired ? '[필수]' : '[선택]',
-                              style: TextStyle(
+                            // ✅ 필수/선택 표시
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
                                 color: term.isRequired
                                     ? Colors.red
                                     : Colors.grey,
-                                fontWeight: FontWeight.bold,
+                                borderRadius:
+                                BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                term.isRequired ? '필수' : '선택',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
+                            // ✅ 약관 제목 표시 (핵심 수정!)
                             Expanded(
-                              child: Text(term.termsTitle),
+                              child: Text(
+                                term.termsTitle,  // ← 이게 중요!
+                                style: const TextStyle(fontSize: 14),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
                         secondary: IconButton(
-                          icon: const Icon(Icons.description_outlined),
+                          icon: const Icon(
+                            Icons.description_outlined,
+                            size: 20,
+                          ),
                           onPressed: () => _showTermDetail(term),
                         ),
-                        controlAffinity: ListTileControlAffinity.leading,
+                        controlAffinity:
+                        ListTileControlAffinity.leading,
                       ),
                       const Divider(height: 1),
                     ],

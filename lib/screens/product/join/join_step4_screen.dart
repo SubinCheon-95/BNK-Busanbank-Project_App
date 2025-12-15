@@ -31,7 +31,7 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
   @override
   void initState() {
     super.initState();
-    _apiService = FlutterApiService(widget.baseUrl);
+    _apiService = FlutterApiService(baseUrl: widget.baseUrl);
   }
 
   int _calculateInterest() {
@@ -61,7 +61,7 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
       );
 
       // API 호출
-      await _apiService.joinAsGuest(finalRequest);
+      await _apiService.joinAsGuest(finalRequest.toJson());
 
       if (!mounted) return;
 

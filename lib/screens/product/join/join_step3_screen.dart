@@ -51,7 +51,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
   @override
   void initState() {
     super.initState();
-    _apiService = FlutterApiService(widget.baseUrl);
+    _apiService = FlutterApiService(baseUrl: widget.baseUrl);
     _baseRate = widget.request.baseRate ?? 0.0;
     _finalRate = _baseRate;
     _loadUserData();

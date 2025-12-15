@@ -1,12 +1,15 @@
-// lib/service/flutter_api_service.dart
-
+/*
+  날짜 : 2025/12/15
+  내용 : Flutter API 서비스 - JWT 토큰 자동 추가
+  작성자 : Shasha
+*/
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/branch.dart';
 import '../models/employee.dart';
 import '../models/product_terms.dart';
 import '../models/user_coupon.dart';
-import '../models/product_join_request.dart';
+import 'token_storage_service.dart';
 
 /// 🔥 Flutter 전용 API 서비스
 ///
@@ -17,170 +20,119 @@ import '../models/product_join_request.dart';
 /// - 쿠폰 조회
 /// - 포인트 조회
 /// - 상품 가입
+
 class FlutterApiService {
   final String baseUrl;
+  final TokenStorageService _tokenStorage = TokenStorageService();
 
-  FlutterApiService(this.baseUrl);
+  FlutterApiService({required this.baseUrl});
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 1. 지점 목록 조회
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  /// ✅ JWT 토큰 헤더 생성 (자동)
+  Future<Map<String, String>> _getHeaders({bool needsAuth = false}) async {
+    final headers = {
+      'Content-Type': 'application/json',
+    };
 
-  /// 전체 지점 목록 조회
-  ///
-  /// GET /api/flutter/branches
-  Future<List<Branch>> getBranches() async {
-    final uri = Uri.parse('$baseUrl/flutter/branches');
-    print('[DEBUG] getBranches URL = $uri');
-
-    final res = await http.get(uri);
-
-    if (res.statusCode != 200) {
-      throw Exception('지점 조회 실패: ${res.statusCode} / ${res.body}');
+    // 인증이 필요한 요청이면 JWT 토큰 추가
+    if (needsAuth) {
+      final token = await _tokenStorage.readToken();
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
     }
 
-    final List<dynamic> data = jsonDecode(utf8.decode(res.bodyBytes));
-    return data.map((e) => Branch.fromJson(e as Map<String, dynamic>)).toList();
+    return headers;
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 2. 직원 목록 조회
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  /// ✅ GET 요청 헬퍼 (인증 여부 선택 가능)
+  Future<dynamic> _get(String path, {bool needsAuth = false}) async {
+    final headers = await _getHeaders(needsAuth: needsAuth);
+    final response = await http.get(
+      Uri.parse('$baseUrl$path'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } else {
+      throw Exception('GET $path failed: ${response.statusCode}');
+    }
+  }
+
+  /// ✅ POST 요청 헬퍼 (인증 여부 선택 가능)
+  Future<dynamic> _post(String path, dynamic body, {bool needsAuth = false}) async {
+    final headers = await _getHeaders(needsAuth: needsAuth);
+    final response = await http.post(
+      Uri.parse('$baseUrl$path'),
+      headers: headers,
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } else {
+      throw Exception('POST $path failed: ${response.statusCode}');
+    }
+  }
+
+  // ========================================
+  // 공개 API (로그인 불필요)
+  // ========================================
+
+  /// 지점 목록 조회
+  Future<List<Branch>> getBranches() async {
+    final data = await _get('/api/flutter/branches', needsAuth: false);
+    return (data as List).map((e) => Branch.fromJson(e)).toList();
+  }
 
   /// 지점별 직원 목록 조회
-  ///
-  /// GET /api/flutter/employees?branchId={branchId}
   Future<List<Employee>> getEmployees(int branchId) async {
-    final uri = Uri.parse('$baseUrl/flutter/employees?branchId=$branchId');
-    print('[DEBUG] getEmployees URL = $uri');
-
-    final res = await http.get(uri);
-
-    if (res.statusCode != 200) {
-      throw Exception('직원 조회 실패: ${res.statusCode} / ${res.body}');
-    }
-
-    final List<dynamic> data = jsonDecode(utf8.decode(res.bodyBytes));
-    return data.map((e) => Employee.fromJson(e as Map<String, dynamic>)).toList();
+    final data = await _get('/api/flutter/branches/$branchId/employees', needsAuth: false);
+    return (data as List).map((e) => Employee.fromJson(e)).toList();
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 3. 약관 조회
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  /// 상품별 약관 조회
-  ///
-  /// GET /api/flutter/products/{productNo}/terms
+  /// 약관 목록 조회
   Future<List<ProductTerms>> getTerms(int productNo) async {
-    final uri = Uri.parse('$baseUrl/flutter/products/$productNo/terms');
-    print('[DEBUG] getTerms URL = $uri');
-
-    final res = await http.get(uri);
-
-    if (res.statusCode != 200) {
-      throw Exception('약관 조회 실패: ${res.statusCode} / ${res.body}');
-    }
-
-    final List<dynamic> data = jsonDecode(utf8.decode(res.bodyBytes));
-    return data.map((e) => ProductTerms.fromJson(e as Map<String, dynamic>)).toList();
+    final data = await _get('/api/flutter/products/$productNo/terms', needsAuth: false);
+    return (data as List).map((e) => ProductTerms.fromJson(e)).toList();
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 4. 쿠폰 조회
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ========================================
+  // 인증 필요 API (로그인 후 사용)
+  // ========================================
 
-  /// 사용자 쿠폰 조회 (사용 가능한 것만)
-  ///
-  /// GET /api/flutter/coupons/user/{userNo}
+  /// 쿠폰 목록 조회 (인증 필요!)
+  Future<List<UserCoupon>> getCoupons(int userNo) async {
+    final data = await _get('/api/flutter/coupons/user/$userNo', needsAuth: true);
+    return (data as List).map((e) => UserCoupon.fromJson(e)).toList();
+  }
+
+  /// 포인트 조회 (인증 필요!)
+  Future<int> getPoints(int userNo) async {
+    final data = await _get('/api/flutter/points/user/$userNo', needsAuth: true);
+    return data['currentPoint'] ?? 0;
+  }
+
+  /// 상품 가입 (인증 필요!)
+  Future<Map<String, dynamic>> joinProduct(Map<String, dynamic> request) async {
+    return await _post('/api/flutter/join', request, needsAuth: true);
+  }
+
+  /// ✅ 쿠폰 목록 조회 (별칭)
   Future<List<UserCoupon>> getUserCoupons(int userNo) async {
-    final uri = Uri.parse('$baseUrl/flutter/coupons/user/$userNo');
-    print('[DEBUG] getUserCoupons URL = $uri');
-
-    final res = await http.get(uri);
-
-    if (res.statusCode != 200) {
-      throw Exception('쿠폰 조회 실패: ${res.statusCode} / ${res.body}');
-    }
-
-    final List<dynamic> data = jsonDecode(utf8.decode(res.bodyBytes));
-    return data.map((e) => UserCoupon.fromJson(e as Map<String, dynamic>)).toList();
+    return await getCoupons(userNo);
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 5. 포인트 조회
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  /// 사용자 포인트 조회
-  ///
-  /// GET /api/flutter/points/user/{userNo}
-  ///
-  /// Response:
-  /// {
-  ///   "userNo": 231837269,
-  ///   "totalPoints": 1500,
-  ///   "availablePoints": 1200,
-  ///   "usedPoints": 300
-  /// }
+  /// ✅ 포인트 조회 (별칭, Map 반환)
   Future<Map<String, dynamic>> getUserPoints(int userNo) async {
-    final uri = Uri.parse('$baseUrl/flutter/points/user/$userNo');
-    print('[DEBUG] getUserPoints URL = $uri');
-
-    final res = await http.get(uri);
-
-    if (res.statusCode != 200) {
-      throw Exception('포인트 조회 실패: ${res.statusCode} / ${res.body}');
-    }
-
-    return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    final points = await getPoints(userNo);
+    return {'totalPoints': points};
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 6. 게스트 가입 (로그인 전)
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  /// 게스트 상품 가입 (로그인 전 - 김부산 고정)
-  ///
-  /// POST /api/flutter/join/guest
-  Future<void> joinAsGuest(ProductJoinRequest request) async {
-    final uri = Uri.parse('$baseUrl/flutter/join/guest');
-
-    print('[DEBUG] joinAsGuest URL = $uri');
-    print('[DEBUG] joinAsGuest body = ${jsonEncode(request.toJson())}');
-
-    final res = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json; charset=utf-8'},
-      body: jsonEncode(request.toJson()),
-    );
-
-    print('[DEBUG] joinAsGuest status = ${res.statusCode}');
-    print('[DEBUG] joinAsGuest response = ${res.body}');
-
-    if (res.statusCode != 200) {
-      throw Exception('가입 실패: ${res.body}');
-    }
+  /// ✅ 게스트 가입 (별칭)
+  Future<void> joinAsGuest(Map<String, dynamic> request) async {
+    await joinProduct(request);
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 7. 인증 가입 (로그인 후) - TODO
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  /// 인증 상품 가입 (로그인 후 - 실제 사용자)
-  ///
-  /// POST /api/flutter/join/auth
-  ///
-  /// TODO: 로그인 기능 구현 후 작성
-  Future<void> joinAsAuth(ProductJoinRequest request) async {
-    final uri = Uri.parse('$baseUrl/flutter/join/auth');
-
-    final res = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json; charset=utf-8'},
-      body: jsonEncode(request.toJson()),
-    );
-
-    if (res.statusCode != 200) {
-      throw Exception('가입 실패: ${res.body}');
-    }
-  }
 }

@@ -15,6 +15,7 @@ import 'join_step3_screen.dart';
 /// - 가입 금액 선택 (ChoiceChip + 직접 입력)
 /// - 가입 기간 선택 (ChoiceChip + 직접 입력)
 /// - 알림 설정 (SMS/Email)
+///
 class JoinStep2Screen extends StatefulWidget {
   final String baseUrl;
   final ProductJoinRequest request;
@@ -56,7 +57,7 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
   @override
   void initState() {
     super.initState();
-    _apiService = FlutterApiService(widget.baseUrl);
+    _apiService = FlutterApiService(baseUrl: widget.baseUrl);
     _loadBranches();
 
     // 기존 값 복원
