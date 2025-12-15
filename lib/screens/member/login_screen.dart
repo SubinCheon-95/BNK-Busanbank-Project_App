@@ -14,106 +14,201 @@ import 'package:tkbank/screens/member/terms_screen.dart';
 import 'package:tkbank/services/member_service.dart';
 import 'package:tkbank/services/token_storage_service.dart';
 
-class LoginScreen extends StatefulWidget{
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<StatefulWidget> createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>{
-
+class _LoginScreenState extends State<LoginScreen> {
   final _idController = TextEditingController();
   final _pwController = TextEditingController();
 
   final service = MemberService();
-  final tokenStorageService = TokenStorageService();
 
-  void _procLogin() async{
-    final userId = _idController.text;
-    final userPw = _pwController.text;
+  static const Color purple900 = Color(0xFF662382);
+  static const Color purple500 = Color(0xFFBD9FCD);
 
-    if(userId.isEmpty || userPw.isEmpty){
+  void _procLogin() async {
+    final userId = _idController.text.trim();
+    final userPw = _pwController.text.trim();
+
+    if (userId.isEmpty || userPw.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('아이디, 비번 입력하세요.'))
+        const SnackBar(content: Text('아이디와 비밀번호를 입력하세요')),
       );
       return;
     }
 
     try {
-      // 서비스 호출
-      Map<String, dynamic> jsonData = await service.login(userId, userPw);
-      String? accessToken = jsonData['accessToken'];
+      final jsonData = await service.login(userId, userPw);
+      final accessToken = jsonData['accessToken'];
+
       log('accessToken : $accessToken');
 
-      if(accessToken != null){
-        // 토큰 저장(Provider로 저장)
+      if (accessToken != null && mounted) {
         context.read<AuthProvider>().login(accessToken);
-
-
-        // 로그인 화면 닫기
         Navigator.of(context).pop();
       }
-
-    }catch(err){
+    } catch (err) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('에러발생 : $err'))
+        SnackBar(content: Text('로그인 실패: $err')),
       );
     }
+  }
 
-
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: purple900),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: purple900, width: 2),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: purple500),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('로그인'),),
+      backgroundColor: const Color(0xFFF6F2F8),
+      appBar: AppBar(
+        title: const Text('로그인'),
+        centerTitle: true,
+        backgroundColor: purple900,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: Center(
-        child: Padding(
-            padding: EdgeInsets.all(30),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _idController,
-                decoration: InputDecoration(
-                labelText: '아이디 입력',
-                border: OutlineInputBorder()
-              ),),
-              const SizedBox(height: 10,),
-              TextField(
-                controller: _pwController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: '비밀번호 입력',
-                  border: OutlineInputBorder()
-              ),),
-              const SizedBox(height: 10,),
-              SizedBox(
-                width: double.infinity,
-                height:50,
-                child: ElevatedButton(
-                    onPressed: _procLogin,
-                    child: const Text('로그인', style: TextStyle(fontSize: 20, color: Colors.black),)
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-              const SizedBox(height: 10,),
-              TextButton(
-                onPressed: (){
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => TermsScreen()),
-                  );
-                },
-                child: const Text('회원가입', style: TextStyle(color: Colors.black),)
-              )
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
 
+                // 로고 or 타이틀
+                const Text(
+                  '딸깍 은행',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: purple900,
+                    letterSpacing: 1.5,
+                  ),
+                ),
 
-          ],
-        ),
+                const SizedBox(height: 30),
+
+                // 아이디
+                TextField(
+                  controller: _idController,
+                  decoration: _inputDecoration('아이디'),
+                ),
+
+                const SizedBox(height: 16),
+
+                // 비밀번호
+                TextField(
+                  controller: _pwController,
+                  obscureText: true,
+                  decoration: _inputDecoration('비밀번호'),
+                ),
+
+                const SizedBox(height: 24),
+
+                // 로그인 버튼
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _procLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: purple900,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      '로그인',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // 하단 메뉴 (아이디 찾기 | 회원가입 | 비밀번호 찾기)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        // TODO: 아이디 찾기
+                      },
+                      child: const Text(
+                        '아이디 찾기',
+                        style: TextStyle(color: purple900),
+                      ),
+                    ),
+
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const TermsScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        '회원가입',
+                        style: TextStyle(
+                          color: purple900,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    TextButton(
+                      onPressed: () {
+                        // TODO: 비밀번호 찾기
+                      },
+                      child: const Text(
+                        '비밀번호 찾기',
+                        style: TextStyle(color: purple900),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
-
-  
 }
