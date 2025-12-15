@@ -33,6 +33,10 @@ dependencies:
   http: ^1.5.0
   flutter_secure_storage: ^9.2.4
   provider: ^6.1.5
+  firebase_core: ^4.2.1
+  firebase_messaging: ^16.0.4
+  flutter_local_notifications: ^19.5.0
+
   #2025/12/15 - 약관 관련 html 불러오기 설정 추가 - 작성자 : 오서정
   webview_flutter: ^4.13.0
 
