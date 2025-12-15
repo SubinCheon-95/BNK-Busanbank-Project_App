@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-import '../model/product.dart';
-import '../model/product_join_request.dart';
+import '../models/product.dart';
+import '../models/product_join_request.dart';
 
 class ProductService {
   /// 기존 사용 방식 유지: ProductService(baseUrl)

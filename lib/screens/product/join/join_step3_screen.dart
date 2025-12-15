@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../model/product_join_request.dart';
-import '../../../model/user_coupon.dart';
-import '../../../service/flutter_api_service.dart';
+import '../../../models/product_join_request.dart';
+import '../../../models/user_coupon.dart';
+import '../../../services/flutter_api_service.dart';
 import 'join_step4_screen.dart';
 import 'dart:math' as math;
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../model/product_join_request.dart';
-import '../../../service/flutter_api_service.dart';
+import '../../../models/product_join_request.dart';
+import '../../../services/flutter_api_service.dart';
 
 /// 🔥 STEP 4: 최종 확인 및 가입
 ///

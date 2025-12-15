@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../model/product_join_request.dart';
-import '../../../model/branch.dart';
-import '../../../model/employee.dart';
-import '../../../service/flutter_api_service.dart';
+import '../../../models/product_join_request.dart';
+import '../../../models/branch.dart';
+import '../../../models/employee.dart';
+import '../../../services/flutter_api_service.dart';
 import 'join_step3_screen.dart';
 
 /// 🔥 STEP 2: 지점/직원 선택, 금액/기간 입력

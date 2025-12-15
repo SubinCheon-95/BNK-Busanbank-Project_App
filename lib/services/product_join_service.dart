@@ -2,8 +2,8 @@
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../model/product_terms.dart';
-import '../model/product_join_request.dart';
+import '../models/product_terms.dart';
+import '../models/product_join_request.dart';
 
 /// 🔥 상품 가입 서비스
 ///

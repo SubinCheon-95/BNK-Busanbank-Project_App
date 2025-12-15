@@ -1,8 +1,8 @@
-// lib/screen/product/product_detail_screen.dart
+
 import 'package:flutter/material.dart';
-import 'package:kmarket_shopping_app/model/product.dart';
-import 'package:kmarket_shopping_app/model/product_join_request.dart';
-import 'package:kmarket_shopping_app/screen/product/join/join_step1_screen.dart';
+import '../../models/product.dart';
+import '../../models/product_join_request.dart';
+import 'join/join_step1_screen.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   const ProductDetailScreen({

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../model/product_join_request.dart';
-import '../../../model/product_terms.dart';
-import '../../../service/product_join_service.dart';
+import '../../../models/product_join_request.dart';
+import '../../../models/product_terms.dart';
+import '../../../services/product_join_service.dart';
 import 'join_step2_screen.dart';
 
 /// 🔥 STEP 1: 약관 동의

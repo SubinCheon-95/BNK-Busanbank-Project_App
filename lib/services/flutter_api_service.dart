@@ -2,11 +2,11 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../model/branch.dart';
-import '../model/employee.dart';
-import '../model/product_terms.dart';
-import '../model/user_coupon.dart';
-import '../model/product_join_request.dart';
+import '../models/branch.dart';
+import '../models/employee.dart';
+import '../models/product_terms.dart';
+import '../models/user_coupon.dart';
+import '../models/product_join_request.dart';
 
 /// 🔥 Flutter 전용 API 서비스
 ///
