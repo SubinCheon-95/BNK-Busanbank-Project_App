@@ -47,16 +47,30 @@ class _LoginScreenState extends State<LoginScreen> {
       print('[DEBUG] 응답 데이터: $jsonData');
 
       final accessToken = jsonData['accessToken'];
+      // 2025/12/16 - 로그인 응답에서 사용자 정보 추출 - 작성자: 진원
+      final userNo = jsonData['userNo']?.toString() ?? '';
+      final userIdFromApi = jsonData['userId']?.toString() ?? userId;
+      final userName = jsonData['userName']?.toString() ?? '';
+      final role = jsonData['role']?.toString() ?? 'USER';
+
       print('[DEBUG] accessToken: ${accessToken != null ? "있음" : "없음"}');
+      print('[DEBUG] userNo: $userNo');
+      print('[DEBUG] userName: $userName');
 
       log('accessToken : $accessToken');
 
-      if (accessToken != null) {
+      if (accessToken != null && userNo.isNotEmpty) {
         print('[DEBUG] 토큰 길이: ${accessToken.length}');
         print('[DEBUG] 토큰 시작 20자: ${accessToken.substring(0, 20)}...');
 
         if (mounted) {
-          context.read<AuthProvider>().login(accessToken);
+          await context.read<AuthProvider>().login(
+            accessToken,
+            userNo: userNo,
+            userId: userIdFromApi,
+            userName: userName,
+            role: role,
+          );
           print('[DEBUG] AuthProvider.login() 호출 완료!');
 
           // ✅ 저장 확인
@@ -67,12 +81,25 @@ class _LoginScreenState extends State<LoginScreen> {
           }
 
           print('[DEBUG] isLoggedIn: ${context.read<AuthProvider>().isLoggedIn}');
+          print('[DEBUG] userNo: ${context.read<AuthProvider>().userNo}');
 
           Navigator.of(context).pop();
+        }
+      } else {
+        print('[ERROR] 로그인 응답에 필수 정보가 없습니다.');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('로그인 정보가 올바르지 않습니다')),
+          );
         }
       }
     } catch (err) {
       print('[ERROR] 로그인 실패: $err');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('로그인 실패: $err')),
+        );
+      }
     }
   }
 
