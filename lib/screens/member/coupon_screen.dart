@@ -195,8 +195,8 @@ class _CouponScreenState extends State<CouponScreen> {
 
   Widget _buildCouponCard(UserCoupon coupon) {
     final isExpired = coupon.expiryDate != null &&
-        coupon.expiryDate!.isBefore(DateTime.now());
-    final isUsed = coupon.isUsed;
+        DateTime.parse(coupon.expiryDate!).isBefore(DateTime.now());
+    final isUsed = coupon.status == 'used';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -285,7 +285,7 @@ class _CouponScreenState extends State<CouponScreen> {
                     const Icon(Icons.calendar_today, size: 16, color: Colors.white70),
                     const SizedBox(width: 8),
                     Text(
-                      '유효기간: ${_formatDate(coupon.expiryDate!)}까지',
+                      '유효기간: ${_formatDate(DateTime.parse(coupon.expiryDate!))}까지',
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.white70,

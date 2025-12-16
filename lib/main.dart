@@ -7,6 +7,7 @@ import 'package:tkbank/services/token_storage_service.dart';
 import 'screens/product/product_main_screen.dart';
 import 'screens/member/coupon_screen.dart';
 import 'screens/member/point_history_screen.dart';
+import 'screens/game/game_menu_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); //Flutter 플러그인과 플랫폼 기능을 쓰기 위한 사전 준비 작성자 : 윤종인
@@ -201,7 +202,33 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // ✅ 버튼 4: 로그인 / 로그아웃
+              // ✅ 버튼 4: 금융게임 (2025-12-16 - 작성자: 진원)
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => GameMenuScreen(baseUrl: baseUrl),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.games),
+                  label: const Text(
+                    '금융게임',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF9C27B0),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // ✅ 버튼 5: 로그인 / 로그아웃
               if (!isLoggedIn) ...[
                 // 로그인 버튼
                 SizedBox(
