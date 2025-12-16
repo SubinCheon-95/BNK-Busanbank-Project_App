@@ -110,13 +110,25 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
     setState(() => _loading = true);
 
     try {
+      print('[DEBUG] ===== 최종 가입 요청 =====');
+      print('[DEBUG] productNo: ${widget.request.productNo}');
+      print('[DEBUG] productName: ${widget.request.productName}');
+      print('[DEBUG] principalAmount: ${widget.request.principalAmount}');
+      print('[DEBUG] contractTerm: ${widget.request.contractTerm}');
+      print('[DEBUG] branchId: ${widget.request.branchId}');
+      print('[DEBUG] empId: ${widget.request.empId}');
+      print('[DEBUG] usedPoints: ${widget.request.usedPoints}');
+      print('[DEBUG] selectedCouponId: ${widget.request.selectedCouponId}');
+
       // 🔥 최종 동의 플래그 설정
       final finalRequest = widget.request.copyWith(
         finalAgree: true,
       );
 
-      // API 호출
-      await _apiService.joinAsGuest(finalRequest.toJson());
+      // ✅ API 호출 (joinProduct로 변경!)
+      await _apiService.joinProduct(finalRequest.toJson());  // ✅ 수정!
+
+      print('[DEBUG] ✅ 가입 성공!');
 
       if (!mounted) return;
 
@@ -145,6 +157,8 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
         ),
       );
     } catch (e) {
+      print('[ERROR] 가입 실패: $e');
+
       if (!mounted) return;
 
       // 실패 다이얼로그

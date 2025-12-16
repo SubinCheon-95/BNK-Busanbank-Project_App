@@ -65,18 +65,27 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
     try {
       // 포인트 조회
       print('[DEBUG] 포인트 조회 시작...');
-      final pointsData = await _apiService.getUserPoints(userNo);
+      final pointsData = await _apiService.getUserPoints(userNo);  // ✅ 추가!
       print('[DEBUG] 포인트 응답: $pointsData');
 
-      // 쿠폰 조회
+      // 쿠폰 조회 (9번 카테고리만!)
       print('[DEBUG] 쿠폰 조회 시작...');
-      final coupons = await _apiService.getUserCoupons(userNo);
-      print('[DEBUG] 쿠폰 ${coupons.length}개 조회 완료');
+      print('[DEBUG] productNo: ${widget.request.productNo}');
+
+      final allCoupons = await _apiService.getUserCoupons(userNo);
+      print('[DEBUG] 전체 쿠폰: ${allCoupons.length}개');
+
+      // ✅ 9번 카테고리 필터링!
+      final filteredCoupons = allCoupons.where((coupon) {
+        return coupon.categoryId == 9;
+      }).toList();
+
+      print('[DEBUG] 9번 카테고리 쿠폰: ${filteredCoupons.length}개');
 
       if (mounted) {
         setState(() {
-          _totalPoints = pointsData['totalPoints'] ?? 0;
-          _coupons = coupons;
+          _totalPoints = pointsData['totalPoints'] ?? 0;  // ✅ 정상 작동!
+          _coupons = filteredCoupons;
           _isLoading = false;
         });
       }
@@ -312,12 +321,26 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-        subtitle: Text(
-          '금리 우대: ${coupon.bonusRate}%',
-          style: const TextStyle(
-            color: Colors.red,
-            fontWeight: FontWeight.bold,
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '금리 우대: ${coupon.bonusRate}%',
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            // ✅ 추가 정보 (선택사항)
+            if (coupon.expireDate != null)
+              Text(
+                '만료일: ${_formatDate(coupon.expireDate!)}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+          ],
         ),
         trailing: Radio<int>(
           value: coupon.ucNo,
@@ -330,6 +353,11 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
         ),
       ),
     );
+  }
+
+  // ✅ 날짜 포맷 헬퍼
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   Widget _buildInterestRateInfo() {
