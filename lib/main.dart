@@ -5,6 +5,8 @@ import 'package:tkbank/services/FcmService.dart';
 import 'package:tkbank/screens/member/login_screen.dart';
 import 'package:tkbank/services/token_storage_service.dart';
 import 'screens/product/product_main_screen.dart';
+import 'screens/member/coupon_screen.dart';
+import 'screens/member/point_history_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); //Flutter 플러그인과 플랫폼 기능을 쓰기 위한 사전 준비 작성자 : 윤종인
@@ -147,7 +149,59 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // ✅ 버튼 2: 로그인 / 로그아웃
+              // ✅ 버튼 2: 쿠폰 등록
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CouponScreen(baseUrl: baseUrl),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.card_giftcard),
+                  label: const Text(
+                    '쿠폰 등록',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE91E63),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // ✅ 버튼 3: 포인트 이력
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PointHistoryScreen(baseUrl: baseUrl),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.stars),
+                  label: const Text(
+                    '포인트 이력',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF9800),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // ✅ 버튼 4: 로그인 / 로그아웃
               if (!isLoggedIn) ...[
                 // 로그인 버튼
                 SizedBox(
