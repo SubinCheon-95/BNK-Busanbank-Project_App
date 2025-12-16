@@ -34,11 +34,12 @@ class _CouponScreenState extends State<CouponScreen> {
     });
 
     try {
-      // 2025/12/16 - 로그인한 사용자 번호 사용 - 작성자: 진원
       final authProvider = context.read<AuthProvider>();
-      final userNo = authProvider.userNo;
 
-      if (userNo == null || userNo.isEmpty) {
+      // 만약 AuthProvider의 userNo가 int 타입으로 바뀌었다면:
+      final int? userNo = authProvider.userNo; // String? -> int?
+
+      if (userNo == null) {
         setState(() {
           _errorMessage = '로그인이 필요합니다';
           _isLoading = false;
@@ -46,7 +47,9 @@ class _CouponScreenState extends State<CouponScreen> {
         return;
       }
 
-      final coupons = await _apiService.getCoupons(int.parse(userNo));
+      // int 타입이므로 int.parse() 없이 바로 전달
+      final coupons = await _apiService.getCoupons(userNo);
+
       setState(() {
         _coupons = coupons;
         _isLoading = false;
