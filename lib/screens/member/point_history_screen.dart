@@ -65,11 +65,13 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
     });
 
     try {
-      // 2025/12/16 - 로그인한 사용자 번호 사용 - 작성자: 진원
       final authProvider = context.read<AuthProvider>();
-      final userNo = authProvider.userNo;
 
-      if (userNo == null || userNo.isEmpty) {
+      // 1. userNo를 int? 타입으로 직접 받습니다.
+      final int? userNo = authProvider.userNo;
+
+      // 2. isEmpty 체크는 String 전용이므로, null 체크만 수행합니다.
+      if (userNo == null) {
         setState(() {
           _errorMessage = '로그인이 필요합니다';
           _isLoading = false;
@@ -77,7 +79,9 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
         return;
       }
 
-      final pointData = await _apiService.getUserPoints(int.parse(userNo));
+      // 3. int.parse() 없이 userNo를 그대로 API에 전달합니다.
+      final pointData = await _apiService.getUserPoints(userNo);
+
       setState(() {
         _totalPoints = pointData['totalPoints'] ?? 0;
         _isLoading = false;
