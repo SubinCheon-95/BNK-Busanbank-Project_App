@@ -7,7 +7,7 @@ class RegisterStepIndicator extends StatelessWidget {
   const RegisterStepIndicator({
     super.key,
     required this.step,
-    this.total = 4,
+    this.total = 3,
   });
 
   @override

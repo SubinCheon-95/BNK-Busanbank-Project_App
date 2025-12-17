@@ -86,7 +86,7 @@ class _TermsScreenState extends State<TermsScreen> {
               ),
             ),
             child: const Text(
-              '동의하고 계속하기',
+              '다음',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -131,9 +131,16 @@ class _TermsScreenState extends State<TermsScreen> {
                       const SizedBox(height: 32),
 
                       const Text(
-                        '약관 동의',
+                        '회원가입을 위해',
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Text(
+                        '필요한 사항을 확인해 주세요.',
+                        style: TextStyle(
+                          fontSize: 26,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

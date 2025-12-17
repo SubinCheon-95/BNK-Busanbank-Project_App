@@ -114,6 +114,22 @@ class MemberService{
     return data['isMatched'] == true;
   }
 
+  /// 🔹 중복 검사 (userId / email / hp)
+  Future<bool> isDuplicated({
+    required String type,
+    required String value,
+  }) async {
+    final res = await http.get(
+      Uri.parse('$baseUrl/member/$type/$value'),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('중복 검사 실패');
+    }
+
+    final data = jsonDecode(res.body);
+    return data['count'] > 0;
+  }
 
 
 }
