@@ -5,9 +5,12 @@
 */
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:tkbank/models/term.dart';
 import 'package:tkbank/models/users.dart';
+import 'package:tkbank/providers/register_provider.dart';
 
 
 class MemberService{
@@ -37,26 +40,6 @@ class MemberService{
     }
   }
 
-  Future<Map<String, dynamic>> register(Users user) async {
-
-     try {
-       final response = await http.post(
-           Uri.parse('$baseUrl/api/member/register'),
-           headers: {"Content-Type": "application/json"},
-           body: jsonEncode(user.toJson())
-       );
-
-       if(response.statusCode == 200){
-         // savedUser 반환
-         return jsonDecode(response.body);
-       }else{
-         throw Exception('statusCode : ${response.statusCode}');
-       }
-     }catch(err){
-       throw Exception('에러발생 : $err');
-     }
-  }
-
   Future<List<Term>> fetchTerms() async {
     try {
       final response = await http.get(
@@ -81,5 +64,57 @@ class MemberService{
     }
   }
 
+  Future<void> register(Map<String, dynamic> data) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/api/member/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('회원가입 실패');
+    }
+  }
+
+
+  /// 1️⃣ 인증번호 발송
+  Future<String> sendHpCode(String hp) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/member/hp/send'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'hp': hp,
+        'mode': 'app',
+      }),
+    );
+
+    if (res.statusCode == 200) {
+      return utf8.decode(res.bodyBytes); // ✅ "인증 코드 발송 완료"
+    } else {
+      throw Exception(utf8.decode(res.bodyBytes)); // ✅ 서버 메시지 그대로
+    }
+  }
+
+  /// 2️⃣ 인증번호 검증
+  Future<bool> verifyHpCode({
+    required String hp,
+    required String code,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/member/hp/code'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'hp': hp,
+        'code': code,
+        'mode': 'app',
+      }),
+    );
+
+    final data = jsonDecode(res.body);
+    return data['isMatched'] == true;
+  }
+
+
 
 }
+

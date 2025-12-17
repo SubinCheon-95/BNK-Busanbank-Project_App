@@ -18,6 +18,8 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        // 2025/12/16 - 회원가입 내용 저장용 provider 구독 - 작성자 : 오서정
+        ChangeNotifierProvider(create: (_) => RegisterProvider()),
       ],
       child: const MyApp(),
     ),
