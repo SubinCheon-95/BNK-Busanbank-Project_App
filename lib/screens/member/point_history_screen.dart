@@ -1,4 +1,5 @@
 // 2025/12/16 - 포인트 이력 조회 화면 - 작성자: 진원
+// 2025/12/17 - 실제 API 연동으로 변경 (목 데이터 제거) - 작성자: 진원
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -18,38 +19,7 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
   int _totalPoints = 0;
   bool _isLoading = true;
   String? _errorMessage;
-
-  // 임시 포인트 이력 데이터 (백엔드 API 구현 전)
-  final List<Map<String, dynamic>> _mockHistory = [
-    {
-      'pointId': 1,
-      'pointAmount': 100,
-      'pointType': 'EARN',
-      'description': '회원가입 보너스',
-      'createdAt': DateTime.now().subtract(const Duration(days: 7)),
-    },
-    {
-      'pointId': 2,
-      'pointAmount': 50,
-      'pointType': 'EARN',
-      'description': '상품 가입',
-      'createdAt': DateTime.now().subtract(const Duration(days: 5)),
-    },
-    {
-      'pointId': 3,
-      'pointAmount': 30,
-      'pointType': 'USE',
-      'description': '포인트 사용',
-      'createdAt': DateTime.now().subtract(const Duration(days: 3)),
-    },
-    {
-      'pointId': 4,
-      'pointAmount': 200,
-      'pointType': 'EARN',
-      'description': '이벤트 참여',
-      'createdAt': DateTime.now().subtract(const Duration(days: 1)),
-    },
-  ];
+  List<dynamic> _historyList = [];
 
   @override
   void initState() {
@@ -66,11 +36,8 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-
-      // 1. userNo를 int? 타입으로 직접 받습니다.
       final int? userNo = authProvider.userNo;
 
-      // 2. isEmpty 체크는 String 전용이므로, null 체크만 수행합니다.
       if (userNo == null) {
         setState(() {
           _errorMessage = '로그인이 필요합니다';
@@ -79,11 +46,13 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
         return;
       }
 
-      // 3. int.parse() 없이 userNo를 그대로 API에 전달합니다.
+      // 포인트 잔액과 이력을 동시에 조회
       final pointData = await _apiService.getUserPoints(userNo);
+      final historyData = await _apiService.getPointHistory(userNo);
 
       setState(() {
         _totalPoints = pointData['totalPoints'] ?? 0;
+        _historyList = historyData;
         _isLoading = false;
       });
     } catch (e) {
@@ -217,7 +186,7 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
   }
 
   Widget _buildHistoryList() {
-    if (_mockHistory.isEmpty) {
+    if (_historyList.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -232,9 +201,9 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _mockHistory.length,
+      itemCount: _historyList.length,
       itemBuilder: (context, index) {
-        final history = _mockHistory[index];
+        final history = _historyList[index];
         return _buildHistoryItem(history);
       },
     );
@@ -243,8 +212,17 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
   Widget _buildHistoryItem(Map<String, dynamic> history) {
     final isEarn = history['pointType'] == 'EARN';
     final amount = history['pointAmount'] as int;
-    final description = history['description'] as String;
-    final date = history['createdAt'] as DateTime;
+    final description = history['description'] as String? ?? '포인트 적립/사용';
+
+    // createdAt이 String일 수도 있고 DateTime일 수도 있으므로 처리
+    DateTime date;
+    if (history['createdAt'] is String) {
+      date = DateTime.parse(history['createdAt']);
+    } else if (history['createdAt'] is DateTime) {
+      date = history['createdAt'];
+    } else {
+      date = DateTime.now();
+    }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

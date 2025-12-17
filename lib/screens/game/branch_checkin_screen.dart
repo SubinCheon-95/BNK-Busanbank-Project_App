@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:provider/provider.dart';
 import 'package:tkbank/providers/auth_provider.dart';
+import 'package:tkbank/services/flutter_api_service.dart';
 
 // 2025-12-16 - 영업점 체크인 화면 (API 연동) - 작성자: 진원
+// 2025-12-17 - FlutterApiService 사용하도록 수정 (JWT 토큰 자동 추가) - 작성자: 진원
 class BranchCheckinScreen extends StatefulWidget {
   final String baseUrl;
 
@@ -15,6 +15,7 @@ class BranchCheckinScreen extends StatefulWidget {
 }
 
 class _BranchCheckinScreenState extends State<BranchCheckinScreen> {
+  late FlutterApiService _apiService;
   bool isLoading = false;
   int totalCheckins = 0;
   int earnedPoints = 0;
@@ -26,6 +27,7 @@ class _BranchCheckinScreenState extends State<BranchCheckinScreen> {
   @override
   void initState() {
     super.initState();
+    _apiService = FlutterApiService(baseUrl: widget.baseUrl);
     _loadData();
   }
 
@@ -46,22 +48,17 @@ class _BranchCheckinScreenState extends State<BranchCheckinScreen> {
         throw Exception('로그인이 필요합니다');
       }
 
-      final response = await http.get(
-        Uri.parse('${widget.baseUrl}/flutter/checkin/history/$userNo'),
-      );
+      final data = await _apiService.getCheckinHistory(userNo);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          totalCheckins = data['totalCheckins'] ?? 0;
-          earnedPoints = data['earnedPoints'] ?? 0;
+      setState(() {
+        totalCheckins = data['totalCheckins'] ?? 0;
+        earnedPoints = data['earnedPoints'] ?? 0;
 
-          if (data['lastCheckin'] != null) {
-            lastCheckinBranch = data['lastCheckin']['branchName'];
-            lastCheckinDate = data['lastCheckin']['checkinDate'];
-          }
-        });
-      }
+        if (data['lastCheckin'] != null) {
+          lastCheckinBranch = data['lastCheckin']['branchName'];
+          lastCheckinDate = data['lastCheckin']['checkinDate'];
+        }
+      });
     } catch (e) {
       debugPrint('체크인 기록 로드 실패: $e');
     }
@@ -73,32 +70,46 @@ class _BranchCheckinScreenState extends State<BranchCheckinScreen> {
     });
 
     try {
-      final response = await http.get(
-        Uri.parse('${widget.baseUrl}/flutter/branches'),
-      );
+      final branchList = await _apiService.getBranches();
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+      setState(() {
+        branches = branchList.map((branch) {
+          // 2025-12-17 - 백엔드 위도/경도 정보 활용 - 작성자: 진원
+          // 실제 위도/경도가 있으면 사용, 없으면 임시 거리
+          double distance;
+          bool isNearby = false;
 
-        setState(() {
-          branches = data.map((branch) {
-            // 거리는 임시로 랜덤 생성 (실제로는 GPS 위치 기반 계산)
-            double distance = (branch['branchId'] % 10) * 0.5 + 0.3;
-            bool isNearby = distance < 1.0;
+          if (branch.latitude != null && branch.longitude != null) {
+            // 간단한 거리 계산 (부산 중심 기준 35.1796, 129.0756)
+            double lat = branch.latitude!;
+            double lon = branch.longitude!;
+            double centerLat = 35.1796;
+            double centerLon = 129.0756;
 
-            return {
-              'id': branch['branchId'],
-              'name': branch['branchName'] ?? '',
-              'address': branch['branchAddr'] ?? '',
-              'distance': distance,
-              'isNearby': isNearby,
-            };
-          }).toList();
-          isLoading = false;
-        });
-      } else {
-        throw Exception('지점 목록 조회 실패');
-      }
+            // 간단한 유클리드 거리 (실제로는 Haversine 공식 사용해야 함)
+            double latDiff = (lat - centerLat) * 111.0; // 위도 1도 ≈ 111km
+            double lonDiff = (lon - centerLon) * 88.0;  // 경도 1도 ≈ 88km (부산 위도 기준)
+            distance = (latDiff * latDiff + lonDiff * lonDiff).abs().clamp(0, 100);
+
+            isNearby = distance < 1.0;
+          } else {
+            // 위도/경도 없으면 임시 거리
+            distance = (branch.branchId % 10) * 0.5 + 0.3;
+            isNearby = distance < 1.0;
+          }
+
+          return {
+            'id': branch.branchId,
+            'name': branch.branchName,
+            'address': branch.branchAddr,
+            'distance': distance,
+            'isNearby': isNearby,
+            'latitude': branch.latitude,
+            'longitude': branch.longitude,
+          };
+        }).toList();
+        isLoading = false;
+      });
     } catch (e) {
       setState(() {
         isLoading = false;
@@ -174,79 +185,69 @@ class _BranchCheckinScreenState extends State<BranchCheckinScreen> {
         throw Exception('로그인이 필요합니다');
       }
 
-      final response = await http.post(
-        Uri.parse('${widget.baseUrl}/flutter/checkin'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'userId': userNo,
-          'branchId': branch['id'],
-          'latitude': 35.1234, // 임시 위도 (실제로는 GPS에서 가져옴)
-          'longitude': 129.1234, // 임시 경도
-        }),
+      final data = await _apiService.checkin(
+        userId: userNo,
+        branchId: branch['id'],
+        latitude: branch['latitude'] ?? 35.1796,  // 지점 위도 또는 부산 중심
+        longitude: branch['longitude'] ?? 129.0756, // 지점 경도 또는 부산 중심
       );
 
       setState(() {
         isLoading = false;
       });
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+      if (data['success'] == true) {
+        // 체크인 성공 - 데이터 새로고침
+        await _loadCheckinHistory();
 
-        if (data['success'] == true) {
-          // 체크인 성공 - 데이터 새로고침
-          await _loadCheckinHistory();
-
-          if (mounted) {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('체크인 완료!'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.location_on,
-                      color: Color(0xFF2196F3),
-                      size: 64,
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('체크인 완료!'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.location_on,
+                    color: Color(0xFF2196F3),
+                    size: 64,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    data['branchName'] ?? branch['name'],
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      data['branchName'] ?? branch['name'],
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${data['earnedPoints'] ?? 20} 포인트 적립!',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${data['earnedPoints']} 포인트 적립!',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('확인'),
                   ),
                 ],
               ),
-            );
-          }
-        } else {
-          // 실패 메시지 표시
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(data['message'] ?? '체크인 실패')),
-            );
-          }
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('확인'),
+                ),
+              ],
+            ),
+          );
         }
       } else {
-        throw Exception('체크인 실패: ${response.statusCode}');
+        // 실패 메시지 표시
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['message'] ?? '체크인 실패')),
+          );
+        }
       }
     } catch (e) {
       setState(() {
@@ -352,97 +353,113 @@ class _BranchCheckinScreenState extends State<BranchCheckinScreen> {
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         elevation: 2,
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(16),
-                          leading: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isNearby
-                                  ? const Color(0xFF2196F3).withOpacity(0.1)
-                                  : Colors.grey.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.location_on,
-                              color: isNearby ? const Color(0xFF2196F3) : Colors.grey,
-                              size: 28,
-                            ),
-                          ),
-                          title: Row(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
                             children: [
+                              // 아이콘
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: isNearby
+                                      ? const Color(0xFF2196F3).withOpacity(0.1)
+                                      : Colors.grey.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.location_on,
+                                  color: isNearby ? const Color(0xFF2196F3) : Colors.grey,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // 정보
                               Expanded(
-                                child: Text(
-                                  branch['name'],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            branch['name'],
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (isNearby)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green,
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: const Text(
+                                              '근처',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      branch['address'] ?? '',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.directions_walk,
+                                          size: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${branch['distance'].toStringAsFixed(1)}km',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              if (isNearby)
-                                Container(
+                              // 버튼
+                              ElevatedButton(
+                                onPressed: isNearby ? () => _checkin(branch) : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2196F3),
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor: Colors.grey[300],
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
+                                    horizontal: 12,
+                                    vertical: 8,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    '근처',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                  minimumSize: const Size(60, 36),
                                 ),
-                            ],
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text(
-                                branch['address'],
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.directions_walk,
-                                    size: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${branch['distance'].toStringAsFixed(1)}km',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
+                                child: const Text(
+                                  '체크인',
+                                  style: TextStyle(fontSize: 12),
+                                ),
                               ),
                             ],
-                          ),
-                          trailing: ElevatedButton(
-                            onPressed: isNearby ? () => _checkin(branch) : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2196F3),
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: Colors.grey[300],
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                            ),
-                            child: const Text('체크인'),
                           ),
                         ),
                       );

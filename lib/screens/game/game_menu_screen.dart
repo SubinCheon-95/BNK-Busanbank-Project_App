@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'attendance_check_screen.dart';
 import 'branch_checkin_screen.dart';
+import 'branch_map_webview_screen.dart';
 
 // 2025-12-16 - 금융게임 메뉴 화면 (출석체크, 영업점체크인) - 작성자: 진원
+// 2025-12-17 - 영업점 체크인 카카오맵 WebView로 변경 - 작성자: 진원
 class GameMenuScreen extends StatelessWidget {
   final String baseUrl;
 
@@ -48,7 +50,6 @@ class GameMenuScreen extends StatelessWidget {
             // 출석체크 버튼
             SizedBox(
               width: double.infinity,
-              height: 80,
               child: Card(
                 elevation: 4,
                 child: InkWell(
@@ -81,26 +82,27 @@ class GameMenuScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 '출석체크',
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              SizedBox(height: 2),
                               Text(
                                 '매일 출석하고 포인트 받기',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 13,
                                   color: Colors.grey,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.arrow_forward_ios),
+                        const Icon(Icons.arrow_forward_ios, size: 20),
                       ],
                     ),
                   ),
@@ -112,15 +114,15 @@ class GameMenuScreen extends StatelessWidget {
             // 영업점체크인 버튼
             SizedBox(
               width: double.infinity,
-              height: 80,
               child: Card(
                 elevation: 4,
                 child: InkWell(
                   onTap: () {
+                    // 2025-12-17 - 카카오맵 WebView로 변경 - 작성자: 진원
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => BranchCheckinScreen(baseUrl: baseUrl),
+                        builder: (_) => BranchMapWebViewScreen(baseUrl: baseUrl),
                       ),
                     );
                   },
@@ -145,26 +147,27 @@ class GameMenuScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 '영업점 체크인',
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              SizedBox(height: 2),
                               Text(
                                 '영업점 방문하고 포인트 받기',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 13,
                                   color: Colors.grey,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.arrow_forward_ios),
+                        const Icon(Icons.arrow_forward_ios, size: 20),
                       ],
                     ),
                   ),

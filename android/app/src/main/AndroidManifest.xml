@@ -3,6 +3,12 @@
     <!-- Android 알림 권한 (윤종인) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- 2025/12/17 - 영업점 체크인 위치 권한 - 작성자: 진원 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
     <application
         android:label="tkbank"
         android:name="${applicationName}"

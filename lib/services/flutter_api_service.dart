@@ -79,15 +79,15 @@ class FlutterApiService {
   // 공개 API (로그인 불필요)
   // ========================================
 
-  /// 지점 목록 조회 (인증 필요!)
+  /// 지점 목록 조회 (공개 API)
   Future<List<Branch>> getBranches() async {
-    final data = await _get('/flutter/branches', needsAuth: true);  // ✅ true로 변경!
+    final data = await _get('/flutter/branches', needsAuth: false);  // 2025-12-17 - 공개 API로 수정 - 작성자: 진원
     return (data as List).map((e) => Branch.fromJson(e)).toList();
   }
 
-  /// 지점별 직원 목록 조회 (인증 필요!)
+  /// 지점별 직원 목록 조회 (공개 API)
   Future<List<Employee>> getEmployees(int branchId) async {
-    final data = await _get('/flutter/branches/$branchId/employees', needsAuth: true);  // ✅ true로 변경!
+    final data = await _get('/flutter/branches/$branchId/employees', needsAuth: false);  // 2025-12-17 - 공개 API로 수정 - 작성자: 진원
     return (data as List).map((e) => Employee.fromJson(e)).toList();
   }
 
@@ -166,5 +166,52 @@ class FlutterApiService {
     }
   }
 
+  // ========================================
+  // 출석체크 및 게임 API (인증 필요)
+  // ========================================
+
+  /// ✅ 출석체크 현황 조회 (인증 필요!)
+  Future<Map<String, dynamic>> getAttendanceStatus(int userNo) async {
+    return await _get('/flutter/attendance/status/$userNo', needsAuth: true);
+  }
+
+  /// ✅ 출석체크 수행 (인증 필요!)
+  Future<Map<String, dynamic>> checkAttendance(int userId) async {
+    return await _post(
+      '/flutter/attendance/check',
+      {'userId': userId},
+      needsAuth: true,
+    );
+  }
+
+  /// ✅ 영업점 체크인 이력 조회 (인증 필요!)
+  Future<Map<String, dynamic>> getCheckinHistory(int userNo) async {
+    return await _get('/flutter/checkin/history/$userNo', needsAuth: true);
+  }
+
+  /// ✅ 영업점 체크인 수행 (인증 필요!)
+  Future<Map<String, dynamic>> checkin({
+    required int userId,
+    required int branchId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    return await _post(
+      '/flutter/checkin',
+      {
+        'userId': userId,
+        'branchId': branchId,
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+      needsAuth: true,
+    );
+  }
+
+  /// ✅ 포인트 이력 조회 (인증 필요!)
+  Future<List<dynamic>> getPointHistory(int userNo) async {
+    final data = await _get('/flutter/points/history/$userNo', needsAuth: true);
+    return data as List<dynamic>;
+  }
 
 }

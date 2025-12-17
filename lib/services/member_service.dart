@@ -5,12 +5,8 @@
 */
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 import 'package:tkbank/models/term.dart';
-import 'package:tkbank/models/users.dart';
-import 'package:tkbank/providers/register_provider.dart';
 
 
 class MemberService{
