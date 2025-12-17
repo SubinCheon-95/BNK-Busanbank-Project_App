@@ -43,6 +43,9 @@ dependencies:
   #2025/12/15 - 약관 관련 html 불러오기 설정 추가 - 작성자 : 오서정
   webview_flutter: ^4.13.0
 
+  #2025/12/17 - 웹소켓 관련 의존성 - 작성자 : 우지희
+  web_socket_channel: ^2.4.0
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8

@@ -154,30 +154,30 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // ✅ 버튼 2: 쿠폰 등록
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CouponScreen(baseUrl: baseUrl),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.card_giftcard),
-                  label: const Text(
-                    '쿠폰 등록',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE91E63),
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+              // SizedBox(
+              //   width: double.infinity,
+              //   height: 56,
+              //   child: ElevatedButton.icon(
+              //     onPressed: () {
+              //       Navigator.push(
+              //         context,
+              //         MaterialPageRoute(
+              //           builder: (_) => CouponScreen(baseUrl: baseUrl),
+              //         ),
+              //       );
+              //     },
+              //     icon: const Icon(Icons.card_giftcard),
+              //     label: const Text(
+              //       '쿠폰 등록',
+              //       style: TextStyle(fontSize: 18),
+              //     ),
+              //     style: ElevatedButton.styleFrom(
+              //       backgroundColor: const Color(0xFFE91E63),
+              //       foregroundColor: Colors.white,
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(height: 16),
 
               // ✅ 버튼 3: 포인트 이력
               SizedBox(
