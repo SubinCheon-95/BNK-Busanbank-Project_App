@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tkbank/providers/auth_provider.dart';
+import 'package:tkbank/providers/register_provider.dart';
 import 'package:tkbank/services/FcmService.dart';
 import 'package:tkbank/screens/member/login_screen.dart';
 import 'package:tkbank/services/token_storage_service.dart';
