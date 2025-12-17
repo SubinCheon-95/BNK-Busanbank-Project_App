@@ -43,9 +43,9 @@ class FcmService { // 푸시 알림 서비스
       message.data['content'] ?? '',
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'high_importance_channel',
+          'high_importance_channel_v2',
           'High Importance Notifications',
-          icon: 'tkbank_logo',
+          icon: 'ic_notification',
           color: Color(0xFF582499),
           importance: Importance.max,
           priority: Priority.high,
