@@ -200,155 +200,155 @@ class _AttendanceCheckScreenState extends State<AttendanceCheckScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 오늘 날짜
-                  Text(
-                    today,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 오늘 날짜
+            Text(
+              today,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 32),
 
-                  // 출석 현황 카드
-                  Card(
-                    elevation: 4,
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        children: [
-                          // 연속 출석일
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _buildStatItem(
-                                icon: Icons.local_fire_department,
-                                label: '연속 출석',
-                                value: '$consecutiveDays일',
-                                color: Colors.orange,
-                              ),
-                              _buildStatItem(
-                                icon: Icons.stars,
-                                label: '누적 포인트',
-                                value: '$totalPoints P',
-                                color: Colors.amber,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          // 이번 주 출석 현황
-                          const Text(
-                            '이번 주 출석 현황',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(7, (index) {
-                              return Column(
-                                children: [
-                                  Text(
-                                    weekDays[index],
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: weeklyAttendance[index]
-                                          ? const Color(0xFF4CAF50)
-                                          : Colors.grey[300],
-                                    ),
-                                    child: weeklyAttendance[index]
-                                        ? const Icon(
-                                            Icons.check,
-                                            color: Colors.white,
-                                            size: 20,
-                                          )
-                                        : null,
-                                  ),
-                                ],
-                              );
-                            }),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // 출석체크 버튼
-                  SizedBox(
-                    height: 60,
-                    child: ElevatedButton(
-                      onPressed: isCheckedToday ? null : _checkAttendance,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4CAF50),
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: Colors.grey[300],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        isCheckedToday ? '오늘 출석 완료!' : '출석 체크하기',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 안내 메시지
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            // 출석 현황 카드
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  children: [
+                    // 연속 출석일
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.info_outline, color: Colors.blue, size: 20),
-                            SizedBox(width: 8),
-                            Text(
-                              '출석체크 안내',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ],
+                        _buildStatItem(
+                          icon: Icons.local_fire_department,
+                          label: '연속 출석',
+                          value: '$consecutiveDays일',
+                          color: Colors.orange,
                         ),
-                        SizedBox(height: 8),
-                        Text('• 매일 출석하면 10 포인트를 받을 수 있어요'),
-                        Text('• 7일 연속 출석 시 보너스 50 포인트 지급'),
-                        Text('• 포인트는 다양한 혜택으로 사용 가능해요'),
+                        _buildStatItem(
+                          icon: Icons.stars,
+                          label: '누적 포인트',
+                          value: '$totalPoints P',
+                          color: Colors.amber,
+                        ),
                       ],
                     ),
+                    const SizedBox(height: 24),
+
+                    // 이번 주 출석 현황
+                    const Text(
+                      '이번 주 출석 현황',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(7, (index) {
+                        return Column(
+                          children: [
+                            Text(
+                              weekDays[index],
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: weeklyAttendance[index]
+                                    ? const Color(0xFF4CAF50)
+                                    : Colors.grey[300],
+                              ),
+                              child: weeklyAttendance[index]
+                                  ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 20,
+                              )
+                                  : null,
+                            ),
+                          ],
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // 출석체크 버튼
+            SizedBox(
+              height: 60,
+              child: ElevatedButton(
+                onPressed: isCheckedToday ? null : _checkAttendance,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                ),
+                child: Text(
+                  isCheckedToday ? '오늘 출석 완료!' : '출석 체크하기',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 안내 메시지
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        '출석체크 안내',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text('• 매일 출석하면 10 포인트를 받을 수 있어요'),
+                  Text('• 7일 연속 출석 시 보너스 50 포인트 지급'),
+                  Text('• 포인트는 다양한 혜택으로 사용 가능해요'),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
     );
   }
 
