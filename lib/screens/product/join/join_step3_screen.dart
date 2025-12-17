@@ -44,54 +44,40 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
   }
 
   Future<void> _loadUserData() async {
+    // ✅ 강제 로그!
+    print('========================================');
+    print('🔥 _loadUserData() 시작!');
+    print('========================================');
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    print('[DEBUG] authProvider.userNo: ${authProvider.userNo}');
+
     final userNo = authProvider.userNo;
 
     if (userNo == null) {
-      print('[ERROR] userNo가 null입니다!');
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('로그인이 필요합니다.')),
-        );
-      }
+      print('[ERROR] ❌ userNo가 null입니다!');
       return;
     }
 
-    print('[DEBUG] ===== STEP 3 데이터 로딩 =====');
-    print('[DEBUG] 현재 로그인 userNo: $userNo');
-
     try {
-      // ✅ 1. 포인트 조회
-      print('[DEBUG] 포인트 조회 시작...');
+      print('[DEBUG] 📌 포인트 조회 시작...');
       final pointsData = await _apiService.getUserPoints(userNo);
-      print('[DEBUG] 포인트 응답: $pointsData');
+      print('[DEBUG] ✅ 포인트 응답: $pointsData');
 
-      // ✅ 2. 쿠폰 조회
-      print('[DEBUG] 쿠폰 조회 시작...');
+      print('[DEBUG] 📌 쿠폰 조회 시작...');
       final coupons = await _apiService.getUserCoupons(userNo);
-      print('[DEBUG] 쿠폰 ${coupons.length}개 조회 완료');
+      print('[DEBUG] ✅ 쿠폰: ${coupons.length}개');
 
-      if (mounted) {
-        setState(() {
-          _totalPoints = pointsData['totalPoints'] ?? 0;
-          _coupons = coupons;  // SQL에서 9번 필터링했음
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _totalPoints = pointsData['totalPoints'] ?? 0;
+        _coupons = coupons;
+        _isLoading = false;
+      });
 
-      print('[DEBUG] ✅ STEP 3 데이터 로딩 완료!');
-      print('[DEBUG] 포인트: $_totalPoints');
-      print('[DEBUG] 쿠폰: ${_coupons.length}개');
-
-    } catch (e) {
-      print('[ERROR] 데이터 조회 실패: $e');
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('데이터 조회 실패: $e')),
-        );
-      }
+    } catch (e, stackTrace) {
+      print('[ERROR] ❌ 실패: $e');
+      print('[ERROR] 스택: $stackTrace');
     }
   }
 

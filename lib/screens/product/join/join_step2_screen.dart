@@ -7,6 +7,8 @@ import '../../../services/flutter_api_service.dart';
 import 'join_step3_screen.dart';
 import '../../../services/token_storage_service.dart';
 import '../../member/login_screen.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/auth_provider.dart';
 
 /// 🔥 STEP 2: 지점/직원 선택, 금액/기간 입력
 ///
@@ -209,27 +211,85 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
     return DateTime(today.year, today.month + months, today.day);
   }
 
-  void _goNext() {
+  void _goNext() async {  // ✅ async 추가!
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('모든 필수 항목을 입력해주세요.')),
+        const SnackBar(content: Text('입력 항목을 확인해주세요.')),
       );
       return;
     }
 
-    if (_selectedBranchId == null) {
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ✅ 계좌 비밀번호 검증 추가!
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    final accountPassword = _pwCtrl.text;
+
+    if (accountPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('지점을 선택해주세요.')),
+        const SnackBar(content: Text('계좌 비밀번호를 입력해주세요.')),
       );
       return;
     }
 
-    if (_selectedEmpId == null) {
+    // ✅ AuthProvider에서 userNo 가져오기
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userNo = authProvider.userNo;
+
+    if (userNo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('담당자를 선택해주세요.')),
+        const SnackBar(content: Text('로그인이 필요합니다.')),
       );
       return;
     }
+
+    // ✅ 로딩 표시
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // ✅ 계좌 비밀번호 검증 API 호출
+      print('[DEBUG] 계좌 비밀번호 검증 시작 - userNo: $userNo');
+
+      final response = await _apiService.verifyAccountPassword(
+        userNo: userNo,
+        accountPassword: accountPassword,
+      );
+
+      print('[DEBUG] 계좌 비밀번호 검증 결과: $response');
+
+      // ✅ 로딩 닫기
+      if (mounted) Navigator.pop(context);
+
+      if (response['success'] != true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(response['message'] ?? '계좌 비밀번호가 일치하지 않습니다.')),
+          );
+        }
+        return;
+      }
+
+      // ✅ 검증 성공 → STEP 3으로 이동
+      print('[DEBUG] ✅ 계좌 비밀번호 검증 성공!');
+
+    } catch (e) {
+      // ✅ 로딩 닫기
+      if (mounted) Navigator.pop(context);
+
+      print('[ERROR] 계좌 비밀번호 검증 실패: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('계좌 비밀번호 검증 실패: $e')),
+        );
+      }
+      return;
+    }
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     final amount = int.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
     final term = int.tryParse(_termCtrl.text) ?? 0;
@@ -248,14 +308,16 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
       notificationEmailAddr: _emailCtrl.text,
     );
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => JoinStep3Screen(
-          request: updated,
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => JoinStep3Screen(
+            request: updated,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   @override

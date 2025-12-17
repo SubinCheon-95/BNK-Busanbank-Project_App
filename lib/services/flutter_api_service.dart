@@ -142,5 +142,29 @@ class FlutterApiService {
     await joinProduct(request);
   }
 
+  /// ✅ 계좌 비밀번호 검증 (인증 필요!)
+  Future<Map<String, dynamic>> verifyAccountPassword({
+    required int userNo,
+    required String accountPassword,
+  }) async {
+    print('[DEBUG] verifyAccountPassword 호출');
+    print('[DEBUG] userNo: $userNo');
+    print('[DEBUG] accountPassword: $accountPassword');
+
+    try {
+      return await _post(
+        '/flutter/verify/account-password',
+        {
+          'userNo': userNo,
+          'accountPassword': accountPassword,
+        },
+        needsAuth: true,
+      );
+    } catch (e) {
+      print('[ERROR] verifyAccountPassword 실패: $e');
+      rethrow;
+    }
+  }
+
 
 }
