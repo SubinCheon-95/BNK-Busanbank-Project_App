@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TKBank 영업점 지도</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        .custom-overlay {
+            position: relative;
+            bottom: 85px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            border-bottom: 2px solid #ddd;
+            float: left;
+        }
+        .custom-overlay:nth-of-type(n) {
+            border: 0;
+            box-shadow: 0px 1px 2px #888;
+        }
+        .custom-overlay a {
+            display: block;
+            text-decoration: none;
+            color: #000;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            overflow: hidden;
+            background: #2196F3;
+            background: linear-gradient(to top, #2196F3, #42A5F5);
+        }
+        .custom-overlay .title {
+            display: block;
+            text-align: center;
+            background: #fff;
+            margin-right: 35px;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .custom-overlay:after {
+            content: '';
+            position: absolute;
+            margin-left: -12px;
+            left: 50%;
+            bottom: -12px;
+            width: 22px;
+            height: 12px;
+            background: url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/vertex_white.png');
+        }
+        .checkin-btn {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 8px 15px;
+            font-size: 12px;
+            margin-top: 5px;
+            background: #4CAF50;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #status-message {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="status-message"></div>
+
+    <!-- 카카오맵 API (작성자: 진원, 2025-11-30) -->
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=fcb02db403a511ea44eb59837485cda6&libraries=services"></script>
+
+    <script>
+        var map;
+        var markers = [];
+        var overlays = [];
+
+        // 2025-12-17 - 카카오맵 초기화 - 작성자: 진원
+        function initMap() {
+            var container = document.getElementById('map');
+            var options = {
+                center: new kakao.maps.LatLng(35.1796, 129.0756), // 부산 중심좌표
+                level: 8
+            };
+            map = new kakao.maps.Map(container, options);
+
+            // 현재 위치 표시
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var lat = position.coords.latitude;
+                    var lon = position.coords.longitude;
+                    var locPosition = new kakao.maps.LatLng(lat, lon);
+
+                    // 현재 위치 마커
+                    var marker = new kakao.maps.Marker({
+                        map: map,
+                        position: locPosition
+                    });
+
+                    // 현재 위치로 지도 중심 이동
+                    map.setCenter(locPosition);
+                }, function(error) {
+                    console.error('위치 정보를 가져올 수 없습니다:', error);
+                });
+            }
+        }
+
+        // 2025-12-17 - Flutter에서 영업점 데이터 받아서 마커 표시 - 작성자: 진원
+        function loadBranchesFromFlutter(branches) {
+            console.log('영업점 데이터 수신:', branches.length + '개');
+
+            // 기존 마커와 오버레이 제거
+            clearMarkers();
+
+            branches.forEach(function(branch) {
+                var position = new kakao.maps.LatLng(branch.latitude, branch.longitude);
+
+                // 마커 생성
+                var marker = new kakao.maps.Marker({
+                    map: map,
+                    position: position,
+                    title: branch.branchName
+                });
+
+                markers.push(marker);
+
+                // 커스텀 오버레이 생성
+                var content = createOverlayContent(branch);
+                var customOverlay = new kakao.maps.CustomOverlay({
+                    map: map,
+                    position: position,
+                    content: content,
+                    yAnchor: 1,
+                    clickable: true
+                });
+
+                overlays.push(customOverlay);
+
+                // 마커 클릭 이벤트
+                kakao.maps.event.addListener(marker, 'click', function() {
+                    showOverlay(customOverlay);
+                });
+            });
+
+            // 첫 번째 영업점으로 지도 중심 이동 (데이터가 있을 경우)
+            if (branches.length > 0) {
+                var firstBranch = branches[0];
+                var center = new kakao.maps.LatLng(firstBranch.latitude, firstBranch.longitude);
+                map.setCenter(center);
+            }
+        }
+
+        // 2025-12-17 - 커스텀 오버레이 HTML 생성 - 작성자: 진원
+        function createOverlayContent(branch) {
+            var content = document.createElement('div');
+            content.className = 'custom-overlay';
+            content.innerHTML = `
+                <a href="#">
+                    <span class="title">${branch.branchName}</span>
+                    <button class="checkin-btn" onclick="requestCheckin(${branch.branchId}, '${branch.branchName}', ${branch.latitude}, ${branch.longitude}); return false;">
+                        체크인
+                    </button>
+                </a>
+            `;
+            return content;
+        }
+
+        // 오버레이 표시
+        function showOverlay(overlay) {
+            overlays.forEach(function(o) {
+                o.setMap(null);
+            });
+            overlay.setMap(map);
+        }
+
+        // 마커와 오버레이 제거
+        function clearMarkers() {
+            markers.forEach(function(marker) {
+                marker.setMap(null);
+            });
+            overlays.forEach(function(overlay) {
+                overlay.setMap(null);
+            });
+            markers = [];
+            overlays = [];
+        }
+
+        // 2025-12-17 - 체크인 요청 (Flutter로 전송) - 작성자: 진원
+        function requestCheckin(branchId, branchName, latitude, longitude) {
+            var data = {
+                branchId: branchId,
+                branchName: branchName,
+                latitude: latitude,
+                longitude: longitude
+            };
+
+            // Flutter로 메시지 전송
+            if (window.FlutterChannel) {
+                window.FlutterChannel.postMessage(JSON.stringify(data));
+            } else {
+                showMessage('앱 연동 오류가 발생했습니다', false);
+            }
+        }
+
+        // 2025-12-17 - Flutter에서 체크인 결과 수신 - 작성자: 진원
+        function onCheckinResult(success, message, points) {
+            if (success) {
+                showMessage(message + ' (+' + points + 'P)', true);
+            } else {
+                showMessage(message, false);
+            }
+        }
+
+        // 상태 메시지 표시
+        function showMessage(message, isSuccess) {
+            var statusDiv = document.getElementById('status-message');
+            statusDiv.textContent = message;
+            statusDiv.style.background = isSuccess ? 'rgba(76, 175, 80, 0.9)' : 'rgba(244, 67, 54, 0.9)';
+            statusDiv.style.display = 'block';
+
+            setTimeout(function() {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // 지도 초기화
+        window.onload = function() {
+            initMap();
+        };
+    </script>
+</body>
+</html>
