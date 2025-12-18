@@ -115,7 +115,10 @@ class FlutterApiService {
 
   /// 상품 가입 (인증 필요!)
   Future<Map<String, dynamic>> joinProduct(Map<String, dynamic> request) async {
-    return await _post('/flutter/join/auth', request, needsAuth: true);
+    final response = await _post('/flutter/join/auth', request, needsAuth: true);
+    print("응답 값 : $response");
+
+    return response;
   }
 
   /// ✅ 쿠폰 목록 조회 (별칭)

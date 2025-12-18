@@ -9,17 +9,20 @@ import 'screens/product/product_main_screen.dart';
 import 'screens/member/coupon_screen.dart';
 import 'screens/member/point_history_screen.dart';
 import 'screens/game/game_menu_screen.dart';
+import 'package:tkbank/screens/product/join/join_step4_screen.dart';
+import 'package:tkbank/screens/product/join/join_step3_screen.dart';
+import 'package:tkbank/screens/product/join/join_step2_screen.dart';
+import 'package:tkbank/models/product_join_request.dart';
+
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized(); //Flutter 플러그인과 플랫폼 기능을 쓰기 위한 사전 준비 작성자 : 윤종인
-
-  await FcmService.init(); //firebase를 미리 준비 작성자 : 윤종인
+  WidgetsFlutterBinding.ensureInitialized();
+  await FcmService.init();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        // 2025/12/16 - 회원가입 내용 저장용 provider 구독 - 작성자 : 오서정
         ChangeNotifierProvider(create: (_) => RegisterProvider()),
       ],
       child: const MyApp(),
@@ -30,9 +33,6 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  /// 📌 에뮬레이터에서 스프링부트 서버 접속용
-  /// - 브라우저: http://localhost:8080/busanbank/api/products
-  /// - 에뮬레이터: http://10.0.2.2:8080/busanbank/api/products
   static const String baseUrl = 'http://10.0.2.2:8080/busanbank/api';
 
   @override
@@ -45,6 +45,40 @@ class MyApp extends StatelessWidget {
         colorSchemeSeed: const Color(0xFF6A1B9A),
       ),
       home: const HomeScreen(baseUrl: baseUrl),
+      // ✅ 추가!
+      onGenerateRoute: (settings) {
+        // STEP 2
+        if (settings.name == '/product/join/step2') {
+          final request = settings.arguments as ProductJoinRequest;
+          return MaterialPageRoute(
+            builder: (context) => JoinStep2Screen(
+              baseUrl: baseUrl,
+              request: request,
+            ),
+          );
+        }
+
+        // STEP 3
+        if (settings.name == '/product/join/step3') {
+          final request = settings.arguments as ProductJoinRequest;
+          return MaterialPageRoute(
+            builder: (context) => JoinStep3Screen(request: request),
+          );
+        }
+
+        // STEP 4
+        if (settings.name == '/product/join/step4') {
+          final request = settings.arguments as ProductJoinRequest;
+          return MaterialPageRoute(
+            builder: (context) => JoinStep4Screen(
+              baseUrl: baseUrl,
+              request: request,
+            ),
+          );
+        }
+
+        return null;
+      },
     );
   }
 }
@@ -56,10 +90,8 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, required this.baseUrl});
 
   Future<void> _logout(BuildContext context) async {
-    // 토큰 삭제
     await TokenStorageService().deleteToken();
 
-    // AuthProvider 업데이트
     if (context.mounted) {
       final authProvider = context.read<AuthProvider>();
       authProvider.logout();
@@ -72,7 +104,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // AuthProvider로 로그인 여부 확인
     final authProvider = context.watch<AuthProvider>();
     final isLoggedIn = authProvider.isLoggedIn;
 
@@ -80,7 +111,6 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('딸깍은행'),
         actions: [
-          // 로그인 상태 표시 (AppBar actions)
           if (isLoggedIn)
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -88,13 +118,6 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   const Icon(Icons.check_circle, color: Colors.green, size: 20),
                   const SizedBox(width: 4),
-                  // ✅ 방법 1: user 필드가 있으면 사용
-                  // Text(
-                  //   '${authProvider.user?.userName ?? "사용자"}님',
-                  //   style: const TextStyle(fontSize: 14),
-                  // ),
-
-                  // ✅ 방법 2: user 필드 없으면 그냥 체크 아이콘만
                   const Text(
                     '로그인됨',
                     style: TextStyle(fontSize: 14),
@@ -110,7 +133,6 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 로고 또는 타이틀
               const Icon(
                 Icons.account_balance,
                 size: 100,
@@ -153,32 +175,6 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // ✅ 버튼 2: 쿠폰 등록
-              // SizedBox(
-              //   width: double.infinity,
-              //   height: 56,
-              //   child: ElevatedButton.icon(
-              //     onPressed: () {
-              //       Navigator.push(
-              //         context,
-              //         MaterialPageRoute(
-              //           builder: (_) => CouponScreen(baseUrl: baseUrl),
-              //         ),
-              //       );
-              //     },
-              //     icon: const Icon(Icons.card_giftcard),
-              //     label: const Text(
-              //       '쿠폰 등록',
-              //       style: TextStyle(fontSize: 18),
-              //     ),
-              //     style: ElevatedButton.styleFrom(
-              //       backgroundColor: const Color(0xFFE91E63),
-              //       foregroundColor: Colors.white,
-              //     ),
-              //   ),
-              // ),
-              // const SizedBox(height: 16),
-
               // ✅ 버튼 3: 포인트 이력
               SizedBox(
                 width: double.infinity,
@@ -205,7 +201,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // ✅ 버튼 4: 금융게임 (2025-12-16 - 작성자: 진원)
+              // ✅ 버튼 4: 금융게임
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -233,7 +229,6 @@ class HomeScreen extends StatelessWidget {
 
               // ✅ 버튼 5: 로그인 / 로그아웃
               if (!isLoggedIn) ...[
-                // 로그인 버튼
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -261,13 +256,11 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ] else ...[
-                // 로그아웃 버튼
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: OutlinedButton.icon(
                     onPressed: () async {
-                      // 확인 다이얼로그
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (dialogContext) => AlertDialog(

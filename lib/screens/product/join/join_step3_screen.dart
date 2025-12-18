@@ -4,6 +4,7 @@ import '../../../models/product_join_request.dart';
 import '../../../models/user_coupon.dart';
 import '../../../services/flutter_api_service.dart';
 import '../../../providers/auth_provider.dart';
+import 'join_step4_screen.dart';
 
 /// 🔥 STEP 3: 포인트/쿠폰 선택, 금리 계산
 ///
@@ -466,13 +467,17 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
     );
   }
 
+  // 쿠폰 리스트 비었을 때도 안 터짐 + null 방어
   double _getSelectedCouponRate() {
     if (_selectedCouponId == null) return 0.0;
+    if (_coupons.isEmpty) return 0.0;
+
     final coupon = _coupons.firstWhere(
-          (c) => c.ucNo == _selectedCouponId,
+          (c) => c.ucNo == _selectedCouponId, // ucNo로 매칭
       orElse: () => _coupons.first,
     );
-    return coupon.bonusRate;
+
+    return (coupon.bonusRate ?? 0.0).toDouble();
   }
 
   int _calculateProfit(int principal, int months, double rate) {
@@ -488,6 +493,17 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
 
   void _goToStep4() {
     // STEP 4로 이동
+    final baseRate = 2.30;
+    final bonusRate = _getSelectedCouponRate();
+    final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;  // ✅ 포인트 보너스!
+    final totalRate = baseRate + bonusRate + pointBonus;
+
+    print('[DEBUG] 📊 최종 금리 계산:');
+    print('[DEBUG]    기본 금리: $baseRate%');
+    print('[DEBUG]    쿠폰 보너스: $bonusRate%');
+    print('[DEBUG]    포인트 보너스: $pointBonus%');
+    print('[DEBUG]    최종 금리: $totalRate%');
+
     final updatedRequest = ProductJoinRequest(
       productNo: widget.request.productNo,
       productName: widget.request.productName,
@@ -499,12 +515,17 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
       agreedTermIds: widget.request.agreedTermIds,
       selectedCouponId: _selectedCouponId,
       usedPoints: _selectedPointAmount ?? 0,  // ✅ usedPoints!
+      applyRate: totalRate,  // ✅ 추가!
     );
 
-    Navigator.pushNamed(
+    Navigator.push(
       context,
-      '/product/join/step4',
-      arguments: updatedRequest,
+      MaterialPageRoute(
+        builder: (context) => JoinStep4Screen(
+          baseUrl: 'http://10.0.2.2:8080/busanbank/api',
+          request: updatedRequest,
+        ),
+      ),
     );
   }
 }

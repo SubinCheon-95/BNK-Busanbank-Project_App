@@ -43,6 +43,9 @@ class ProductJoinRequest {
   final String? notificationHp;
   final String? notificationEmailAddr;
 
+  // ✅ 상태 추가!
+  final String? status;
+
   // 최종 동의
   final bool? finalAgree;
 
@@ -71,6 +74,7 @@ class ProductJoinRequest {
     this.notificationEmail,
     this.notificationHp,
     this.notificationEmailAddr,
+    this.status,
     this.finalAgree,
   });
 
@@ -100,6 +104,7 @@ class ProductJoinRequest {
     String? notificationEmail,
     String? notificationHp,
     String? notificationEmailAddr,
+    String? status,
     bool? finalAgree,
   }) {
     return ProductJoinRequest(
@@ -127,6 +132,7 @@ class ProductJoinRequest {
       notificationEmail: notificationEmail ?? this.notificationEmail,
       notificationHp: notificationHp ?? this.notificationHp,
       notificationEmailAddr: notificationEmailAddr ?? this.notificationEmailAddr,
+      status: status ?? this.status,
       finalAgree: finalAgree ?? this.finalAgree,
     );
   }
@@ -158,6 +164,7 @@ class ProductJoinRequest {
       'notificationEmail': notificationEmail,
       'notificationHp': notificationHp,
       'notificationEmailAddr': notificationEmailAddr,
+      'status': status,
       'finalAgree': finalAgree,
     };
   }
@@ -188,6 +195,7 @@ class ProductJoinRequest {
       notificationEmail: json['notificationEmail'],
       notificationHp: json['notificationHp'],
       notificationEmailAddr: json['notificationEmailAddr'],
+      status: json['status'],
       finalAgree: json['finalAgree'],
     );
   }

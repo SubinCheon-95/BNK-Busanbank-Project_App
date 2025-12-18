@@ -109,12 +109,14 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
 
     setState(() => _loading = true);
 
+
     try {
       print('[DEBUG] ===== 최종 가입 요청 =====');
       print('[DEBUG] productNo: ${widget.request.productNo}');
       print('[DEBUG] productName: ${widget.request.productName}');
       print('[DEBUG] principalAmount: ${widget.request.principalAmount}');
       print('[DEBUG] contractTerm: ${widget.request.contractTerm}');
+      print('[DEBUG] applyRate: ${widget.request.applyRate}');
       print('[DEBUG] branchId: ${widget.request.branchId}');
       print('[DEBUG] empId: ${widget.request.empId}');
       print('[DEBUG] usedPoints: ${widget.request.usedPoints}');
@@ -126,7 +128,7 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
       );
 
       // ✅ API 호출 (joinProduct로 변경!)
-      await _apiService.joinProduct(finalRequest.toJson());  // ✅ 수정!
+      print(await _apiService.joinProduct(finalRequest.toJson()));  // ✅ 수정!
 
       print('[DEBUG] ✅ 가입 성공!');
 
@@ -405,7 +407,7 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
       ),
       child: SafeArea(
         child: ElevatedButton(
-          onPressed: _loading || !_finalAgree ? null : _submit,
+          onPressed: _submit,
           style: ElevatedButton.styleFrom(
             minimumSize: const Size(double.infinity, 56),
           ),
