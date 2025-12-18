@@ -18,7 +18,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     message.data['content'] ?? '',
     const NotificationDetails(
       android: AndroidNotificationDetails(
-        'high_importance_channel',
+        'high_importance_channel_v2',
         'High Importance Notifications',
         importance: Importance.max,
         priority: Priority.high,

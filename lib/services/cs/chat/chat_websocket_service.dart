@@ -8,10 +8,8 @@ class ChatWebSocketService {
   final StreamController<String> _controller = StreamController<String>.broadcast();
 
   bool get isConnected => _channel != null;
-
   Stream<String> get stream => _controller.stream;
 
-  /// WebSocket 연결
   void connect() {
     if (_channel != null) return;
 
@@ -24,18 +22,14 @@ class ChatWebSocketService {
         _controller.add(msg);
         print('📥 WS 수신: $msg');
       },
-      onError: (e) {
-        _controller.addError(e);
-      },
-      onDone: () {
-        print('🔌 WS onDone');
-      },
+      onError: (e) => _controller.addError(e),
+      onDone: () => print('🔌 WS onDone'),
       cancelOnError: false,
     );
+
     print('🔌 WebSocket 연결됨: $uri');
   }
 
-  /// 메시지 보내기
   void sendText(String text) {
     if (_channel == null) {
       throw StateError("WebSocket 아직 연결 안 됨. connect() 먼저 호출.");
@@ -44,7 +38,6 @@ class ChatWebSocketService {
     print("📤 보낸 메시지: $text");
   }
 
-  /// 연결 종료
   void disconnect() {
     _channel?.sink.close(status.normalClosure);
     _channel = null;

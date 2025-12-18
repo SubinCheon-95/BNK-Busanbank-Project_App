@@ -96,7 +96,7 @@ class _ChatScreenState extends State<ChatScreen> {
         "type": "ENTER",
         "sessionId": _chatController.sessionId,
         "senderType": _chatController.senderType,
-        "senderId": _chatController.userId,
+        "senderId": _chatController.senderId,
       }));
     }
 
@@ -214,7 +214,7 @@ class _ChatScreenState extends State<ChatScreen> {
         "type": "ENTER",
         "sessionId": _chatController.sessionId,
         "senderType": _chatController.senderType,
-        "senderId": _chatController.userId,
+        "senderId": _chatController.senderId,
       }));
     }
 
