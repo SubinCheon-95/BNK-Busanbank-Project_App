@@ -6,8 +6,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:tkbank/services/camera_point_service.dart';
 
-class VisionTestScreen extends StatefulWidget {
+import '../../providers/auth_provider.dart';
+
+class VisionTestScreen extends StatefulWidget { //카메라, 갤러리 이미지를 이용해 일치시 포인트 획득 - 작성자: 윤종인
+  final String baseUrl = 'http://10.0.2.2:8080/busanbank/api';
   const VisionTestScreen({super.key});
 
   @override
@@ -15,8 +20,17 @@ class VisionTestScreen extends StatefulWidget {
 }
 
 class _VisionTestScreenState extends State<VisionTestScreen> {
+  late CameraPointService cameraPointService;
+
+  bool isPointRequested = false;
   XFile? image;
   String result = "";
+
+  @override
+  void initState() {
+    super.initState();
+    cameraPointService = CameraPointService(baseUrl: widget.baseUrl);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +58,7 @@ class _VisionTestScreenState extends State<VisionTestScreen> {
                   setState(() {
                     image = picked;
                     result = "";
+                    isPointRequested = false;
                   });
                 }
               },
@@ -61,6 +76,7 @@ class _VisionTestScreenState extends State<VisionTestScreen> {
                   setState(() {
                     image = picked;
                     result = "";
+                    isPointRequested = false;
                   });
                 }
               },
@@ -162,15 +178,20 @@ class _VisionTestScreenState extends State<VisionTestScreen> {
       );
 
 
-      if (hasTarget) {
+      if (hasTarget && !isPointRequested) {
+        isPointRequested = true;
+
         setState(() {
           result = '🎉 TV 인식 성공! 포인트 지급';
         });
-      } else {
+
+        await requestPoint();
+      } else if (!hasTarget) {
         setState(() {
           result = '❌ 대상 이미지 아님';
         });
       }
+
 
     } catch (e, s) {
       log('OCR EXCEPTION', error: e, stackTrace: s);
@@ -178,5 +199,16 @@ class _VisionTestScreenState extends State<VisionTestScreen> {
         result = '에러: $e';
       });
     }
+  }
+
+  Future<void> requestPoint() async {
+    final authProvider = context.read<AuthProvider>();
+    final userNo = authProvider.userNo;
+
+    if (userNo == null) {
+      throw Exception('로그인이 필요합니다');
+    }
+
+    final data = await cameraPointService.checkImage(userNo);
   }
 }
