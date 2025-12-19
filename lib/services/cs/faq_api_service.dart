@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:tkbank/config/api_config.dart';
 
 import '../../models/faq_models.dart';
 
 class FaqApiService {
-
-  static const String _base = 'http://10.0.2.2:8080/busanbank';
+  String get base => ApiConfig.baseUrl;
 
   Future<List<FaqCategory>> fetchCategories() async {
-    final uri = Uri.parse('$_base/api/cs/faq/categories');
-    final res = await http.get(uri);
+    final uri = Uri.parse('$base/api/cs/faq/categories');
+    final res = await http.get(uri).timeout(const Duration(seconds: 10));
 
     if (res.statusCode != 200) {
       throw Exception('카테고리 조회 실패: ${res.statusCode}');
@@ -41,7 +41,7 @@ class FaqApiService {
       params['searchType'] = searchType;
     }
 
-    final uri = Uri.parse('$_base/api/cs/faq').replace(queryParameters: params);
+    final uri = Uri.parse('$base/api/cs/faq').replace(queryParameters: params);
 
     final res = await http.get(uri);
     if (res.statusCode != 200) {

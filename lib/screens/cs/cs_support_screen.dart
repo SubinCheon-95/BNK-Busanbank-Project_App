@@ -42,7 +42,7 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
       return;
     }
 
-    // ✅ 핵심: 로그인 돼있으면 여기서 무조건 컨트롤러 생성(지연 생성)
+    // ✅ 로그인 돼있으면 여기서 무조건 컨트롤러 생성(지연 생성)
     _chatController ??= ChatController(
       api: ChatApiService(),
       ws: ChatWebSocketService(),
@@ -154,7 +154,7 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
           if (!isLoggedIn)
             Card(
               elevation: 1,
-              color: Colors.amber.shade50,
+              color: Colors.amberAccent,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: const ListTile(
                 leading: Icon(Icons.lock_outline),
@@ -169,14 +169,17 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
           if (isLoggedIn && _hasActiveSession)
             Card(
               elevation: 1,
-              color: Colors.pink.shade50,
+              color: Colors.pinkAccent,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
                 leading: const Icon(Icons.forum_outlined),
                 title: const Text('진행 중인 상담이 있습니다'),
                 subtitle: Text('세션 ID: ${_chatController!.sessionId} · 이어서 상담하기'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => _openChat(context),
+                onTap: () {
+                  debugPrint('tap: 진행중 상담');
+                  _openChat(context);
+                },
               ),
             ),
 
@@ -196,7 +199,10 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
                   title: const Text('자주 묻는 질문(FAQ)'),
                   subtitle: const Text('자주 문의되는 내용을 먼저 확인해 보세요.'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _openFaq(context),
+                  onTap: () {
+                    debugPrint('tap: FAQ');
+                    _openFaq(context);
+                  },
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -204,15 +210,23 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
                   title: const Text('1:1 문의'),
                   subtitle: const Text('문의 내용을 남겨주시면 순차적으로 답변드립니다.'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _openOneToOne(context),
+                  onTap: () {
+                    debugPrint('tap: 1:1 문의');
+                    _openOneToOne(context);
+                  },
                 ),
                 const Divider(height: 1),
+
+                // ✅ 변경됨: 로그인 여부와 무관하게 "항상 눌리게"
                 ListTile(
                   leading: const Icon(Icons.history),
                   title: const Text('지난 상담내역'),
                   subtitle: const Text('종료된 상담 내역을 확인할 수 있습니다.'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: isLoggedIn ? () => _openChatHistory(context) : null,
+                  onTap: () {
+                    debugPrint('tap: 지난 상담내역');
+                    _openChatHistory(context);
+                  },
                 ),
               ],
             ),
@@ -229,14 +243,18 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Column(
               children: [
+                // ✅ 변경됨: 로그인 여부와 무관하게 "항상 눌리게"
                 ListTile(
                   leading: const Icon(Icons.chat_bubble_outline),
                   title: Text(_hasActiveSession ? '채팅 상담 (이어하기)' : '채팅 상담'),
-                  subtitle: Text(_hasActiveSession
-                      ? '진행 중 상담으로 다시 연결합니다.'
-                      : '상담원과 실시간 채팅으로 문의하세요.'),
+                  subtitle: Text(
+                    _hasActiveSession ? '진행 중 상담으로 다시 연결합니다.' : '상담원과 실시간 채팅으로 문의하세요.',
+                  ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: isLoggedIn ? () => _openChat(context) : null,
+                  onTap: () {
+                    debugPrint('tap: 채팅상담');
+                    _openChat(context);
+                  },
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -244,7 +262,10 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
                   title: const Text('전화 상담'),
                   subtitle: const Text('고객센터로 바로 전화 연결됩니다.'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _callCenter(context),
+                  onTap: () {
+                    debugPrint('tap: 전화상담');
+                    _callCenter(context);
+                  },
                 ),
               ],
             ),
@@ -264,6 +285,7 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
                   title: const Text('만보기'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
+                    debugPrint('tap: 만보기');
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => StepCounterPage()),
