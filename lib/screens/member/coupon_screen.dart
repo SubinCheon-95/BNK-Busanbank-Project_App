@@ -272,7 +272,7 @@ class _CouponScreenState extends State<CouponScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                '금리 +${(coupon.bonusRate * 100).toStringAsFixed(1)}%',
+                '금리 +${(coupon.bonusRate * 1).toStringAsFixed(1)}%',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
