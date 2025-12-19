@@ -5,7 +5,7 @@ class Routes {
 
   // 상품
   // static const String productList = '/products';
-  // static const String productDetail = '/product/detail';
+  static const String productDetail = '/product/detail';
 
   // 상품 가입
   // static const String joinStep1 = '/product/join/step1';

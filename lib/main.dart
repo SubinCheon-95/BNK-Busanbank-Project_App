@@ -9,7 +9,6 @@ import 'package:tkbank/services/FcmService.dart';
 import 'package:tkbank/screens/member/login_screen.dart';
 import 'package:tkbank/services/token_storage_service.dart';
 import 'screens/product/product_main_screen.dart';
-import 'screens/member/coupon_screen.dart';
 import 'screens/member/point_history_screen.dart';
 import 'screens/game/game_menu_screen.dart';
 import 'package:tkbank/screens/product/join/join_step4_screen.dart';

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'attendance_check_screen.dart';
-import 'branch_checkin_screen.dart';
 import 'branch_map_webview_screen.dart';
 
 // 2025-12-16 - 금융게임 메뉴 화면 (출석체크, 영업점체크인) - 작성자: 진원

@@ -3,10 +3,6 @@ import 'package:tkbank/models/chat_session_summary.dart';
 import 'package:tkbank/screens/cs/chat/chat_history_detail_screen.dart';
 import 'package:tkbank/services/cs/chat/chat_api_service.dart';
 
-import 'package:flutter/material.dart';
-import 'package:tkbank/models/chat_session_summary.dart';
-import 'chat_history_detail_screen.dart';
-
 class ChatHistoryScreen extends StatefulWidget {
   /// Hub(Tab) 안에서 쓰면 AppBar 중복되니 false 추천
   final bool showAppBar;

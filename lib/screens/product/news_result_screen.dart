@@ -96,7 +96,7 @@ class NewsResultScreen extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      color: color.withOpacity(0.1),
+      color: color.withValues(alpha: 0.1),
       child: Row(
         children: [
           Icon(icon, size: 48, color: color),
@@ -267,7 +267,7 @@ class NewsResultScreen extends StatelessWidget {
                 },
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
