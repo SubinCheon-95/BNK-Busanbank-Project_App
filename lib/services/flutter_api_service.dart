@@ -216,9 +216,17 @@ class FlutterApiService {
   }
 
   /// ✅ 포인트 이력 조회 (인증 필요!)
+  // 2025/12/19 - 디버그 로그 추가 및 에러 처리 개선 - 작성자: 진원
   Future<List<dynamic>> getPointHistory(int userNo) async {
-    final data = await _get('/flutter/points/history/$userNo', needsAuth: true);
-    return data as List<dynamic>;
+    try {
+      print('[DEBUG] FlutterApiService - 포인트 이력 조회 요청: $baseUrl/flutter/points/history/$userNo'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+      final data = await _get('/flutter/points/history/$userNo', needsAuth: true);
+      print('[DEBUG] FlutterApiService - 포인트 이력 응답: ${data.runtimeType}'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+      return data as List<dynamic>;
+    } catch (e) {
+      print('[ERROR] FlutterApiService - 포인트 이력 조회 실패: $e'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+      rethrow;
+    }
   }
 
   /// ✅ URL 기반 뉴스 분석

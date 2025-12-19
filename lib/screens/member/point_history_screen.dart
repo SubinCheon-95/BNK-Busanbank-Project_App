@@ -28,38 +28,53 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
     _loadPoints();
   }
 
+  // 2025/12/19 - BuildContext 사용 문제 수정 및 에러 처리 개선 - 작성자: 진원
   Future<void> _loadPoints() async {
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final authProvider = context.read<AuthProvider>();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final int? userNo = authProvider.userNo;
 
       if (userNo == null) {
-        setState(() {
-          _errorMessage = '로그인이 필요합니다';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _errorMessage = '로그인이 필요합니다';
+            _isLoading = false;
+          });
+        }
         return;
       }
 
+      print('[DEBUG] 포인트 이력 조회 - userNo: $userNo'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+
       // 포인트 잔액과 이력을 동시에 조회
       final pointData = await _apiService.getUserPoints(userNo);
-      final historyData = await _apiService.getPointHistory(userNo);
+      print('[DEBUG] 포인트 데이터: $pointData'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
 
-      setState(() {
-        _totalPoints = pointData['totalPoints'] ?? 0;
-        _historyList = historyData;
-        _isLoading = false;
-      });
+      final historyData = await _apiService.getPointHistory(userNo);
+      print('[DEBUG] 포인트 이력 데이터: ${historyData.length}건'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+
+      if (mounted) {
+        setState(() {
+          _totalPoints = pointData['totalPoints'] ?? 0;
+          _historyList = historyData;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = '포인트 조회에 실패했습니다: $e';
-        _isLoading = false;
-      });
+      print('[ERROR] 포인트 조회 실패: $e'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+      if (mounted) {
+        setState(() {
+          _errorMessage = '포인트 조회에 실패했습니다: $e';
+          _isLoading = false;
+        });
+      }
     }
   }
 

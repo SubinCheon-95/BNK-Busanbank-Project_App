@@ -204,17 +204,31 @@ class MemberService{
     }
   }
   // 2025/12/18 - 사용자 프로필 조회 - 작성자: 진원
+  // 2025/12/19 - 에러 처리 및 디버그 로그 추가 - 작성자: 진원
   Future<UserProfile> getUserProfile(int userNo) async {
-    final headers = await _getHeaders(needsAuth: true);
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/flutter/profile/$userNo'),
-      headers: headers,
-    );
+    try {
+      final headers = await _getHeaders(needsAuth: true);
 
-    if (response.statusCode == 200) {
-      return UserProfile.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('프로필 조회 실패: ${response.statusCode}');
+      print('[DEBUG] 프로필 조회 요청 - userNo: $userNo'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+      print('[DEBUG] 프로필 조회 URL: $baseUrl/api/flutter/profile/$userNo'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/flutter/profile/$userNo'),
+        headers: headers,
+      );
+
+      print('[DEBUG] 프로필 조회 응답 코드: ${response.statusCode}'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+      print('[DEBUG] 프로필 조회 응답 본문: ${response.body}'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return UserProfile.fromJson(data);
+      } else {
+        throw Exception('프로필 조회 실패: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('[ERROR] 프로필 조회 예외: $e'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+      rethrow;
     }
   }
 

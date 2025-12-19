@@ -32,26 +32,35 @@ class _MyPageScreenState extends State<MyPageScreen> {
     _loadUserData();
   }
 
+  // 2025/12/19 - BuildContext 사용 문제 수정 및 에러 처리 개선 - 작성자: 진원
   Future<void> _loadUserData() async {
     try {
-      final authProvider = context.read<AuthProvider>();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userNo = authProvider.userNo;
 
       if (userNo == null) {
         throw Exception('로그인 필요');
       }
 
-      final profile = await _memberService.getUserProfile(userNo);
-      final point = await _pointService.getUserPoints(userNo);
+      print('[DEBUG] 마이페이지 - userNo: $userNo'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
 
-      setState(() {
-        _userProfile = profile;
-        _point = point;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
+      final profile = await _memberService.getUserProfile(userNo);
+      print('[DEBUG] 프로필 조회 성공: ${profile.userId}'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+
+      final point = await _pointService.getUserPoints(userNo);
+      print('[DEBUG] 포인트 조회 성공: ${point.availablePoints}P'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+
       if (mounted) {
+        setState(() {
+          _userProfile = profile;
+          _point = point;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('[ERROR] 마이페이지 데이터 조회 실패: $e'); // 2025/12/19 - 디버그 로그 추가 - 작성자: 진원
+      if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('데이터 조회 실패: $e')),
         );
