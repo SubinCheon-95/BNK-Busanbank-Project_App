@@ -69,4 +69,12 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
+
+    <!-- ✅ 권한 추가 (manifest 태그 안, application 태그 밖!) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    
+
 </manifest>
