@@ -3,10 +3,9 @@ class NewsAnalysisResult {
   final String? title;
   final String? description;
   final String? image;
-  final String summary;
+  final String? summary;
   final List<String> keywords;
-  final String sentiment;
-  final double sentimentScore;
+  final SentimentResult sentiment;
   final List<RecommendedProduct> recommendations;
 
   NewsAnalysisResult({
@@ -14,10 +13,9 @@ class NewsAnalysisResult {
     this.title,
     this.description,
     this.image,
-    required this.summary,
+    this.summary,
     required this.keywords,
     required this.sentiment,
-    required this.sentimentScore,
     required this.recommendations,
   });
 
@@ -27,10 +25,9 @@ class NewsAnalysisResult {
       title: json['title'],
       description: json['description'],
       image: json['image'],
-      summary: json['summary'] ?? '',
-      keywords: List<String>.from(json['keywords'] ?? []),
-      sentiment: json['sentiment']?['label'] ?? '중립',
-      sentimentScore: json['sentiment']?['score']?.toDouble() ?? 0.0,
+      summary: json['summary'],
+      keywords: (json['keywords'] as List?)?.cast<String>() ?? [],
+      sentiment: SentimentResult.fromJson(json['sentiment'] ?? {}),
       recommendations: (json['recommendations'] as List?)
           ?.map((e) => RecommendedProduct.fromJson(e))
           .toList() ?? [],
@@ -38,25 +35,45 @@ class NewsAnalysisResult {
   }
 }
 
+class SentimentResult {
+  final String label;  // 긍정, 부정, 중립
+  final double score;
+  final String? explain;
+
+  SentimentResult({
+    required this.label,
+    required this.score,
+    this.explain,
+  });
+
+  factory SentimentResult.fromJson(Map<String, dynamic> json) {
+    return SentimentResult(
+      label: json['label'] ?? '중립',
+      score: (json['score'] ?? 0.0).toDouble(),
+      explain: json['explain'],
+    );
+  }
+}
+
 class RecommendedProduct {
   final int productNo;
   final String productName;
-  final String description;
-  final double maturityRate;
+  final double? maturityRate;
+  final String? description;
 
   RecommendedProduct({
     required this.productNo,
     required this.productName,
-    required this.description,
-    required this.maturityRate,
+    this.maturityRate,
+    this.description,
   });
 
   factory RecommendedProduct.fromJson(Map<String, dynamic> json) {
     return RecommendedProduct(
-      productNo: json['productNo'] ?? 0,
+      productNo: (json['productNo'] ?? 0).toInt(),
       productName: json['productName'] ?? '',
-      description: json['description'] ?? '',
-      maturityRate: json['maturityRate']?.toDouble() ?? 0.0,
+      maturityRate: json['maturityRate']?.toDouble(),
+      description: json['description'],
     );
   }
 }

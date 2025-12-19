@@ -1,23 +1,35 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import '../../../services/news_service.dart';
-import '../../../models/news_analysis_result.dart';
+import '../../services/flutter_api_service.dart';
+import '../../models/news_analysis_result.dart';
 import 'news_result_screen.dart';
 
-class NewsAnalysisScreen extends StatefulWidget {
-  const NewsAnalysisScreen({super.key});
+class NewsAnalysisMainScreen extends StatefulWidget {
+  final String baseUrl;
+
+  const NewsAnalysisMainScreen({
+    super.key,
+    required this.baseUrl,
+  });
 
   @override
-  State<NewsAnalysisScreen> createState() => _NewsAnalysisScreenState();
+  State<NewsAnalysisMainScreen> createState() => _NewsAnalysisMainScreenState();
 }
 
-class _NewsAnalysisScreenState extends State<NewsAnalysisScreen> {
-  final _urlController = TextEditingController();
-  final _newsService = NewsService();
-  final _imagePicker = ImagePicker();
+class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
+  final TextEditingController _urlController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+  late FlutterApiService _apiService;
 
-  bool _isAnalyzing = false;
+  File? _selectedImage;
+  bool _analyzing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiService = FlutterApiService(baseUrl: widget.baseUrl);
+  }
 
   @override
   void dispose() {
@@ -25,413 +37,440 @@ class _NewsAnalysisScreenState extends State<NewsAnalysisScreen> {
     super.dispose();
   }
 
-  // URL 분석
+  /// URL 기반 분석
   Future<void> _analyzeUrl() async {
     final url = _urlController.text.trim();
 
     if (url.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('URL을 입력하세요')),
-      );
+      _showError('URL을 입력해주세요.');
       return;
     }
 
-    if (!_isValidUrl(url)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('올바른 URL 형식이 아닙니다')),
-      );
+    if (!url.startsWith('http')) {
+      _showError('올바른 URL을 입력해주세요. (http:// 또는 https://)');
       return;
     }
 
-    setState(() {
-      _isAnalyzing = true;
-    });
+    setState(() => _analyzing = true);
 
     try {
-      final result = await _newsService.analyzeUrl(url);
+      final result = await _apiService.analyzeNewsUrl(url);
 
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => NewsResultScreen(result: result),
+      setState(() => _analyzing = false);
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NewsResultScreen(
+            baseUrl: widget.baseUrl,
+            result: result,
           ),
-        );
-      }
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('분석 실패: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
+      setState(() => _analyzing = false);
+      _showError('분석 실패: $e');
+    }
+  }
+
+  /// 이미지 선택
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
         setState(() {
-          _isAnalyzing = false;
+          _selectedImage = File(image.path);
         });
       }
+    } catch (e) {
+      _showError('이미지 선택 실패: $e');
     }
   }
 
-  // 이미지 분석 (카메라)
-  Future<void> _analyzeImageFromCamera() async {
-    final image = await _imagePicker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 80,
-    );
-
-    if (image != null) {
-      await _processImage(File(image.path));
+  /// 이미지 기반 분석
+  Future<void> _analyzeImage() async {
+    if (_selectedImage == null) {
+      _showError('이미지를 선택해주세요.');
+      return;
     }
-  }
 
-  // 이미지 분석 (갤러리)
-  Future<void> _analyzeImageFromGallery() async {
-    final image = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-
-    if (image != null) {
-      await _processImage(File(image.path));
-    }
-  }
-
-  // 이미지 처리 및 분석
-  Future<void> _processImage(File imageFile) async {
-    setState(() {
-      _isAnalyzing = true;
-    });
+    setState(() => _analyzing = true);
 
     try {
-      final result = await _newsService.analyzeImage(imageFile);
+      final result = await _apiService.analyzeNewsImage(_selectedImage!);
 
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => NewsResultScreen(result: result),
+      setState(() => _analyzing = false);
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NewsResultScreen(
+            baseUrl: widget.baseUrl,
+            result: result,
           ),
-        );
-      }
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이미지 분석 실패: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isAnalyzing = false;
-        });
-      }
+      setState(() => _analyzing = false);
+      _showError('분석 실패: $e');
     }
   }
 
-  bool _isValidUrl(String url) {
-    return Uri.tryParse(url)?.hasAbsolutePath ?? false;
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('뉴스 분석'),
-        centerTitle: true,
+        title: const Text('AI 뉴스 분석'),
+        backgroundColor: const Color(0xFF6A1B9A),
+        foregroundColor: Colors.white,
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 타이틀
-                const Text(
-                  'AI 뉴스 분석',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // 🎨 헤더 (웹 버전 그대로!)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(40),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF6A1B9A), Color(0xFF9C27B0)],
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  '뉴스 URL 또는 이미지를 분석하여\n맞춤 금융상품을 추천해드립니다.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                    height: 1.5,
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome,
+                      size: 64,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    '기사/콘텐츠 분석 (AI)',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'URL을 입력하고 "AI 분석" 버튼을 누르면',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    '기사 요약 / 키워드 / 감성 / 추천 상품을 제공합니다',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-                const SizedBox(height: 32),
-
-                // URL 입력 섹션
-                _buildUrlSection(),
-
-                const SizedBox(height: 32),
-
-                // 구분선
-                Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'OR',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.bold,
-                        ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  // 📝 URL 입력 섹션
+                  Card(
+                    elevation: 8,
+                    shadowColor: Colors.blue.withOpacity(0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [Colors.blue[400]!, Colors.blue[600]!],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.link,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              const Text(
+                                'URL로 분석하기',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          TextField(
+                            controller: _urlController,
+                            decoration: InputDecoration(
+                              hintText: '뉴스 기사 URL을 입력하세요',
+                              hintStyle: TextStyle(color: Colors.grey[400]),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                  color: Colors.blue,
+                                  width: 2,
+                                ),
+                              ),
+                              prefixIcon: const Icon(Icons.web, color: Colors.blue),
+                              contentPadding: const EdgeInsets.all(20),
+                            ),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 60,
+                            child: ElevatedButton.icon(
+                              onPressed: _analyzing ? null : _analyzeUrl,
+                              icon: _analyzing
+                                  ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                                  : const Icon(Icons.analytics, size: 28),
+                              label: Text(
+                                _analyzing ? '분석 중...' : 'AI 분석',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 4,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
+                  ),
 
-                const SizedBox(height: 32),
+                  const SizedBox(height: 32),
 
-                // 이미지 업로드 섹션
-                _buildImageSection(),
-
-                const SizedBox(height: 32),
-
-                // 기능 설명
-                _buildFeatureCards(),
-              ],
-            ),
-          ),
-
-          // 로딩 오버레이
-          if (_isAnalyzing)
-            Container(
-              color: Colors.black54,
-              child: const Center(
-                child: Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text(
-                          '뉴스 분석 중...',
+                  // 구분선
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey[300], thickness: 2)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          '또는',
                           style: TextStyle(
-                            fontSize: 16,
+                            color: Colors.grey[700],
                             fontWeight: FontWeight.bold,
+                            fontSize: 18,
                           ),
                         ),
-                        SizedBox(height: 8),
-                        Text(
-                          'AI가 기사를 분석하고 있습니다',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
+                      ),
+                      Expanded(child: Divider(color: Colors.grey[300], thickness: 2)),
+                    ],
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // 📷 이미지 업로드 섹션
+                  Card(
+                    elevation: 8,
+                    shadowColor: Colors.purple.withOpacity(0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [Colors.purple[400]!, Colors.purple[600]!],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.image,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              const Text(
+                                '이미지로 분석하기',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 24),
+
+                          // 이미지 선택 버튼
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _pickImage(ImageSource.camera),
+                                  icon: const Icon(Icons.camera_alt, size: 24),
+                                  label: const Text(
+                                    '카메라',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.all(20),
+                                    side: BorderSide(
+                                      color: Colors.purple[300]!,
+                                      width: 2,
+                                    ),
+                                    foregroundColor: Colors.purple,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _pickImage(ImageSource.gallery),
+                                  icon: const Icon(Icons.photo_library, size: 24),
+                                  label: const Text(
+                                    '갤러리',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.all(20),
+                                    side: BorderSide(
+                                      color: Colors.purple[300]!,
+                                      width: 2,
+                                    ),
+                                    foregroundColor: Colors.purple,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          if (_selectedImage != null) ...[
+                            const SizedBox(height: 24),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.file(
+                                _selectedImage!,
+                                height: 200,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 60,
+                              child: ElevatedButton.icon(
+                                onPressed: _analyzing ? null : _analyzeImage,
+                                icon: _analyzing
+                                    ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                    : const Icon(Icons.analytics, size: 28),
+                                label: Text(
+                                  _analyzing ? '분석 중...' : 'AI 분석',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.purple,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUrlSection() {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.link,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'URL로 분석',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _urlController,
-              decoration: const InputDecoration(
-                hintText: 'https://news.naver.com/...',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.web),
-              ),
-              keyboardType: TextInputType.url,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _isAnalyzing ? null : _analyzeUrl,
-              icon: const Icon(Icons.search),
-              label: const Text('분석 시작'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
+                ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildImageSection() {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.image,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  '이미지로 분석',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '기사 스크린샷이나 신문 사진을 업로드하세요',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isAnalyzing ? null : _analyzeImageFromCamera,
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('카메라'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 48),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isAnalyzing ? null : _analyzeImageFromGallery,
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('갤러리'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 48),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeatureCards() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '분석 기능',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildFeatureCard(
-          icon: Icons.summarize,
-          title: '요약',
-          description: '기사의 핵심 내용을 4-7문장으로 요약',
-        ),
-        const SizedBox(height: 12),
-        _buildFeatureCard(
-          icon: Icons.key,
-          title: '키워드 추출',
-          description: 'TF-IDF 알고리즘으로 중요 키워드 추출',
-        ),
-        const SizedBox(height: 12),
-        _buildFeatureCard(
-          icon: Icons.sentiment_satisfied,
-          title: '감정 분석',
-          description: '긍정/부정/중립 감정 분석 및 점수',
-        ),
-        const SizedBox(height: 12),
-        _buildFeatureCard(
-          icon: Icons.recommend,
-          title: '상품 추천',
-          description: '기사 내용과 가장 관련 있는 금융상품 추천',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeatureCard({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Theme.of(context).primaryColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -10,6 +10,10 @@ import '../models/employee.dart';
 import '../models/product_terms.dart';
 import '../models/user_coupon.dart';
 import 'token_storage_service.dart';
+import '../models/news_article.dart';
+import 'dart:io';
+import 'package:http_parser/http_parser.dart';
+import '../models/news_analysis_result.dart';
 
 /// 🔥 Flutter 전용 API 서비스
 ///
@@ -217,6 +221,49 @@ class FlutterApiService {
     return data as List<dynamic>;
   }
 
+  /// ✅ URL 기반 뉴스 분석
+  Future<NewsAnalysisResult> analyzeNewsUrl(String url) async {
+    final response = await _post(
+      '/flutter/news/analyze/url',
+      {'url': url},
+      needsAuth: false,  // 공개 API
+    );
+    return NewsAnalysisResult.fromJson(response);
+  }
+
+  /// ✅ 이미지 기반 뉴스 분석 (Multipart)
+  Future<NewsAnalysisResult> analyzeNewsImage(File imageFile) async {
+    final headers = await _getHeaders(needsAuth: false);
+
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/flutter/news/analyze/image'),
+    );
+
+    // 헤더 추가
+    headers.forEach((key, value) {
+      request.headers[key] = value;
+    });
+
+    // 파일 추가
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        imageFile.path,
+        contentType: MediaType('image', 'jpeg'),
+      ),
+    );
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return NewsAnalysisResult.fromJson(data);
+    } else {
+      throw Exception('이미지 분석 실패: ${response.statusCode}');
+    }
+  }
 
 
 }

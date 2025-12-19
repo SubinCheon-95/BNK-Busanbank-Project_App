@@ -16,6 +16,7 @@ import 'package:tkbank/screens/product/join/join_step3_screen.dart';
 import 'package:tkbank/screens/product/join/join_step2_screen.dart';
 import 'package:tkbank/models/product_join_request.dart';
 import 'screens/my_page/my_page_screen.dart'; // 2025/12/18 - 마이페이지 추가 - 작성자: 진원
+import 'package:tkbank/screens/product/news_analysis_screen.dart';
 
 // 2025/12/17 - Locale 초기화 추가 - 작성자: 진원
 Future<void> main() async {
@@ -258,6 +259,31 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+
+              // ✅ 버튼 : 금융감정분석
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => NewsAnalysisMainScreen(baseUrl: baseUrl),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.auto_awesome),
+                  label: const Text(
+                    'AI 뉴스 분석 & 상품 추천',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2196F3),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
 
               // ✅ 버튼 : 마이페이지 (2025/12/18 - 작성자: 진원)
               if (isLoggedIn)
