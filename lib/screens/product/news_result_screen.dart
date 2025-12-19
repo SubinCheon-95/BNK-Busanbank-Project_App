@@ -275,6 +275,7 @@ class NewsResultScreen extends StatelessWidget {
                       return Card(
                         margin: const EdgeInsets.only(bottom: 16),
                         elevation: 4,
+                        clipBehavior: Clip.antiAlias, // ✅ 추가!
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),

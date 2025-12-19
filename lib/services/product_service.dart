@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/product.dart';
 import '../models/product_join_request.dart';
+import '../models/category.dart';
 
 class ProductService {
   /// 기존 사용 방식 유지: ProductService(baseUrl)
@@ -70,4 +71,36 @@ class ProductService {
       throw Exception('상품 가입 실패: ${res.statusCode} / ${res.statusCode} / ${res.body}');
     }
   }
+
+  /// ✅ 카테고리 목록 조회
+  Future<List<Category>> fetchCategories() async {
+    final uri = Uri.parse('$baseUrl/categories');
+    print('[DEBUG] fetchCategories URL = $uri');
+
+    final res = await http.get(uri);
+
+    if (res.statusCode != 200) {
+      throw Exception('카테고리 조회 실패: ${res.statusCode}');
+    }
+
+    final List<dynamic> data = jsonDecode(utf8.decode(res.bodyBytes));
+    return data.map((e) => Category.fromJson(e)).toList();
+  }
+
+  /// ✅ 카테고리별 상품 조회
+  Future<List<Product>> fetchProductsByCategory(int categoryId) async {
+    final uri = Uri.parse('$baseUrl/products/by-category/$categoryId');
+    print('[DEBUG] fetchProductsByCategory URL = $uri');
+
+    final res = await http.get(uri);
+
+    if (res.statusCode != 200) {
+      throw Exception('카테고리별 상품 조회 실패: ${res.statusCode}');
+    }
+
+    final List<dynamic> data = jsonDecode(utf8.decode(res.bodyBytes));
+    return data.map((e) => Product.fromJson(e)).toList();
+  }
+
+
 }

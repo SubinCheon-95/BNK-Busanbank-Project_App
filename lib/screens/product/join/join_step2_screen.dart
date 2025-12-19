@@ -63,8 +63,8 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
     super.initState();
     _apiService = FlutterApiService(baseUrl: widget.baseUrl);
 
-    // ✅ STEP 2부터 로그인 체크!
-    _checkLoginAndLoadData();
+    // ✅ STEP 2부터 로그인 체크! 있던거 삭제합니다!
+    // _checkLoginAndLoadData();
 
     // 기존 값 복원
     final req = widget.request;
@@ -88,63 +88,63 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
     _emailNotify = req.notificationEmail == 'Y';
   }
 
-  /// ✅ 로그인 체크 및 데이터 로드
-  Future<void> _checkLoginAndLoadData() async {
-    final token = await TokenStorageService().readToken();
-
-    if (token == null) {
-      // ❌ 로그인 안 됨
-      if (!mounted) return;  // ✅ mounted 체크!
-
-      // ✅ 다이얼로그 표시 후 결과 대기
-      final result = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(  // ✅ dialogContext 사용!
-          title: const Row(
-            children: [
-              Icon(Icons.lock, color: Colors.orange, size: 28),
-              SizedBox(width: 12),
-              Text('로그인 필요'),
-            ],
-          ),
-          content: const Text('상품 가입을 진행하려면 로그인이 필요합니다.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, true);  // ✅ true 반환 (로그인하기)
-              },
-              child: const Text('로그인하기'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);  // ✅ false 반환 (취소)
-              },
-              child: const Text('취소'),
-            ),
-          ],
-        ),
-      );
-
-      if (!mounted) return;  // ✅ mounted 체크!
-
-      // ✅ 결과에 따라 처리
-      if (result == true) {
-        // 로그인하기 선택
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      } else {
-        // 취소 선택
-        Navigator.pop(context);
-      }
-      return;
-    }
-
-    // ✅ 로그인 됨 → 데이터 로드
-    _loadBranches();
-  }
+  /// ✅ 로그인 체크 및 데이터 로드 모두 주석처리!!!
+  // Future<void> _checkLoginAndLoadData() async {
+  //   final token = await TokenStorageService().readToken();
+  //
+  //   if (token == null) {
+  //     // ❌ 로그인 안 됨
+  //     if (!mounted) return;  // ✅ mounted 체크!
+  //
+  //     // ✅ 다이얼로그 표시 후 결과 대기
+  //     final result = await showDialog<bool>(
+  //       context: context,
+  //       barrierDismissible: false,
+  //       builder: (dialogContext) => AlertDialog(  // ✅ dialogContext 사용!
+  //         title: const Row(
+  //           children: [
+  //             Icon(Icons.lock, color: Colors.orange, size: 28),
+  //             SizedBox(width: 12),
+  //             Text('로그인 필요'),
+  //           ],
+  //         ),
+  //         content: const Text('상품 가입을 진행하려면 로그인이 필요합니다.'),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () {
+  //               Navigator.pop(dialogContext, true);  // ✅ true 반환 (로그인하기)
+  //             },
+  //             child: const Text('로그인하기'),
+  //           ),
+  //           TextButton(
+  //             onPressed: () {
+  //               Navigator.pop(dialogContext, false);  // ✅ false 반환 (취소)
+  //             },
+  //             child: const Text('취소'),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //
+  //     if (!mounted) return;  // ✅ mounted 체크!
+  //
+  //     // ✅ 결과에 따라 처리
+  //     if (result == true) {
+  //       // 로그인하기 선택
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (_) => const LoginScreen()),
+  //       );
+  //     } else {
+  //       // 취소 선택
+  //       Navigator.pop(context);
+  //     }
+  //     return;
+  //   }
+  //
+  //   // ✅ 로그인 됨 → 데이터 로드
+  //   _loadBranches();
+  // }
 
   @override
   void dispose() {
