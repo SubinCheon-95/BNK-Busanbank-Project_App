@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // 2025/12/21 - 웹 플랫폼 체크용 - 작성자: 진원
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:tkbank/providers/auth_provider.dart';
@@ -22,7 +23,11 @@ import 'screens/product/interest_calculator_screen.dart';  // ✅ 추가!
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ko_KR', null);
-  await FcmService.init();
+
+  // 2025/12/21 - 웹에서는 Firebase 초기화 건너뛰기 - 작성자: 진원
+  if (!kIsWeb) {
+    await FcmService.init();
+  }
 
   runApp(
     MultiProvider(
