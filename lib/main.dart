@@ -17,7 +17,7 @@ import 'package:tkbank/screens/product/join/join_step3_screen.dart';
 import 'package:tkbank/screens/product/join/join_step2_screen.dart';
 import 'package:tkbank/models/product_join_request.dart';
 import 'screens/my_page/my_page_screen.dart';
-import 'package:tkbank/screens/product/news_analysis_screen.dart';
+import 'screens/product/interest_calculator_screen.dart';  // ✅ 추가!
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +38,7 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  static const String baseUrl = 'http://당신IPv4:8080/busanbank/api';
+  static const String baseUrl = 'http://니꺼:8080/busanbank/api';
 
   @override
   Widget build(BuildContext context) {
@@ -166,6 +166,32 @@ class HomeScreen extends StatelessWidget {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6A1B9A),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // ✅ 금리계산기 버튼 추가!
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InterestCalculatorScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.calculate),
+                    label: const Text(
+                      '금리 계산기',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00BCD4),
                       foregroundColor: Colors.white,
                     ),
                   ),

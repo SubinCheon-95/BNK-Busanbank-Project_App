@@ -3,22 +3,23 @@
 class ProductTerms {
   final int termId;
   final int productNo;
-  final String termType;      // ✅ 추가! (ESSENTIAL/OPTIONAL)
+  final String termType;      // ESSENTIAL/OPTIONAL
   final String termTitle;
   final String termContent;
-  final bool isRequired;      // ✅ 유지 (termType == 'ESSENTIAL')
+  final bool isRequired;
+  final int displayOrder;     // ✅ 추가!
 
   ProductTerms({
     required this.termId,
     required this.productNo,
-    required this.termType,   // ✅ 추가!
+    required this.termType,
     required this.termTitle,
     required this.termContent,
     required this.isRequired,
+    required this.displayOrder,  // ✅ 추가!
   });
 
   factory ProductTerms.fromJson(Map<String, dynamic> json) {
-    // ✅ termType으로 isRequired 판단
     final termType = json['termType'] as String? ?? '';
     final isRequired = termType.toUpperCase() == 'ESSENTIAL' ||
         json['isRequired'] == 1 ||
@@ -27,10 +28,11 @@ class ProductTerms {
     return ProductTerms(
       termId: json['termId'] ?? 0,
       productNo: json['productNo'] ?? 0,
-      termType: termType,         // ✅ 추가!
+      termType: termType,
       termTitle: json['termTitle'] ?? '',
       termContent: json['termContent'] ?? '',
       isRequired: isRequired,
+      displayOrder: json['displayOrder'] ?? 0,  // ✅ 추가!
     );
   }
 
@@ -38,10 +40,11 @@ class ProductTerms {
     return {
       'termId': termId,
       'productNo': productNo,
-      'termType': termType,       // ✅ 추가!
+      'termType': termType,
       'termTitle': termTitle,
       'termContent': termContent,
       'isRequired': isRequired,
+      'displayOrder': displayOrder,  // ✅ 추가!
     };
   }
 }

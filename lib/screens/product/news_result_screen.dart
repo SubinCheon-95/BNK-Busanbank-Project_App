@@ -34,6 +34,47 @@ class NewsResultScreen extends StatelessWidget {
     }
   }
 
+  // ✅ 감정 강도(체감) 계산: explain에서 원점수(score=정수)를 파싱해서 사용
+  double _getSentimentStrength() {
+    // 1) explain에서 "score=-6" 같은 원점수 추출 시도
+    final explain = result.sentiment.explain ?? '';
+    final match = RegExp(r'score\s*=\s*(-?\d+)').firstMatch(explain);
+
+    if (match != null) {
+      final rawScore = int.tryParse(match.group(1) ?? '0') ?? 0;
+      final abs = rawScore.abs();
+
+      // 백엔드가 confidence = abs(score)/10 로 만들었으니,
+      // abs(score)=10이면 강도 100%로 매핑하는 게 가장 자연스러움
+      final percent = (abs / 10.0) * 100.0;
+
+      // 0~100으로 제한
+      return percent.clamp(0.0, 100.0);
+    }
+
+    // 2) 파싱 실패하면 기존 confidence 기반으로 fallback
+    final conf = result.sentiment.score.abs();
+    return (conf * 10.0);
+  }
+
+
+  // ✅ 감정 강도 텍스트
+  String _getSentimentStrengthText() {
+    final strength = _getSentimentStrength();
+
+    if (strength < 20) {
+      return '매우 약함';
+    } else if (strength < 40) {
+      return '약함';
+    } else if (strength < 60) {
+      return '보통';
+    } else if (strength < 80) {
+      return '강함';
+    } else {
+      return '매우 강함';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,7 +142,7 @@ class NewsResultScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Text(
-                    '신뢰도: ${(result.sentiment.score * 100).toStringAsFixed(1)}%',
+                    '감정 강도: ${_getSentimentStrength().toStringAsFixed(1)}%',
                     style: const TextStyle(
                       fontSize: 28,  // 🔥 크게!
                       fontWeight: FontWeight.bold,
@@ -325,9 +366,9 @@ class NewsResultScreen extends StatelessWidget {
                                         style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,  // ✅ 추가!
                                       ),
-                                      overflow: TextOverflow.ellipsis,  // ✅ 추가!
-                                    ),
                                     ),
                                   ],
                                 ),

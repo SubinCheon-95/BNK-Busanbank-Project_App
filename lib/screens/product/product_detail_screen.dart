@@ -5,6 +5,7 @@ import '../../models/product.dart';
 import '../../models/product_join_request.dart';
 import '../member/login_screen.dart';
 import 'join/join_step1_screen.dart';
+import '../game/branch_map_webview_screen.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   const ProductDetailScreen({
@@ -190,8 +191,66 @@ class ProductDetailScreen extends StatelessWidget {
   void _handleJoin(BuildContext context, ProductJoinRequest joinReq) {
     final authProvider = context.read<AuthProvider>();
 
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ✅ 1. joinTypes 체크
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    final joinTypes = product.joinTypes ?? [];
+
+    print('📌 상품 가입 타입: $joinTypes');
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ✅ 2. MOBILE 가입 불가능한 경우 → 영업점 지도로
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    if (!joinTypes.contains('MOBILE')) {
+      print('📌 MOBILE 가입 불가 → 영업점 지도로 이동');
+
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.store, color: Colors.orange, size: 28),
+              SizedBox(width: 12),
+              Text('영업점 가입 상품'),
+            ],
+          ),
+          content: const Text(
+              '이 상품은 영업점에서만 가입 가능합니다.\n'
+                  '가까운 영업점을 찾아보시겠습니까?'
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+
+                // ✅ 영업점 지도로 이동
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BranchMapWebViewScreen(
+                      baseUrl: baseUrl,
+                    ),
+                  ),
+                );
+              },
+              child: const Text('영업점 찾기'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ✅ 3. MOBILE 가입 가능 → 로그인 체크
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    print('📌 MOBILE 가입 가능 → 로그인 체크');
+
     if (!authProvider.isLoggedIn) {
-      // 로그인 안 되어 있으면 로그인 화면으로
       showDialog(
         context: context,
         builder: (dialogContext) => AlertDialog(
@@ -211,7 +270,6 @@ class ProductDetailScreen extends StatelessWidget {
                     builder: (_) => const LoginScreen(),
                   ),
                 ).then((_) {
-                  // 로그인 후 돌아왔을 때 다시 체크
                   if (authProvider.isLoggedIn) {
                     _navigateToJoin(context, joinReq);
                   }
@@ -223,12 +281,14 @@ class ProductDetailScreen extends StatelessWidget {
         ),
       );
     } else {
-      // 로그인 되어 있으면 바로 가입 화면으로
+      // ✅ 4. 로그인 됨 → 가입 진행
+      print('📌 로그인 완료 → 가입 진행');
       _navigateToJoin(context, joinReq);
     }
   }
 
   void _navigateToJoin(BuildContext context, ProductJoinRequest joinReq) {
+    // ✅ STEP1으로 이동
     Navigator.push(
       context,
       MaterialPageRoute(

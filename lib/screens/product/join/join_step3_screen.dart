@@ -29,14 +29,17 @@ class JoinStep3Screen extends StatefulWidget {
 
 class _JoinStep3ScreenState extends State<JoinStep3Screen> {
   final FlutterApiService _apiService = FlutterApiService(
-    baseUrl: 'http://10.0.2.2:8080/busanbank/api',
+    baseUrl: 'http://니꺼:8080/busanbank/api',
   );
 
   int _totalPoints = 0;
   List<UserCoupon> _coupons = [];
-  int? _selectedCouponId;
+  String? _selectedCouponKey;  // ✅ ucNo 또는 couponName!
   int? _selectedPointAmount;
   bool _isLoading = true;
+
+  // ✅ 추가!
+  bool _contractAgreed = false;  // 예금상품계약서 동의
 
   @override
   void initState() {
@@ -118,11 +121,17 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
             _buildExpectedProfit(),
             const SizedBox(height: 32),
 
+            // ✅ 계약서 섹션
+            _buildContractSection(),
+
+            const SizedBox(height: 100),
+
             // 다음 버튼
             _buildNextButton(),
           ],
         ),
       ),
+
     );
   }
 
@@ -286,65 +295,84 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
   }
 
   Widget _buildCouponItem(UserCoupon coupon) {
-    final isSelected = _selectedCouponId == coupon.ucNo;
+    // ✅ ucNo가 0이면 couponName 사용!
+    final couponKey = coupon.ucNo != 0
+        ? coupon.ucNo.toString()
+        : coupon.couponName;
+
+    final isSelected = _selectedCouponKey == couponKey;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: isSelected ? 4 : 1,
       color: isSelected ? Colors.blue.shade50 : Colors.white,
-      child: ListTile(
-        title: Text(
-          coupon.couponName,
-          style: TextStyle(
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '금리 우대: ${coupon.bonusRate}%',
-              style: const TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
+      child: InkWell(
+        onTap: () {
+          print('📌 쿠폰 클릭: key=$couponKey, 이름=${coupon.couponName}, 금리=${coupon.bonusRate}%');
+          setState(() {
+            // ✅ 토글!
+            if (_selectedCouponKey == couponKey) {
+              _selectedCouponKey = null;
+              print('📌 쿠폰 선택 해제');
+            } else {
+              _selectedCouponKey = couponKey;
+              print('📌 새 선택: $_selectedCouponKey');
+            }
+          });
+        },
+        child: ListTile(
+          title: Text(
+            coupon.couponName,
+            style: TextStyle(
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
-            // ✅ 추가 정보 (선택사항)
-            if (coupon.expireDate != null)
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                '만료일: ${_formatDate(coupon.expireDate!)}',
+                '금리 우대: ${coupon.bonusRate}%',
                 style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-          ],
-        ),
-        trailing: Radio<int>(
-          value: coupon.ucNo,
-          groupValue: _selectedCouponId,
-          onChanged: (value) {
-            print('📌 쿠폰 선택: couponId=$value');
-            print('📌 기존 선택: $_selectedCouponId');
-            setState(() {
-              _selectedCouponId = value;
-              print('📌 새 선택: $_selectedCouponId');
-            });
-          },
+              // ✅ 추가 정보 (선택사항)
+              if (coupon.expireDate != null)
+                Text(
+                  '만료일: ${_formatDate(coupon.expireDate!)}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+            ],
+          ),
+          trailing: Radio<String>(
+            value: couponKey,  // ✅ ucNo 또는 couponName!
+            groupValue: _selectedCouponKey,
+            onChanged: null,  // ✅ InkWell이 처리!
+            activeColor: Colors.blue,              // ✅ 선택 색상
+          ),
         ),
       ),
     );
   }
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 1. _buildInterestRateInfo 수정 (360줄 근처)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // ✅ 날짜 포맷 헬퍼
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   Widget _buildInterestRateInfo() {
-    final baseRate = 2.30;
-    final bonusRate = _getSelectedCouponRate();
-    final totalRate = baseRate + bonusRate;
+    // ✅ 상품 기본 금리 (하드코딩 X!)
+    final baseRate = widget.request.baseRate ?? 0.0;
+    final couponBonus = _getSelectedCouponRate();
+    final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;
+    final totalRate = baseRate + couponBonus + pointBonus;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -354,26 +382,61 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
       ),
       child: Column(
         children: [
+          // 기본 금리
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('기본 금리'),
-              Text('$baseRate%'),
+              Text('${baseRate.toStringAsFixed(2)}%'),
             ],
           ),
+
+          // ✅ 쿠폰 보너스 (있을 때만)
+          if (couponBonus > 0) ...[
+            const Divider(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('쿠폰 보너스', style: TextStyle(color: Colors.green)),
+                Text(
+                  '+${couponBonus.toStringAsFixed(2)}%',
+                  style: const TextStyle(color: Colors.green),
+                ),
+              ],
+            ),
+          ],
+
+          // ✅ 포인트 보너스 (있을 때만)
+          if (pointBonus > 0) ...[
+            const Divider(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('포인트 보너스', style: TextStyle(color: Colors.orange)),
+                Text(
+                  '+${pointBonus.toStringAsFixed(2)}%',
+                  style: const TextStyle(color: Colors.orange),
+                ),
+              ],
+            ),
+          ],
+
           const Divider(height: 24),
+
+          // 최종 적용 금리
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 '최종 적용 금리',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               Text(
-                '$totalRate%',
+                '${totalRate.toStringAsFixed(2)}%',
                 style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
               ),
             ],
@@ -383,11 +446,20 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
     );
   }
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 2. _buildExpectedProfit
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   Widget _buildExpectedProfit() {
     final principal = widget.request.principalAmount ?? 0;
     final term = widget.request.contractTerm ?? 0;
-    final rate = 2.30 + _getSelectedCouponRate();
-    final expectedProfit = _calculateProfit(principal, term, rate);
+
+    // ✅ 동적 금리 계산
+    final baseRate = widget.request.baseRate ?? 0.0;
+    final couponBonus = _getSelectedCouponRate();
+    final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;
+    final totalRate = baseRate + couponBonus + pointBonus;
+
+    final expectedProfit = _calculateProfit(principal, term, totalRate);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -417,6 +489,25 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              const Text('가입 기간'),
+              Text('$term개월'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('적용 금리'),
+              Text(
+                '${totalRate.toStringAsFixed(2)}%',
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               const Text('예상 이자'),
               Text(
                 '${_formatNumber(expectedProfit)}원',
@@ -430,13 +521,14 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
             children: [
               const Text(
                 '만기 금액',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               Text(
                 '${_formatNumber(principal + expectedProfit)}원',
                 style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
               ),
             ],
@@ -445,6 +537,226 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
       ),
     );
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 3. _buildContractTable 수정 (633줄 근처)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Widget _buildContractTable() {
+    final req = widget.request;
+    final today = DateTime.now();
+
+    // ✅ 동적 금리 계산
+    final baseRate = widget.request.baseRate ?? 0.0;
+    final couponBonus = _getSelectedCouponRate();
+    final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;
+    final totalRate = baseRate + couponBonus + pointBonus;
+
+    return Table(
+      border: TableBorder.all(color: Colors.grey[300]!),
+      children: [
+        _buildTableRow('상품명', req.productName ?? ''),
+        _buildTableRow(
+          '신규 금액',
+          '${_formatNumber(req.principalAmount ?? 0)}원',
+        ),
+        _buildTableRow('계약 기간', '${req.contractTerm ?? 0}개월'),
+        _buildTableRow(
+          '최초 신규 적용 이율',
+          '연 ${totalRate.toStringAsFixed(2)}%',  // ✅ 동적!
+        ),
+        _buildTableRow('이자 지급 방식', '만기일시지급 단리식'),
+        _buildTableRow('과세 구분', '일반과세'),
+        _buildTableRow(
+          '계약 체결일',
+          '${today.year}.${today.month}.${today.day}',
+        ),
+      ],
+    );
+  }
+
+
+  // ✅ 계약서 섹션 추가!
+  Widget _buildContractSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '예금상품계약서 전자서명 동의',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '계약서 내용을 확인하셨습니까?',
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: _showContractDialog,
+            icon: const Icon(Icons.description),
+            label: const Text('계약서 확인하기'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.blue,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Checkbox(
+                value: _contractAgreed,
+                onChanged: (value) {
+                  setState(() {
+                    _contractAgreed = value ?? false;
+                  });
+                },
+              ),
+              const Expanded(
+                child: Text(
+                  '예금상품계약서 내용을 확인하였으며 동의합니다.',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 4. 계약서 다이얼로그 추가
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  void _showContractDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text(
+          '[예금상품 계약서]',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 계약 정보 테이블
+              _buildContractTable(),
+
+              const SizedBox(height: 16),
+
+              const Text(
+                '■ 예금상품 계약 체결에 관한 사항',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+
+              const Text(
+                '본인은 위 예금상품의 중요한 사항을 충분히 설명받고 이해하였습니까?',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 8),
+
+              const Text(
+                '✅ 예, 충분히 설명받고 이해하였습니다.',
+                style: TextStyle(fontSize: 13, color: Colors.green),
+              ),
+              const SizedBox(height: 16),
+
+              const Text(
+                '■ 예금상품의 중요 내용 요약',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+
+              const Text(
+                '• 상품의 개요 (계약 기간, 이자의 지급 시기 및 지급 방식 등)\n'
+                    '• 이자율 및 이자 계산 방법, 중도해지 이자율\n'
+                    '• 계약 해지 조건, 예금자 보호 여부\n'
+                    '• 손실 발생 위험, 민원 처리 및 분쟁 조정',
+                style: TextStyle(fontSize: 12, height: 1.5),
+              ),
+              const SizedBox(height: 16),
+
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  '이 예금 상품 계약서에 명시된 모든 내용을 충분히 읽고 이해하였으며, 이 계약에 동의합니다.',
+                  style: TextStyle(fontSize: 12, height: 1.5),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('닫기'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _contractAgreed = true;
+              });
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('계약서 내용을 확인했습니다.')),
+              );
+            },
+            child: const Text('확인 및 동의'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 5. 계약 정보 테이블 추가
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+  TableRow _buildTableRow(String label, String value) {
+    return TableRow(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          color: Colors.grey[200],
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+
 
   Widget _buildNextButton() {
     return SizedBox(
@@ -472,15 +784,22 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
 
   // 쿠폰 리스트 비었을 때도 안 터짐 + null 방어
   double _getSelectedCouponRate() {
-    if (_selectedCouponId == null) return 0.0;
+    if (_selectedCouponKey == null) return 0.0;
     if (_coupons.isEmpty) return 0.0;
 
+    // ✅ key로 쿠폰 찾기!
     final coupon = _coupons.firstWhere(
-          (c) => c.ucNo == _selectedCouponId, // ucNo로 매칭
+          (c) {
+        final key = c.ucNo != 0 ? c.ucNo.toString() : c.couponName;
+        return key == _selectedCouponKey;
+      },
       orElse: () => _coupons.first,
     );
 
-    return (coupon.bonusRate ?? 0.0).toDouble();
+    final rate = (coupon.bonusRate ?? 0.0).toDouble();
+    print('[DEBUG] 선택된 쿠폰: ${coupon.couponName}, 금리: $rate%');
+
+    return rate;
   }
 
   int _calculateProfit(int principal, int months, double rate) {
@@ -494,41 +813,67 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
     );
   }
 
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 6. _goToStep4 메서드 수정 - 계약서 동의 체크
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ✅ 계약서 동의 체크 추가!
   void _goToStep4() {
-    // STEP 4로 이동
-    final baseRate = 2.30;
+    // ✅ 계약서 동의 체크 추가!
+    if (!_contractAgreed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('예금상품계약서를 확인하고 동의해주세요.')),
+      );
+      return;
+    }
+
+    final baseRate = widget.request.baseRate ?? 0.0;
     final bonusRate = _getSelectedCouponRate();
-    final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;  // ✅ 포인트 보너스!
+    final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;
     final totalRate = baseRate + bonusRate + pointBonus;
 
-    print('[DEBUG] 📊 최종 금리 계산:');
-    print('[DEBUG]    기본 금리: $baseRate%');
-    print('[DEBUG]    쿠폰 보너스: $bonusRate%');
-    print('[DEBUG]    포인트 보너스: $pointBonus%');
-    print('[DEBUG]    최종 금리: $totalRate%');
+    // ✅ 선택된 쿠폰의 실제 ucNo 가져오기
+    int? selectedCouponUcNo;
+    if (_selectedCouponKey != null) {
+      final coupon = _coupons.firstWhere(
+            (c) {
+          final key = c.ucNo != 0 ? c.ucNo.toString() : c.couponName;
+          return key == _selectedCouponKey;
+        },
+        orElse: () => _coupons.first,
+      );
+      selectedCouponUcNo = coupon.ucNo;
+    }
 
-    final updatedRequest = ProductJoinRequest(
-      productNo: widget.request.productNo,
-      productName: widget.request.productName,
-      principalAmount: widget.request.principalAmount,
-      contractTerm: widget.request.contractTerm,
-      accountPassword: widget.request.accountPassword,
-      branchId: widget.request.branchId,
-      empId: widget.request.empId,
-      agreedTermIds: widget.request.agreedTermIds,
-      selectedCouponId: _selectedCouponId,
-      usedPoints: _selectedPointAmount ?? 0,  // ✅ usedPoints!
-      applyRate: totalRate,  // ✅ 추가!
+    print('[DEBUG] 📊 최종 금리:');
+    print('[DEBUG]    기본: $baseRate%, 쿠폰: $bonusRate%, 포인트: $pointBonus%');
+    print('[DEBUG]    최종: $totalRate%');
+    print('[DEBUG]    선택 쿠폰 key: $_selectedCouponKey');
+    print('[DEBUG]    선택 쿠폰 ucNo: $selectedCouponUcNo');
+
+    // ✅✅✅ copyWith 사용! (HP, 비밀번호 유지!)
+    final updatedRequest = widget.request.copyWith(
+      selectedCouponId: selectedCouponUcNo,  // ✅ int!
+      usedPoints: _selectedPointAmount ?? 0,
+      pointBonusRate: pointBonus,
+      couponBonusRate: bonusRate,
+      applyRate: totalRate,
     );
+
+    print('[DEBUG] 📋 STEP4로 전달:');
+    print('[DEBUG]    HP: ${updatedRequest.notificationHp}');
+    print('[DEBUG]    Email: ${updatedRequest.notificationEmailAddr}');
+    print('[DEBUG]    Password: ${updatedRequest.accountPasswordOriginal != null ? "있음" : "없음"}');
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => JoinStep4Screen(
-          baseUrl: 'http://10.0.2.2:8080/busanbank/api',
+          baseUrl: 'http://니꺼:8080/busanbank/api',
           request: updatedRequest,
         ),
       ),
     );
   }
+
 }

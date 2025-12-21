@@ -2,8 +2,8 @@
 
 class Product {
   final int productNo;
-  final String name;          // productName
-  final String type;          // productType ("01" 예금, "02" 적금)
+  final String name;
+  final String type;
   final int categoryId;
   final String? categoryName;
   final String description;
@@ -15,12 +15,12 @@ class Product {
   final int? depositAmount;
   final String interestMethod;
   final String payCycle;
-  final String endDate; // 예: "2026-12-31"
+  final String endDate;
   final int adminId;
   final String createdAt;
   final String? updatedAt;
   final String status;
-  final String? joinTypes;
+  final List<String>? joinTypes;  // ✅ List<String>으로 변경!
   final String? joinTypesStr;
   final int subscriberCount;
   final String? productFeatures;
@@ -46,14 +46,13 @@ class Product {
     required this.createdAt,
     this.updatedAt,
     required this.status,
-    this.joinTypes,
+    this.joinTypes,  // ✅ List<String>
     this.joinTypesStr,
     required this.subscriberCount,
     this.productFeatures,
     required this.hit,
   });
 
-  /// 백엔드 JSON(ProductDTO) → Product
   factory Product.fromJson(Map<String, dynamic> json) {
     num _toNum(dynamic v) => v is num ? v : num.parse(v.toString());
     int? _toIntNullable(dynamic v) =>
@@ -79,7 +78,12 @@ class Product {
       createdAt: json['createdAt'] as String? ?? '',
       updatedAt: json['updatedAt'] as String?,
       status: json['status'] as String? ?? '',
-      joinTypes: json['joinTypes']?.toString(),
+      // ✅ joinTypes 파싱 (List<String>)
+      joinTypes: json['joinTypes'] != null
+          ? (json['joinTypes'] is List
+          ? List<String>.from(json['joinTypes'])
+          : null)
+          : null,
       joinTypesStr: json['joinTypesStr']?.toString(),
       subscriberCount: json['subscriberCount'] as int? ?? 0,
       productFeatures: json['productFeatures']?.toString(),

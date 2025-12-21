@@ -139,6 +139,12 @@ class ProductJoinRequest {
 
   // JSON 변환
   Map<String, dynamic> toJson() {
+    // ✅ 날짜 형식 변환 함수 (YYYY-MM-DD만!)
+    String? formatDate(DateTime? date) {
+      if (date == null) return null;
+      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    }
+
     return {
       'productNo': productNo,
       'productName': productName,
@@ -146,8 +152,8 @@ class ProductJoinRequest {
       'userId': userId,
       'principalAmount': principalAmount,
       'contractTerm': contractTerm,
-      'startDate': startDate?.toIso8601String(),
-      'expectedEndDate': expectedEndDate?.toIso8601String(),
+      'startDate': formatDate(startDate),          // ✅ 날짜만!
+      'expectedEndDate': formatDate(expectedEndDate), // ✅ 날짜만!
       'branchId': branchId,
       'empId': empId,
       'accountPassword': accountPassword,

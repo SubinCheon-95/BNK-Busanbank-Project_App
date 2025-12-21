@@ -14,7 +14,7 @@ import 'token_storage_service.dart';
 // 2025/12/18 - JWT 토큰 인증 추가 - 작성자: 진원
 class MemberService{
 
-  final String baseUrl = "http://당신IPv4:8080/busanbank";
+  final String baseUrl = "http://니꺼:8080/busanbank";
   final TokenStorageService _tokenStorage = TokenStorageService();
 
   /// JWT 토큰 헤더 생성

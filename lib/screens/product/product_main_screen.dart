@@ -33,10 +33,10 @@ class _ProductMainScreenState extends State<ProductMainScreen> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // 🎨 Hero Section
+            // ✅ 개선된 Hero Section (오버플로우 해결!)
             SliverToBoxAdapter(
               child: Container(
-                height: 250,
+                height: 280,  // ✅ 높이 조정
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -44,52 +44,96 @@ class _ProductMainScreenState extends State<ProductMainScreen> {
                     colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                   ),
                 ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          '당신의 재무 목표를\n실현하세요',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1.3,
-                          ),
-                          textAlign: TextAlign.center,
+                child: Stack(
+                  children: [
+                    // 배경 패턴
+                    Positioned.fill(
+                      child: Opacity(
+                        opacity: 0.1,
+                        child: CustomPaint(
+                          painter: _CirclePatternPainter(),
                         ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          '높은 금리와 다양한 혜택으로\n더 나은 미래를 준비하세요',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white70,
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+
+                    // 콘텐츠
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // 아이콘
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.account_balance,
+                              size: 48,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // 타이틀
+                          const Text(
+                            '당신의 재무 목표를\n실현하세요',
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              height: 1.3,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+
+                          // 서브타이틀
+                          const Text(
+                            '높은 금리와 다양한 혜택으로\n더 나은 미래를 준비하세요',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-            // 🏷️ 카테고리별 상품
+            // ✅ 카테고리별 상품
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '카테고리별 상품',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF667eea),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          '카테고리별 상품',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     _buildCategoryGrid(),
@@ -171,8 +215,6 @@ class _ProductMainScreenState extends State<ProductMainScreen> {
           onTap: () {
             final name = category['name'] as String;
 
-
-            // ✅ 미래테크는 AI 뉴스 분석 화면으로
             if (name == '미래테크') {
               Navigator.push(
                 context,
@@ -183,7 +225,6 @@ class _ProductMainScreenState extends State<ProductMainScreen> {
               return;
             }
 
-            // 나머지는 카테고리 상품 화면으로
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -237,7 +278,7 @@ class _ProductMainScreenState extends State<ProductMainScreen> {
               Flexible(
                 child: Text(
                   title,
-                  style: const TextStyle(  // ✅ 수정! fontSize는 TextStyle 안에!
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -252,4 +293,26 @@ class _ProductMainScreenState extends State<ProductMainScreen> {
       ),
     );
   }
+}
+
+// ✅ 배경 패턴 페인터
+class _CirclePatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    for (var i = 0; i < 10; i++) {
+      canvas.drawCircle(
+        Offset(size.width * 0.8, size.height * 0.3 + i * 30),
+        20 + i * 10,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

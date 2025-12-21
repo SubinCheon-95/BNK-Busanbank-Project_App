@@ -3,6 +3,7 @@ import '../../../models/product_join_request.dart';
 import '../../../services/flutter_api_service.dart';
 import '../../../services/token_storage_service.dart';
 import '../../member/login_screen.dart';
+import '../../../models/product_terms.dart';
 
 /// 🔥 STEP 4: 최종 확인 및 가입
 ///
@@ -30,6 +31,11 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
   bool _finalAgree = false;
   bool _loading = false;
 
+  // ✅ 마지막최종약관 추가!
+  List<ProductTerms> _finalTerms = [];
+  final Map<int, bool> _agreedFinal = {};
+  bool _loadingTerms = true;
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +43,8 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
 
     // ✅ 로그인 체크
     _checkLogin();
+    // ✅ 마지막 최종약관
+    _loadFinalTerms();  // ✅ 마지막 최종약관
   }
 
   /// ✅ 로그인 체크
@@ -89,6 +97,59 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
     }
   }
 
+
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 3. displayOrder 9,10,11 약관 로드 메서드 추가
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Future<void> _loadFinalTerms() async {
+    try {
+      print('📋 STEP4 약관 조회 시작...');
+
+      final allTerms = await _apiService.getTerms(widget.request.productNo!);
+
+      // ✅ displayOrder 9, 10, 11만 필터링
+      final step4Terms = allTerms
+          .where((term) =>
+      term.displayOrder == 9 ||
+          term.displayOrder == 10 ||
+          term.displayOrder == 11)
+          .toList();
+
+      print('📋 STEP4 약관 조회 완료: ${step4Terms.length}개');
+      for (var term in step4Terms) {
+        print('   - displayOrder: ${term.displayOrder}, title: ${term.termTitle}');
+      }
+
+      setState(() {
+        _finalTerms = step4Terms;
+        for (final term in step4Terms) {
+          _agreedFinal[term.termId] = false;
+        }
+        _loadingTerms = false;
+      });
+    } catch (e) {
+      print('❌ STEP4 약관 조회 실패: $e');
+      setState(() => _loadingTerms = false);
+    }
+  }
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 4. 필수 약관 체크 메서드 추가
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  bool _areRequiredTermsAgreed() {
+    if (_finalTerms.isEmpty) return true;
+
+    final required = _finalTerms.where((t) => t.isRequired);
+    return required.every((t) => _agreedFinal[t.termId] == true);
+  }
+
+
+
+
   int _calculateInterest() {
     final amount = widget.request.principalAmount ?? 0;
     final months = widget.request.contractTerm ?? 0;
@@ -100,6 +161,15 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
   }
 
   Future<void> _submit() async {
+    // ✅ 1. 필수 약관 체크
+    if (!_areRequiredTermsAgreed()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('필수 서류를 모두 확인해주세요.')),
+      );
+      return;
+    }
+
+    // ✅ 2. 최종 동의 체크
     if (!_finalAgree) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('최종 동의를 체크해주세요.')),
@@ -108,7 +178,6 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
     }
 
     setState(() => _loading = true);
-
 
     try {
       print('[DEBUG] ===== 최종 가입 요청 =====');
@@ -122,19 +191,15 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
       print('[DEBUG] usedPoints: ${widget.request.usedPoints}');
       print('[DEBUG] selectedCouponId: ${widget.request.selectedCouponId}');
 
-      // 🔥 최종 동의 플래그 설정
       final finalRequest = widget.request.copyWith(
         finalAgree: true,
       );
 
-      // ✅ API 호출 (joinProduct로 변경!)
-      print(await _apiService.joinProduct(finalRequest.toJson()));  // ✅ 수정!
-
+      print(await _apiService.joinProduct(finalRequest.toJson()));
       print('[DEBUG] ✅ 가입 성공!');
 
       if (!mounted) return;
 
-      // 성공 다이얼로그
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -150,7 +215,6 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
           actions: [
             TextButton(
               onPressed: () {
-                // 홈으로 이동 (모든 스택 제거)
                 Navigator.of(context).popUntil((route) => route.isFirst);
               },
               child: const Text('확인'),
@@ -163,7 +227,6 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
 
       if (!mounted) return;
 
-      // 실패 다이얼로그
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -255,8 +318,94 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
                     valueBold: true,
                   ),
                 ]),
+                const SizedBox(height: 24),
+
+
+              // ✅ 필수 확인 서류 (displayOrder 9,10,11)
+              if (_finalTerms.isNotEmpty) ...[
+                Row(
+                  children: [
+                    const Icon(Icons.description, color: Colors.blue, size: 24),
+                    const SizedBox(width: 8),
+                    const Text(
+                      '필수 확인 서류',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue[200]!),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: _finalTerms.map((term) {
+                      return Column(
+                        children: [
+                          CheckboxListTile(
+                            value: _agreedFinal[term.termId],
+                            onChanged: (v) {
+                              setState(() {
+                                _agreedFinal[term.termId] = v ?? false;
+                              });
+                            },
+                            title: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: term.isRequired
+                                        ? Colors.red
+                                        : Colors.grey,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    term.isRequired ? '필수' : '선택',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    term.termTitle,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            secondary: IconButton(
+                              icon: const Icon(
+                                Icons.visibility,
+                                size: 20,
+                                color: Colors.blue,
+                              ),
+                              onPressed: () => _showTermDetail(term),
+                            ),
+                            controlAffinity: ListTileControlAffinity.leading,
+                          ),
+                          if (term != _finalTerms.last)
+                            const Divider(height: 1),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
 
                 const SizedBox(height: 24),
+              ],
 
                 // 최종 동의
                 Container(
@@ -282,12 +431,74 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
             ),
           ),
 
+
           // 하단 버튼
           _buildBottomButton(),
         ],
       ),
     );
   }
+
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 6. 약관 상세 보기 메서드 추가
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  void _showTermDetail(ProductTerms term) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (_, controller) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          term.termTitle,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: controller,
+                      child: Text(
+                        term.termContent.isNotEmpty
+                            ? term.termContent
+                            : '약관 내용이 없습니다.',
+                        style: const TextStyle(fontSize: 14, height: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
 
   Widget _buildProgressBar() {
     return Container(
