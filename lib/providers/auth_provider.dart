@@ -5,7 +5,10 @@
 */
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:tkbank/services/biometric_storage_service.dart';
 import 'package:tkbank/services/member_service.dart';
+import 'package:tkbank/services/pin_storage_service.dart';
+import 'package:tkbank/services/simple_login_storage_service.dart';
 import 'package:tkbank/services/token_storage_service.dart';
 
 class AuthProvider with ChangeNotifier {
@@ -91,6 +94,9 @@ class AuthProvider with ChangeNotifier {
           await _storage.write(key: 'refreshToken', value: refreshToken);
         }
 
+        // 2025/12/21 - 로그인 시 아이디 간편 로그인 저장소 저장 - 작성자: 오서정
+        await _simpleLoginStorage.saveUserId(_userId!);
+
         _isLoggedIn = true;
         notifyListeners();
       } else {
@@ -121,4 +127,65 @@ class AuthProvider with ChangeNotifier {
 
     notifyListeners();
   }
+
+  // 2025/12/21 - 간편 로그인 연동 추가, 간편 로그인 토큰 여부 추가 - 작성자: 오서정
+  Future<void> loginWithStoredToken() async {
+    final token = await _tokenStorageService.readToken();
+
+    if (token == null) {
+      throw Exception('저장된 로그인 정보가 없습니다.');
+    }
+
+    _accessToken = token;
+    _refreshToken = await _storage.read(key: 'refreshToken');
+
+    final userNoStr = await _storage.read(key: 'userNo');
+    _userNo = userNoStr != null ? int.tryParse(userNoStr) : null;
+    _userId = await _storage.read(key: 'userId');
+    _userName = await _storage.read(key: 'userName');
+    _role = await _storage.read(key: 'role');
+
+    _isLoggedIn = true;
+    notifyListeners();
+  }
+
+  Future<void> loginWithSimpleAuth(String userId) async {
+    final result = await _memberService.simpleLogin(userId);
+
+    _accessToken = result.accessToken;
+    _refreshToken = result.refreshToken;
+    _userNo = result.userNo;
+    _userId = result.userId;
+    _userName = result.userName;
+    _role = result.role;
+
+    // ✅ 이게 핵심
+    await _tokenStorageService.saveToken(_accessToken!);
+    await _storage.write(key: 'refreshToken', value: _refreshToken);
+    await _storage.write(key: 'userNo', value: _userNo.toString());
+    await _storage.write(key: 'userId', value: _userId);
+    await _storage.write(key: 'userName', value: _userName ?? '');
+    await _storage.write(key: 'role', value: _role ?? 'USER');
+
+    _isLoggedIn = true;
+    notifyListeners();
+  }
+
+
+  Future<bool> hasStoredLoginInfo() async {
+    final token = await _tokenStorageService.readToken();
+    final refresh = await _storage.read(key: 'refreshToken');
+    final userNo = await _storage.read(key: 'userNo');
+
+    return token != null && refresh != null && userNo != null;
+  }
+
+  final _simpleLoginStorage = SimpleLoginStorageService();
+
+  Future<bool> hasSimpleLoginBaseInfo() {
+    return _simpleLoginStorage.hasUserId();
+  }
+
+
+
 }
