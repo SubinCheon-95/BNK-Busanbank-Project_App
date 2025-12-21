@@ -6,6 +6,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:tkbank/models/simple_login_result.dart';
 import 'package:tkbank/models/term.dart';
 import '../models/user_profile.dart';
 import 'token_storage_service.dart';
@@ -56,6 +57,7 @@ class MemberService{
     }
   }
 
+  // 2025/12/18 - 약관 기능 - 작성자: 오서정
   Future<List<Term>> fetchTerms() async {
     try {
       final response = await http.get(
@@ -80,6 +82,7 @@ class MemberService{
     }
   }
 
+  // 2025/12/18 - 회원가입 기능 - 작성자: 오서정
   Future<void> register(Map<String, dynamic> data) async {
     final res = await http.post(
       Uri.parse('$baseUrl/api/member/register'),
@@ -93,7 +96,7 @@ class MemberService{
   }
 
 
-  /// 1️⃣ 인증번호 발송
+  // 2025/12/18 - 휴대폰 인증 기능 - 작성자: 오서정
   Future<String> sendHpCode(String hp) async {
     final res = await http.post(
       Uri.parse('$baseUrl/member/hp/send'),
@@ -111,7 +114,6 @@ class MemberService{
     }
   }
 
-  /// 2️⃣ 인증번호 검증
   Future<bool> verifyHpCode({
     required String hp,
     required String code,
@@ -130,7 +132,7 @@ class MemberService{
     return data['isMatched'] == true;
   }
 
-  /// 🔹 중복 검사 (userId / email / hp)
+  // 2025/12/18 - 사용자 정보 중복검사 - 작성자: 오서정
   Future<bool> isDuplicated({
     required String type,
     required String value,
@@ -147,6 +149,7 @@ class MemberService{
     return data['count'] > 0;
   }
 
+  // 2025/12/18 - 아이디 찾기 기능 - 작성자: 오서정
   Future<Map<String, dynamic>> findUserIdByHp({required String userName, required String hp,}) async {
     final res = await http.post(
       Uri.parse('$baseUrl/api/member/find/id/hp'),
@@ -164,7 +167,7 @@ class MemberService{
     return jsonDecode(res.body);
   }
 
-  /// 🔐 비밀번호 찾기 - 사용자 확인
+  // 2025/12/18 - 비밀번호 찾기 기능 - 작성자: 오서정
   Future<void> verifyUserForPw({
     required String userName,
     required String userId,
@@ -185,7 +188,7 @@ class MemberService{
     }
   }
 
-  /// 🔐 비밀번호 재설정
+  // 2025/12/18 - 비밀번호 재설정 기능 - 작성자: 오서정
   Future<void> resetPassword({
     required String userId,
     required String newPw,
@@ -318,5 +321,24 @@ class MemberService{
       throw Exception('회원 탈퇴 실패');
     }
   }
+
+  // 2025/12/21 - 간편 로그인 기능 추가 - 작성자: 오서정
+  Future<SimpleLoginResult> simpleLogin(String userId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/member/simple-login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'userId': userId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return SimpleLoginResult.fromJson(json);
+    } else {
+      throw Exception('간편 로그인 실패');
+    }
+  }
+
 }
 
