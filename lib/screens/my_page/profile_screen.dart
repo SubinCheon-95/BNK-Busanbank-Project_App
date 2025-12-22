@@ -6,6 +6,8 @@ import '../../services/member_service.dart';
 import '../../services/point_service.dart';
 import '../../models/user_profile.dart';
 import '../../models/point.dart';
+import '../member/point_history_screen.dart';
+import '../../main.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -116,11 +118,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildInfoRow('최근 접속', _userProfile?.lastConnectTime ?? ''),
           ]),
           const SizedBox(height: 16),
-          _buildInfoCard('포인트 정보', [
-            _buildInfoRow('총 포인트', '${_point?.totalPoints ?? 0}P'),
-            _buildInfoRow('사용 가능 포인트', '${_point?.availablePoints ?? 0}P'),
-            _buildInfoRow('사용한 포인트', '${_point?.usedPoints ?? 0}P'),
-          ]),
+          _buildInfoCard(
+            '포인트 정보',
+            [
+              _buildInfoRow('총 포인트', '${_point?.totalPoints ?? 0}P'),
+              _buildInfoRow('사용 가능 포인트', '${_point?.availablePoints ?? 0}P'),
+              _buildInfoRow('사용한 포인트', '${_point?.usedPoints ?? 0}P'),
+            ],
+            actionLabel: '상세보기',
+            onAction: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PointHistoryScreen(baseUrl: MyApp.baseUrl),
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 16),
           _buildInfoCard('주소 정보', [
             _buildInfoRow('우편번호', _userProfile?.zip ?? '-'),
@@ -132,7 +146,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoCard(String title, List<Widget> children) {
+  Widget _buildInfoCard(
+    String title,
+    List<Widget> children, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -140,12 +159,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (actionLabel != null && onAction != null)
+                  TextButton.icon(
+                    onPressed: onAction,
+                    icon: const Icon(Icons.arrow_forward, size: 16),
+                    label: Text(actionLabel),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF2196F3),
+                    ),
+                  ),
+              ],
             ),
             const Divider(height: 24),
             ...children,

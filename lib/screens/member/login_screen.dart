@@ -14,12 +14,14 @@ import 'package:provider/provider.dart';
 import 'package:tkbank/providers/auth_provider.dart';
 import 'package:tkbank/screens/member/find_id_screen.dart';
 import 'package:tkbank/screens/member/find_pw_screen.dart';
+import 'package:tkbank/screens/member/pin_auth_screen.dart';
 import 'package:tkbank/screens/member/terms_screen.dart';
 import 'package:tkbank/services/biometric_auth_service.dart';
 import 'package:tkbank/services/biometric_storage_service.dart';
 import 'package:tkbank/services/pin_storage_service.dart';
 
 // 25/12/21 - 간편 로그인 기능 추가 - 작성자: 오서정
+// 25/12/22 - 간편 비밀번호 입력 화면 분리 - 작성자: 오서정
 enum LoginType {
   id,
   pin,
@@ -38,7 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
   //25/12/21 - 간편 로그인 기능 추가 - 작성자: 오서정
   LoginType _loginType = LoginType.id;
   LoginType? _pendingLoginType;
-  String _inputPin = '';
   bool _biometricTried = false;
 
   final _idController = TextEditingController();
@@ -147,8 +148,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
+                //2025/12/22 - 간편비밀번호 입력 창 분리 - 작성자: 오서정
                 if (_loginType == LoginType.id) _idLoginForm(),
-                if (_loginType == LoginType.pin) _pinLoginView(),
                 if (_loginType == LoginType.biometric) _biometricLoginView(),
 
                 
@@ -314,86 +315,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _onPinNumberPressed(String num) async {
-    if (_inputPin.length >= 6) return;
-
-    setState(() => _inputPin += num);
-
-    if (_inputPin.length == 6) {
-      await _tryPinLogin();
-    }
-  }
-
-  void _onPinDelete() {
-    if (_inputPin.isEmpty) return;
-    setState(() => _inputPin = _inputPin.substring(0, _inputPin.length - 1));
-  }
-
-  Future<void> _tryPinLogin() async {
-    final ok = await PinStorageService().verifyPin(_inputPin);
-
-    if (!ok) {
-      setState(() => _inputPin = '');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('간편 비밀번호가 틀렸습니다')),
-      );
-      return;
-    }
-
-    final userId =
-    await const FlutterSecureStorage().read(key: 'simple_login_userId');
-
-    if (userId == null) {
-      _showGuideDialog(
-        '간편 로그인 불가',
-        '아이디 로그인 후 간편 로그인을 등록해주세요.',
-      );
-      setState(() => _inputPin = '');
-      return;
-    }
-
-    await context.read<AuthProvider>().loginWithSimpleAuth(userId);
-
-    if (mounted) Navigator.pop(context);
-  }
-
-
-  Widget _pinLoginView() {
-    return Column(
-      children: [
-        const Text(
-          '간편 비밀번호 입력',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: purple900,
-          ),
-        ),
-        const SizedBox(height: 20),
-        // 🔵 PIN 입력 표시 (●●●○○○)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: List.generate(6, (i) {
-            return Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: i < _inputPin.length ? purple900 : purple500,
-              ),
-            );
-          }),
-        ),
-
-        _pinKeypad(),
-
-        const SizedBox(height: 30),
-
-
-      ],
-    );
-  }
-
   Widget _biometricLoginView() {
     if (!_biometricTried) {
       _biometricTried = true;
@@ -432,51 +353,18 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _pinKeypad() {
-    return Column(
-      children: [
-        for (var row in [
-          ['1','2','3'],
-          ['4','5','6'],
-          ['7','8','9'],
-          ['','0','⌫'],
-        ])
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: row.map((key) {
-              if (key == '') return const SizedBox(width: 60);
 
-              return IconButton(
-                iconSize: 28,
-                onPressed: () {
-                  if (key == '⌫') {
-                    _onPinDelete();
-                  } else {
-                    _onPinNumberPressed(key);
-                  }
-                },
-                icon: Text(
-                  key,
-                  style: const TextStyle(fontSize: 22),
-                ),
-              );
-            }).toList(),
-          ),
-      ],
-    );
-  }
-
+  // 2025/12/22 - 간편비밀번호 화면 분리 - 작성자: 오서정
   Future<void> _handleLoginTypeTap() async {
     final type = _pendingLoginType;
     if (type == null) return;
 
     final auth = context.read<AuthProvider>();
 
-    // 🔹 PIN 탭
+    // 🔹 PIN 탭 → 바로 인증 화면
     if (type == LoginType.pin) {
       final hasPin = await PinStorageService().hasPin();
       final hasBaseInfo = await auth.hasSimpleLoginBaseInfo();
-      //final canLogin = await auth.hasStoredLoginInfo();
 
       if (!hasPin || !hasBaseInfo) {
         _showGuideDialog(
@@ -486,13 +374,28 @@ class _LoginScreenState extends State<LoginScreen> {
         _pendingLoginType = null;
         return;
       }
+
+      _pendingLoginType = null;
+
+      // ⭐⭐ 여기서 바로 이동 ⭐⭐
+      final success = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const PinAuthScreen(),
+        ),
+      );
+
+      if (success == true && mounted) {
+        // ⭐ LoginScreen까지 닫기
+        Navigator.pop(context);
+      }
+      return;
     }
 
-    // 🔹 지문 탭
+    // 🔹 생체 인증 탭
     if (type == LoginType.biometric) {
       final enabled = await BiometricStorageService().isEnabled();
       final hasBaseInfo = await auth.hasSimpleLoginBaseInfo();
-      //final canLogin = await auth.hasStoredLoginInfo();
 
       if (!enabled || !hasBaseInfo) {
         _showGuideDialog(
@@ -502,18 +405,20 @@ class _LoginScreenState extends State<LoginScreen> {
         _pendingLoginType = null;
         return;
       }
+
+      setState(() {
+        _loginType = LoginType.biometric;
+        _pendingLoginType = null;
+        _biometricTried = false;
+      });
+      return;
     }
 
-
-    // ✅ 여기까지 왔으면 보여줘도 됨
+    // 🔹 아이디 로그인만 화면 전환
     setState(() {
-      _loginType = type;
-      _inputPin = '';
+      _loginType = LoginType.id;
       _pendingLoginType = null;
-
-      if (type != LoginType.biometric) {
-        _biometricTried = false;
-      }
+      _biometricTried = false;
     });
   }
 

@@ -27,6 +27,18 @@ class PhoneVerifyScreen extends StatefulWidget {
 class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
     with SingleTickerProviderStateMixin {
 
+  // 2025/12/22 - 이메일 도메인 추천 기능 추가 - 작성자: 오서정
+  final List<String> _emailDomains = [
+    'gmail.com',
+    'naver.com',
+    'daum.net',
+    'kakao.com',
+    'hanmail.net',
+  ];
+
+  bool _showDomainSuggestion = false;
+  List<String> _filteredDomains = [];
+
   // ======================
   // Controller / Focus
   // ======================
@@ -105,6 +117,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
     });
     emailFocus.addListener(() async {
       if (!emailFocus.hasFocus) {
+        setState(() => _showDomainSuggestion = false);
         await _validateEmail();
       }
     });
@@ -331,7 +344,44 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
                 _errorText(juminError),
 
                 _label('이메일', required: true),
-                _input(emailCtrl, focus: emailFocus, isError: emailError != null,),
+                _input(emailCtrl,
+                  focus: emailFocus,
+                  isError: emailError != null,
+                  // 2025/12/22 - 이메일 도메인 추천 기능 추가 - 작성자: 오서정
+                  onChanged: (value) {
+                    // @가 없으면 추천 안 함
+                    if (!value.contains('@')) {
+                      setState(() => _showDomainSuggestion = false);
+                      return;
+                    }
+
+                    final parts = value.split('@');
+
+                    // @가 2개 이상이면 비정상 → 숨김
+                    if (parts.length != 2) {
+                      setState(() => _showDomainSuggestion = false);
+                      return;
+                    }
+
+                    final domainPart = parts[1];
+
+                    // 이미 도메인이 완성된 경우 ('.' 포함 + 후보에 존재)
+                    if (_emailDomains.contains(domainPart)) {
+                      setState(() => _showDomainSuggestion = false);
+                      return;
+                    }
+
+                    // 도메인 입력 중일 때만 필터링
+                    final matched = _emailDomains
+                        .where((d) => d.startsWith(domainPart))
+                        .toList();
+
+                    setState(() {
+                      _filteredDomains = matched;
+                      _showDomainSuggestion = matched.isNotEmpty;
+                    });
+                  },
+                ),
                 _errorText(emailError),
                 if (emailChecked && !emailDuplicated && emailError == null)
                   const Padding(
@@ -341,7 +391,33 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
                       style: TextStyle(color: Colors.green, fontSize: 12),
                     ),
                   ),
+                if (_showDomainSuggestion)
+                  Container(
+                    margin: const EdgeInsets.only(top: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      children: _filteredDomains.map((domain) {
+                        return ListTile(
+                          dense: true,
+                          title: Text(domain),
+                          onTap: () {
+                            final id = emailCtrl.text.split('@')[0];
 
+                            setState(() {
+                              emailCtrl.text = '$id@$domain';
+                              _showDomainSuggestion = false;
+                            });
+
+                            FocusScope.of(context).unfocus();
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
 
                 _label('휴대폰 번호', required: true),
                 Row(

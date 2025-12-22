@@ -223,7 +223,7 @@ class _BranchCheckinScreenState extends State<BranchCheckinScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${data['earnedPoints'] ?? 20} 포인트 적립!',
+                    '${data['earnedPoints'] ?? 100} 포인트 적립!',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

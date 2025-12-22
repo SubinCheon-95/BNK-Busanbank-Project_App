@@ -55,9 +55,14 @@ class _AttendanceCheckScreenState extends State<AttendanceCheckScreen> {
 
         // 주간 출석 현황
         List<dynamic> weeklyData = data['weeklyAttendance'] ?? [];
+        print('[DEBUG] 서버에서 받은 출석 데이터: $data');
+        print('[DEBUG] weeklyAttendance 데이터: $weeklyData');
+
         for (int i = 0; i < weeklyData.length && i < 7; i++) {
           weeklyAttendance[i] = weeklyData[i] ?? false;
         }
+
+        print('[DEBUG] 파싱된 weeklyAttendance: $weeklyAttendance');
 
         isLoading = false;
       });
@@ -112,10 +117,9 @@ class _AttendanceCheckScreenState extends State<AttendanceCheckScreen> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 64,
+                  const Text(
+                    '🐧',
+                    style: TextStyle(fontSize: 80),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -251,21 +255,20 @@ class _AttendanceCheckScreenState extends State<AttendanceCheckScreen> {
                             ),
                             const SizedBox(height: 8),
                             Container(
-                              width: 36,
-                              height: 36,
+                              width: 40,
+                              height: 40,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: weeklyAttendance[index]
                                     ? const Color(0xFF4CAF50)
                                     : Colors.grey[300],
                               ),
-                              child: weeklyAttendance[index]
-                                  ? const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 20,
-                              )
-                                  : null,
+                              child: Center(
+                                child: Text(
+                                  weeklyAttendance[index] ? '🐧' : '',
+                                  style: const TextStyle(fontSize: 24),
+                                ),
+                              ),
                             ),
                           ],
                         );

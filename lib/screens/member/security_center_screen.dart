@@ -1,3 +1,8 @@
+/*
+  날짜: 2025/12/22
+  내용: 인증센터 UI 수정
+  이름: 오서정
+*/
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tkbank/providers/auth_provider.dart';
@@ -13,6 +18,11 @@ class SecurityCenterScreen extends StatefulWidget {
   @override
   State<SecurityCenterScreen> createState() => _SecurityCenterScreenState();
 }
+
+const Color bnkPrimary = Color(0xFF6A1B9A);   // 메인 보라
+const Color bnkPrimarySoft = Color(0xFFF3E5F5); // 연보라 배경
+const Color bnkGrayText = Color(0xFF6B7280);
+const Color bnkCardBg = Colors.white;
 
 class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
 
@@ -67,11 +77,15 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
     }
 
     return Scaffold(
+      backgroundColor: bnkPrimarySoft,
       appBar: AppBar(
-        title: const Text('인증센터'),
-        backgroundColor: const Color(0xFF455A64),
+        title: const Text(
+          '인증센터',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: bnkPrimary,
         foregroundColor: Colors.white,
-        elevation: 1,
+        elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -82,7 +96,8 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
             _SecurityItem(
               icon: Icons.password,
               title: '간편 비밀번호',
-              subtitle: _hasPin ? '등록됨 · 변경 / 해제' : '등록하기',
+              subtitle: _hasPin ? '● 등록됨 · 변경 / 해제' : '등록하기',
+              enabled: _hasPin,
               onTap: () async {
                 if (_hasPin) {
                   // 🔹 이미 등록됨 → 해제 물어봄
@@ -109,7 +124,8 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
             _SecurityItem(
               icon: Icons.fingerprint,
               title: '생체 인증',
-              subtitle: _bioEnabled ? '활성화됨 · 해제' : '등록하기',
+              subtitle: _bioEnabled ? '● 활성화됨 · 해제' : '등록하기',
+              enabled: _bioEnabled,
               onTap: () async {
                 if (_bioEnabled) {
                   await _confirmDisableBiometric();
@@ -145,15 +161,6 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
 
 
   }
-
-  void _showNotReady(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature 기능은 준비 중입니다.'),
-      ),
-    );
-  }
-
 
   Future<void> _confirmRemovePin() async {
     final ok = await showDialog<bool>(
@@ -216,37 +223,54 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
   }
 
 }
-
 class _SecurityItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final bool enabled;
 
   const _SecurityItem({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
+    required this.enabled,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 18,
-        ),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
+          color: bnkCardBg,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Icon(icon, size: 28, color: Colors.grey.shade800),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: enabled ? bnkPrimarySoft : Colors.grey.shade200,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: enabled ? bnkPrimary : Colors.grey,
+              ),
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -259,24 +283,26 @@ class _SecurityItem extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     subtitle,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey.shade600,
+                      color: enabled ? bnkPrimary : bnkGrayText,
+                      fontWeight: enabled ? FontWeight.w500 : FontWeight.normal,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right),
+            const Icon(Icons.chevron_right, color: Colors.grey),
           ],
         ),
       ),
     );
   }
-
-
-
 }
+
+
+
+
