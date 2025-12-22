@@ -6,7 +6,7 @@ import '../models/coupon.dart';
 import 'token_storage_service.dart';
 
 class CouponService {
-  final String baseUrl = "http://니꺼:8080/busanbank";
+  final String baseUrl = "http://10.0.2.2:8080/busanbank";
   final TokenStorageService _tokenStorage = TokenStorageService();
 
   // 사용자 쿠폰 목록 조회

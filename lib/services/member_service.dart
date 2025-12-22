@@ -339,6 +339,5 @@ class MemberService{
       throw Exception('간편 로그인 실패');
     }
   }
-
 }
 

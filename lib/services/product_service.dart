@@ -9,7 +9,7 @@ class ProductService {
   /// 기존 사용 방식 유지: ProductService(baseUrl)
   ProductService(this.baseUrl);
 
-  /// 예) http://니꺼:8080/busanbank/api
+  /// 예) http://10.0.2.2:8080/busanbank/api
   final String baseUrl;
 
   /// 전체 상품 목록 조회: GET /busanbank/api/products

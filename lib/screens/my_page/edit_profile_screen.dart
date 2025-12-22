@@ -22,6 +22,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _addr2Controller = TextEditingController();
 
   bool _isLoading = false;
+  bool _isLoadingData = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final authProvider = context.read<AuthProvider>();
+      final userNo = authProvider.userNo;
+
+      if (userNo == null) {
+        throw Exception('로그인 필요');
+      }
+
+      final profile = await _memberService.getUserProfile(userNo);
+
+      // 기존 정보로 입력 필드 채우기
+      _emailController.text = profile.email ?? '';
+      _hpController.text = profile.hp ?? '';
+      _zipController.text = profile.zip ?? '';
+      _addr1Controller.text = profile.addr1 ?? '';
+      _addr2Controller.text = profile.addr2 ?? '';
+
+      setState(() => _isLoadingData = false);
+    } catch (e) {
+      setState(() => _isLoadingData = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('정보 조회 실패: $e')),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -80,11 +116,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: const Color(0xFF2196F3),
         foregroundColor: Colors.white,
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
+      body: _isLoadingData
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -174,9 +212,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     : const Text('저장', style: TextStyle(fontSize: 16)),
               ),
             ),
-          ],
-        ),
-      ),
+                ],
+              ),
+            ),
     );
   }
 }
