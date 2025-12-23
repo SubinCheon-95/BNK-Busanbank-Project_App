@@ -34,7 +34,8 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
 
   int _totalPoints = 0;
   List<UserCoupon> _coupons = [];
-  String? _selectedCouponKey;  // ✅ ucNo 또는 couponName!
+
+  String? _selectedCouponKey;
   int? _selectedPointAmount;
   bool _isLoading = true;
 
@@ -72,6 +73,11 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
       print('[DEBUG] 📌 쿠폰 조회 시작...');
       final coupons = await _apiService.getUserCoupons(userNo);
       print('[DEBUG] ✅ 쿠폰: ${coupons.length}개');
+
+      // ✅ 여기를 변경 추가
+      for (final c in coupons) {
+        print('✅ 쿠폰 파싱확인: ucNo=${c.ucNo}, couponNo=${c.couponNo}, name=${c.couponName}, status=${c.status}');
+      }
 
       setState(() {
         _totalPoints = pointsData['totalPoints'] ?? 0;
@@ -295,10 +301,11 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
   }
 
   Widget _buildCouponItem(UserCoupon coupon) {
-    // ✅ ucNo가 0이면 couponName 사용!
-    final couponKey = coupon.ucNo != 0
-        ? coupon.ucNo.toString()
-        : coupon.couponName;
+    // ✅ 여기 변경
+    final couponKey = coupon.ucNo.toString();
+    // final couponKey = coupon.ucNo != 0
+    //     ? coupon.ucNo.toString()
+    //     : coupon.couponName;
 
     final isSelected = _selectedCouponKey == couponKey;
 
@@ -306,54 +313,51 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
       margin: const EdgeInsets.only(bottom: 8),
       elevation: isSelected ? 4 : 1,
       color: isSelected ? Colors.blue.shade50 : Colors.white,
-      child: InkWell(
+      child: ListTile(
         onTap: () {
-          print('📌 쿠폰 클릭: key=$couponKey, 이름=${coupon.couponName}, 금리=${coupon.bonusRate}%');
+          // ✅ ListTile 탭도 동일 동작 (라디오/타일 어디 눌러도 똑같이)
           setState(() {
-            // ✅ 토글!
-            if (_selectedCouponKey == couponKey) {
-              _selectedCouponKey = null;
-              print('📌 쿠폰 선택 해제');
-            } else {
-              _selectedCouponKey = couponKey;
-              print('📌 새 선택: $_selectedCouponKey');
-            }
+            _selectedCouponKey = (isSelected) ? null : couponKey;
           });
+          print('📌 쿠폰 클릭: key=$couponKey, 이름=${coupon.couponName}, 금리=${coupon.bonusRate}%');
         },
-        child: ListTile(
-          title: Text(
-            coupon.couponName,
-            style: TextStyle(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
+        title: Text(
+          coupon.couponName,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '금리 우대: ${coupon.bonusRate}%',
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (coupon.expireDate != null)
               Text(
-                '금리 우대: ${coupon.bonusRate}%',
+                '만료일: ${_formatDate(coupon.expireDate!)}',
                 style: const TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.grey,
                 ),
               ),
-              // ✅ 추가 정보 (선택사항)
-              if (coupon.expireDate != null)
-                Text(
-                  '만료일: ${_formatDate(coupon.expireDate!)}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
-                ),
-            ],
-          ),
-          trailing: Radio<String>(
-            value: couponKey,  // ✅ ucNo 또는 couponName!
-            groupValue: _selectedCouponKey,
-            onChanged: null,  // ✅ InkWell이 처리!
-            activeColor: Colors.blue,              // ✅ 선택 색상
-          ),
+          ],
+        ),
+        trailing: Radio<String>(
+          value: couponKey,                 // ✅ String
+          groupValue: _selectedCouponKey,   // ✅ String?
+          toggleable: true,                // ✅ 다시 누르면 해제됨
+          onChanged: (value) {
+            setState(() {
+              _selectedCouponKey = value;   // toggleable이라 null도 들어올 수 있음
+            });
+            print('📌 Radio 변경: $_selectedCouponKey');
+          },
+          activeColor: Colors.blue,
         ),
       ),
     );
@@ -787,18 +791,16 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
     if (_selectedCouponKey == null) return 0.0;
     if (_coupons.isEmpty) return 0.0;
 
-    // ✅ key로 쿠폰 찾기!
-    final coupon = _coupons.firstWhere(
-          (c) {
-        final key = c.ucNo != 0 ? c.ucNo.toString() : c.couponName;
-        return key == _selectedCouponKey;
-      },
-      orElse: () => _coupons.first,
-    );
+    final selected = _coupons.where((c) => c.ucNo.toString() == _selectedCouponKey).toList();
+    if (selected.isEmpty) {
+      print('[DEBUG] ❌ 선택 key=$_selectedCouponKey 인 쿠폰을 못 찾음 → 0% 처리');
+      return 0.0;
+    }
 
-    final rate = (coupon.bonusRate ?? 0.0).toDouble();
-    print('[DEBUG] 선택된 쿠폰: ${coupon.couponName}, 금리: $rate%');
+    final coupon = selected.first;
+    final rate = coupon.bonusRate.toDouble();
 
+    print('[DEBUG] ✅ 선택된 쿠폰: ${coupon.couponName}, ucNo=${coupon.ucNo}, 금리: $rate%');
     return rate;
   }
 
@@ -832,18 +834,15 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
     final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;
     final totalRate = baseRate + bonusRate + pointBonus;
 
-    // ✅ 선택된 쿠폰의 실제 ucNo 가져오기
+    // ✅ 여기를 변경
     int? selectedCouponUcNo;
     if (_selectedCouponKey != null) {
-      final coupon = _coupons.firstWhere(
-            (c) {
-          final key = c.ucNo != 0 ? c.ucNo.toString() : c.couponName;
-          return key == _selectedCouponKey;
-        },
-        orElse: () => _coupons.first,
-      );
-      // ✅ ucNo가 0이면 null로 처리 (백엔드에서 0을 유효한 쿠폰 ID로 인식하지 못함)
-      selectedCouponUcNo = coupon.ucNo != 0 ? coupon.ucNo : null;
+      final matches = _coupons.where((c) => c.ucNo.toString() == _selectedCouponKey).toList();
+      if (matches.isNotEmpty) {
+        selectedCouponUcNo = matches.first.ucNo; // ✅ 그대로 전송
+      } else {
+        selectedCouponUcNo = null;
+      }
     }
 
     print('[DEBUG] 📊 최종 금리:');
