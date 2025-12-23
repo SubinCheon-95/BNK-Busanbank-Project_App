@@ -2,6 +2,7 @@
   날짜 : 2025/12/15
   내용 : users 모델 추가
   작성자 : 오서정
+  수정 : 2025/12/23 - 닉네임/아바타 필드 추가 - 진원
 */
 class Users{
 
@@ -12,6 +13,8 @@ class Users{
   final String email;
   final String hp;
   String role;
+  String? nickname;       // 닉네임 (선택)
+  String? avatarImage;    // 아바타 이미지 경로 (선택)
 
   Users({
     required this.userNo,
@@ -20,7 +23,9 @@ class Users{
     required this.userPw,
     required this.email,
     required this.hp,
-    this.role = 'USER'
+    this.role = 'USER',
+    this.nickname,
+    this.avatarImage,
   });
 
   Map<String, dynamic> toJson(){
@@ -31,8 +36,25 @@ class Users{
       "userPw": userPw,
       "email": email,
       "hp": hp,
-      "role": role
+      "role": role,
+      "nickname": nickname,
+      "avatarImage": avatarImage,
     };
+  }
+
+  // JSON에서 Users 객체 생성
+  factory Users.fromJson(Map<String, dynamic> json) {
+    return Users(
+      userNo: json['userNo']?.toString() ?? '',
+      userName: json['userName'] ?? '',
+      userId: json['userId'] ?? '',
+      userPw: json['userPw'] ?? '',
+      email: json['email'] ?? '',
+      hp: json['hp'] ?? '',
+      role: json['role'] ?? 'USER',
+      nickname: json['nickname'],
+      avatarImage: json['avatarImage'],
+    );
   }
 
 }

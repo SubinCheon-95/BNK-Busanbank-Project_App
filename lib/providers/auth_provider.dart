@@ -28,6 +28,8 @@ class AuthProvider with ChangeNotifier {
   String? _userId;
   String? _userName;
   String? _role;
+  String? _nickname;      // 2025/12/23 - 닉네임 추가 - 작성자: 진원
+  String? _avatarImage;   // 2025/12/23 - 아바타 이미지 추가 - 작성자: 진원
 
   // Getters
   bool get isLoggedIn => _isLoggedIn;
@@ -37,6 +39,8 @@ class AuthProvider with ChangeNotifier {
   String? get userId => _userId;
   String? get userName => _userName;
   String? get role => _role;
+  String? get nickname => _nickname;        // 2025/12/23 - 닉네임 getter - 작성자: 진원
+  String? get avatarImage => _avatarImage;  // 2025/12/23 - 아바타 이미지 getter - 작성자: 진원
 
   AuthProvider() {
     // 앱 실행 시 로그인 여부 검사
@@ -57,6 +61,8 @@ class AuthProvider with ChangeNotifier {
       _userId = await _storage.read(key: 'userId');
       _userName = await _storage.read(key: 'userName');
       _role = await _storage.read(key: 'role');
+      _nickname = await _storage.read(key: 'nickname');           // 2025/12/23 - 닉네임 로드 - 작성자: 진원
+      _avatarImage = await _storage.read(key: 'avatarImage');     // 2025/12/23 - 아바타 이미지 로드 - 작성자: 진원
 
       // 해당 Provider를 구독하고 있는 Consumer 알림
       notifyListeners();
@@ -94,6 +100,18 @@ class AuthProvider with ChangeNotifier {
           await _storage.write(key: 'refreshToken', value: refreshToken);
         }
 
+        // 2025/12/23 - 프로필 정보도 저장 - 작성자: 진원
+        final nickname = jsonData['nickname'];
+        final avatarImage = jsonData['avatarImage'];
+        if (nickname != null) {
+          _nickname = nickname;
+          await _storage.write(key: 'nickname', value: nickname);
+        }
+        if (avatarImage != null) {
+          _avatarImage = avatarImage;
+          await _storage.write(key: 'avatarImage', value: avatarImage);
+        }
+
         // 2025/12/21 - 로그인 시 아이디 간편 로그인 저장소 저장 - 작성자: 오서정
         await _simpleLoginStorage.saveUserId(_userId!);
 
@@ -116,6 +134,8 @@ class AuthProvider with ChangeNotifier {
     await _storage.delete(key: 'userName');
     await _storage.delete(key: 'role');
     await _storage.delete(key: 'refreshToken');
+    await _storage.delete(key: 'nickname');      // 2025/12/23 - 닉네임 삭제 - 작성자: 진원
+    await _storage.delete(key: 'avatarImage');   // 2025/12/23 - 아바타 이미지 삭제 - 작성자: 진원
 
     _isLoggedIn = false;
     _accessToken = null;
@@ -124,6 +144,8 @@ class AuthProvider with ChangeNotifier {
     _userId = null;
     _userName = null;
     _role = null;
+    _nickname = null;       // 2025/12/23 - 닉네임 초기화 - 작성자: 진원
+    _avatarImage = null;    // 2025/12/23 - 아바타 이미지 초기화 - 작성자: 진원
 
     notifyListeners();
   }
@@ -144,6 +166,8 @@ class AuthProvider with ChangeNotifier {
     _userId = await _storage.read(key: 'userId');
     _userName = await _storage.read(key: 'userName');
     _role = await _storage.read(key: 'role');
+    _nickname = await _storage.read(key: 'nickname');           // 2025/12/23 - 닉네임 로드 - 작성자: 진원
+    _avatarImage = await _storage.read(key: 'avatarImage');     // 2025/12/23 - 아바타 이미지 로드 - 작성자: 진원
 
     _isLoggedIn = true;
     notifyListeners();
@@ -167,7 +191,28 @@ class AuthProvider with ChangeNotifier {
     await _storage.write(key: 'userName', value: _userName ?? '');
     await _storage.write(key: 'role', value: _role ?? 'USER');
 
+    // 2025/12/23 - 프로필 정보도 저장 - 작성자: 진원
+    if (_nickname != null) {
+      await _storage.write(key: 'nickname', value: _nickname);
+    }
+    if (_avatarImage != null) {
+      await _storage.write(key: 'avatarImage', value: _avatarImage);
+    }
+
     _isLoggedIn = true;
+    notifyListeners();
+  }
+
+  // 2025/12/23 - 프로필 업데이트 메서드 추가 - 작성자: 진원
+  Future<void> updateProfile({String? nickname, String? avatarImage}) async {
+    if (nickname != null) {
+      _nickname = nickname;
+      await _storage.write(key: 'nickname', value: nickname);
+    }
+    if (avatarImage != null) {
+      _avatarImage = avatarImage;
+      await _storage.write(key: 'avatarImage', value: avatarImage);
+    }
     notifyListeners();
   }
 

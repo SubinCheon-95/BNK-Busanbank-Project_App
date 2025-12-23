@@ -1,4 +1,5 @@
 // 2025/12/18 - 마이페이지 메인 화면 - 작성자: 진원
+// 2025/12/23 - 프로필 수정 기능 추가 - 작성자: 진원
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -7,6 +8,7 @@ import '../../services/point_service.dart';
 import '../../models/user_profile.dart';
 import '../../models/point.dart';
 import 'profile_screen.dart';
+import 'profile_edit_screen.dart';
 import 'coupon_list_screen.dart';
 import 'my_products_screen.dart';
 import 'settings_screen.dart';
@@ -95,19 +97,66 @@ class _MyPageScreenState extends State<MyPageScreen> {
   }
 
   Widget _buildProfileSection() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final nickname = authProvider.nickname;
+    final avatarImage = authProvider.avatarImage;
+
     return Container(
       padding: const EdgeInsets.all(20),
       color: const Color(0xFF2196F3),
       child: Column(
         children: [
-          const CircleAvatar(
-            radius: 40,
-            backgroundColor: Colors.white,
-            child: Icon(Icons.person, size: 50, color: Color(0xFF2196F3)),
+          // 아바타 이미지 (프로필 수정 버튼 포함)
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.white,
+                backgroundImage: avatarImage != null
+                    ? NetworkImage(avatarImage)
+                    : null,
+                child: avatarImage == null
+                    ? const Icon(Icons.person, size: 50, color: Color(0xFF2196F3))
+                    : null,
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: () async {
+                    // 프로필 수정 화면으로 이동
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileEditScreen(),
+                      ),
+                    );
+                    // 프로필이 업데이트되면 데이터 새로고침
+                    if (result == true) {
+                      _loadUserData();
+                    }
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFF2196F3), width: 2),
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    child: const Icon(
+                      Icons.edit,
+                      size: 16,
+                      color: Color(0xFF2196F3),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
+          // 닉네임 또는 사용자 ID 표시
           Text(
-            _userProfile?.userId ?? '',
+            nickname ?? _userProfile?.userId ?? '',
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
