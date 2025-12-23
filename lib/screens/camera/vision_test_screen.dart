@@ -12,7 +12,7 @@ import 'package:tkbank/services/camera_point_service.dart';
 import '../../providers/auth_provider.dart';
 
 class VisionTestScreen extends StatefulWidget { //카메라, 갤러리 이미지를 이용해 일치시 포인트 획득 - 작성자: 윤종인
-  final String baseUrl = 'http://192.168.0.212:8080/busanbank/api';
+  final String baseUrl = 'http://10.0.2.2:8080/busanbank/api';
   const VisionTestScreen({super.key});
 
   @override

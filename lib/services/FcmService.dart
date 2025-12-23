@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:tkbank/screens/btc/Bitcoin_prediction_screen.dart';
 import '../firebase_options.dart';
 import '../main.dart';
 import '../navigator_key.dart';
@@ -14,7 +15,7 @@ import '../screens/product/product_main_screen.dart';
 import 'fcm_background_handler.dart';
 
 class FcmService { // 푸시 알림 서비스
-  static const String baseUrl = 'http://192.168.0.212:8080/busanbank/api';
+  static const String baseUrl = 'http://10.0.2.2:8080/busanbank/api';
 
   static final FlutterLocalNotificationsPlugin _local =
   FlutterLocalNotificationsPlugin();
@@ -126,6 +127,12 @@ class FcmService { // 푸시 알림 서비스
         navigatorKey.currentState?.push(
           MaterialPageRoute(builder: (_) => const VisionTestScreen()),
         ); // 오늘의 미션 도착 - 주변 은행 로고를 촬영하고 포인트를 받아보세요
+        break;
+
+      case '/btc':
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const BitcoinPredictionScreen()),
+        ); // 오늘의 비트코인 방향 예측 - 어제보다 올랐을까요, 내렸을까요? 지금 선택해보세요
         break;
 
       default:
