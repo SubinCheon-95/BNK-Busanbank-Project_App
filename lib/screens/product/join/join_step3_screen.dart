@@ -414,6 +414,8 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
               children: [
                 const Text('포인트 보너스', style: TextStyle(color: Colors.orange)),
                 Text(
+
+
                   '+${pointBonus.toStringAsFixed(2)}%',
                   style: const TextStyle(color: Colors.orange),
                 ),
