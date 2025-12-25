@@ -238,8 +238,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // 메인 마스코트 (중앙 상단)
   Widget _buildMascot() {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Positioned(
-      top: 280,
+      top: screenHeight * 0.28,
       left: 0,
       right: 0,
       child: Center(
@@ -260,8 +262,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // 💬 1단계: 인사 (도트 대화창)
   Widget _buildGreeting() {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Positioned(
-      top: 80,
+      top: screenHeight * 0.10,  // 👈 화면 높이의 10% 위치
       left: 24,
       right: 24,
       child: GestureDetector(
@@ -270,13 +274,11 @@ class _HomeScreenState extends State<HomeScreen> {
           height: 180,
           child: Stack(
             children: [
-              // 🎨 도트 대화창 배경
               Image.asset(
                 'assets/images/dialog_box.png',
                 fit: BoxFit.contain,
                 width: double.infinity,
               ),
-              // 📝 텍스트 (이미지 위에)
               Positioned.fill(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
@@ -312,10 +314,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 💬 2단계: 질문 (도트 대화창)
+  // 💬 2단계: 질문 (화면 비율로!)
   Widget _buildQuestion() {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Positioned(
-      top: 80,
+      top: screenHeight * 0.1,  // 👈 화면 높이의 10% 위치
       left: 24,
       right: 24,
       child: GestureDetector(
@@ -326,13 +330,11 @@ class _HomeScreenState extends State<HomeScreen> {
           height: 180,
           child: Stack(
             children: [
-              // 🎨 도트 대화창 배경
               Image.asset(
                 'assets/images/dialog_box.png',
                 fit: BoxFit.contain,
                 width: double.infinity,
               ),
-              // 📝 텍스트 (이미지 위에)
               Positioned.fill(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
@@ -368,23 +370,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 🔘 플로팅 메뉴 버튼 (새로 추가!)
+  // 🔘 플로팅 메뉴 버튼 (화면 비율 유지 + SafeArea 고려!)
   Widget _buildFloatingMenuButton() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Positioned(
-      right: 16,  // 오른쪽 여백
-      top: MediaQuery.of(context).size.height * 0.75,
+      right: 16,
+      bottom: 90 + bottomPadding,  // 👈 하단 네비게이션 바(75) + 여백(15) + 안전영역
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         child: FloatingActionButton(
           onPressed: () {
             setState(() => _showMenu = !_showMenu);
           },
-          backgroundColor: const Color(0xFF6A1B9A),  // 보라색
+          backgroundColor: const Color(0xFF6A1B9A),
           elevation: 6,
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: Icon(
-              _showMenu ? Icons.close : Icons.menu,  // 햄버거 아이콘
+              _showMenu ? Icons.close : Icons.menu,
               key: ValueKey(_showMenu),
               color: Colors.white,
               size: 28,
