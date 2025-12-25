@@ -23,6 +23,9 @@ import 'package:tkbank/models/product_join_request.dart';
 import 'screens/my_page/my_page_screen.dart';
 import 'screens/product/interest_calculator_screen.dart';  // ✅ 추가!
 import 'screens/splash_screen.dart'; // 25.12.22 천수빈
+import 'package:camera/camera.dart'; // 25.12.23 천수빈
+import 'package:permission_handler/permission_handler.dart'; // 25.12.23 천수빈
+import 'package:model_viewer_plus/model_viewer_plus.dart'; // 25.12.23 천수빈
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -93,10 +96,69 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+// 2025.12.23 _ Home Screen 수정 - 수정자: 천수빈
+class HomeScreen extends StatefulWidget {
   final String baseUrl;
 
   const HomeScreen({super.key, required this.baseUrl});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _step = 0; // 0: 인사, 1: 질문, 2: 메뉴
+  CameraController? _cameraController;
+  bool _isCameraInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCamera();
+
+    // 2초 후 자동으로 다음 단계
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _step = 1);
+    });
+  }
+
+  Future<void> _initializeCamera() async {
+    try {
+      // 카메라 권한 요청
+      final status = await Permission.camera.request();
+      if (!status.isGranted) {
+        if (mounted) {
+          setState(() => _isCameraInitialized = false);
+        }
+        return;
+      }
+
+      // 사용 가능한 카메라 가져오기
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) return;
+
+      // 후면 카메라 사용
+      _cameraController = CameraController(
+        cameras.first,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+
+      await _cameraController?.initialize();
+
+      if (mounted) {
+        setState(() => _isCameraInitialized = true);
+      }
+    } catch (e) {
+      print('카메라 초기화 실패: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _cameraController?.dispose();
+    super.dispose();
+  }
 
   Future<void> _logout(BuildContext context) async {
     await TokenStorageService().deleteToken();
@@ -117,389 +179,392 @@ class HomeScreen extends StatelessWidget {
     final isLoggedIn = authProvider.isLoggedIn;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('딸깍은행'),
-        actions: [
-          if (isLoggedIn)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                  const SizedBox(width: 4),
-                  const Text('로그인됨', style: TextStyle(fontSize: 14)),
-                ],
-              ),
-            ),
+      body: Stack(
+        children: [
+          // 📹 카메라 배경
+          _buildCameraBackground(),
+
+          // 🎭 마스코트 (항상 표시)
+          _buildMascot(),
+
+          // 💬 단계별 UI
+          if (_step == 0) _buildGreeting(),
+          if (_step == 1) _buildQuestion(),
+          if (_step == 2) _buildMenu(isLoggedIn),
         ],
       ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.account_balance,
-                  size: 100,
-                  color: Color(0xFF6A1B9A),
+    );
+  }
+
+  // 📹 카메라 배경
+  Widget _buildCameraBackground() {
+    if (_isCameraInitialized && _cameraController != null) {
+      return SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: _cameraController!.value.previewSize!.height,
+            height: _cameraController!.value.previewSize!.width,
+            child: CameraPreview(_cameraController!),
+          ),
+        ),
+      );
+    }
+
+    // 카메라 로딩 중이거나 실패 시 회색 배경
+    return Container(
+      color: Colors.grey[300],
+      child: const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF6A1B9A),
+        ),
+      ),
+    );
+  }
+
+  // 메인 마스코트 (중앙 상단)
+  Widget _buildMascot() {
+    return Positioned(
+      top: 150,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          width: 400,
+          height: 600,
+          child: ModelViewer(
+            src: 'assets/models/penguinman.glb',
+            alt: "딸깍은행 마스코트",
+            autoRotate: false,
+            cameraControls: false,
+            backgroundColor: Colors.transparent,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 💬 1단계: 인사
+  Widget _buildGreeting() {
+    return Positioned(
+      bottom: 100,
+      left: 24,
+      right: 24,
+      child: AnimatedOpacity(
+        opacity: 1.0,
+        duration: const Duration(milliseconds: 500),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF6A1B9A), width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: const Text(
+            '안녕하세요. 김딸깍님!',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 💬 2단계: 질문
+  Widget _buildQuestion() {
+    return Positioned(
+      bottom: 100,
+      left: 24,
+      right: 24,
+      child: GestureDetector(
+        onTap: () => setState(() => _step = 2),
+        child: AnimatedOpacity(
+          opacity: 1.0,
+          duration: const Duration(milliseconds: 500),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF6A1B9A), width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
                 ),
-                const SizedBox(height: 24),
+              ],
+            ),
+            child: Column(
+              children: [
                 const Text(
-                  '딸깍은행에 오신 것을 환영합니다',
+                  '무엇을 도와드릴까요?',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 8),
+                Text(
+                  '탭하여 계속',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
+  // 📋 3단계: 메뉴 버튼들
+  Widget _buildMenu(bool isLoggedIn) {
+    return Positioned(
+      bottom: 20,
+      left: 24,
+      right: 24,
+      child: Container(
+        constraints: const BoxConstraints(
+          maxHeight: 500,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF6A1B9A), width: 3),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: const Text(
+                '찾는게 있으시면\n선택해 주세요!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _menuButton('금융상품 보기', Icons.shopping_bag, () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ProductMainScreen(baseUrl: baseUrl),
+                          builder: (_) => ProductMainScreen(baseUrl: widget.baseUrl),
                         ),
                       );
-                    },
-                    icon: const Icon(Icons.shopping_bag),
-                    label: const Text(
-                      '상품 둘러보기',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6A1B9A),
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // ✅ 금리계산기 버튼 추가!
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
+                    }),
+                    _menuButton('금리 계산기', Icons.calculate, () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => const InterestCalculatorScreen(),
                         ),
                       );
-                    },
-                    icon: const Icon(Icons.calculate),
-                    label: const Text(
-                      '금리 계산기',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00BCD4),
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
+                    }),
+                    _menuButton('금융게임 바로가기', Icons.games, () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => NewsAnalysisMainScreen(baseUrl: baseUrl),
+                          builder: (_) => GameMenuScreen(baseUrl: widget.baseUrl),
                         ),
                       );
-                    },
-                    icon: const Icon(Icons.auto_awesome),
-                    label: const Text(
-                      'AI 뉴스 분석 & 상품 추천',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2196F3),
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
+                    }),
+                    _menuButton('AI 뉴스 분석', Icons.auto_awesome, () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => PointHistoryScreen(baseUrl: baseUrl),
+                          builder: (_) => NewsAnalysisMainScreen(baseUrl: widget.baseUrl),
                         ),
                       );
-                    },
-                    icon: const Icon(Icons.stars),
-                    label: const Text(
-                      '포인트 이력',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF9800),
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
+                    }),
+                    _menuButton('포인트 이력', Icons.stars, () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => GameMenuScreen(baseUrl: baseUrl),
+                          builder: (_) => PointHistoryScreen(baseUrl: widget.baseUrl),
                         ),
                       );
-                    },
-                    icon: const Icon(Icons.games),
-                    label: const Text(
-                      '금융게임',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF9C27B0),
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
+                    }),
+                    _menuButton('고객센터', Icons.support_agent, () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => const CustomerSupportScreen(),
                         ),
                       );
-                    },
-                    icon: const Icon(Icons.support_agent),
-                    label: const Text(
-                      '고객센터',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF9C27B0),
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // 2025/12/19 - 챗봇 연동 테스트 페이지 이동 추가 - 작성자: 오서정
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
+                    }),
+                    _menuButton('챗봇', Icons.smart_toy_outlined, () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => const ChatbotScreen(),
                         ),
                       );
-                    },
-                    icon: const Icon(Icons.smart_toy_outlined),
-                    label: const Text(
-                      '챗봇 테스트(임시)',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF9C27B0),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 4,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // 2025/12/20 - 인증센터(로그인 간편비밀번호, 생체인증 등록하는 페이지) 페이지 이동 추가 - 작성자: 오서정
-                if (isLoggedIn) ...[
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
+                    }),
+                    if (isLoggedIn) ...[
+                      _menuButton('인증센터', Icons.lock_outline, () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const SecurityCenterScreen(),
                           ),
                         );
-                      },
-                      icon: const Icon(Icons.lock_outline),
-                      label: const Text(
-                        '인증센터',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF455A64), // 보안 느낌
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 4,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-
-                if (isLoggedIn)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
+                      }),
+                      _menuButton('마이페이지', Icons.person, () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const MyPageScreen(),
                           ),
                         );
-                      },
-                      icon: const Icon(Icons.person),
-                      label: const Text(
-                        '마이페이지',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2196F3),
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-
-                if (isLoggedIn) const SizedBox(height: 16),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
+                      }),
+                    ],
+                    _menuButton('OCR 테스트', Icons.camera_alt, () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => const VisionTestScreen(),
                         ),
                       );
-                    },
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text(
-                      'OCR 테스트 (임시)',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black87,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
+                    }),
+                    const SizedBox(height: 8),
+                    if (!isLoggedIn)
+                      _loginButton()
+                    else
+                      _logoutButton(),
+                  ],
                 ),
-                const SizedBox(height: 16),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                if (!isLoggedIn) ...[
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const LoginScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.login),
-                      label: const Text(
-                        '로그인',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                          color: Color(0xFF6A1B9A),
-                          width: 2,
-                        ),
-                        foregroundColor: const Color(0xFF6A1B9A),
-                      ),
-                    ),
-                  ),
-                ] else ...[
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (dialogContext) => AlertDialog(
-                            title: const Text('로그아웃'),
-                            content: const Text('로그아웃하시겠습니까?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(dialogContext, false),
-                                child: const Text('취소'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(dialogContext, true),
-                                child: const Text('로그아웃'),
-                              ),
-                            ],
-                          ),
-                        );
+  Widget _menuButton(String label, IconData icon, VoidCallback onPressed) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            side: const BorderSide(color: Colors.black, width: 2),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.black),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                        if (confirm == true && context.mounted) {
-                          await _logout(context);
-                        }
-                      },
-                      icon: const Icon(Icons.logout),
-                      label: const Text(
-                        '로그아웃',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                          color: Colors.red,
-                          width: 2,
-                        ),
-                        foregroundColor: Colors.red,
-                      ),
-                    ),
-                  ),
-                ],
+  Widget _loginButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const LoginScreen(),
+            ),
+          );
+        },
+        icon: const Icon(Icons.login),
+        label: const Text('로그인'),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          backgroundColor: const Color(0xFF6A1B9A),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _logoutButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () async {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('로그아웃'),
+              content: const Text('로그아웃하시겠습니까?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text('로그아웃'),
+                ),
               ],
             ),
+          );
+
+          if (confirm == true && context.mounted) {
+            await _logout(context);
+          }
+        },
+        icon: const Icon(Icons.logout),
+        label: const Text('로그아웃'),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          side: const BorderSide(color: Colors.red, width: 2),
+          foregroundColor: Colors.red,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
           ),
         ),
       ),
