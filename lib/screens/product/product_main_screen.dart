@@ -25,126 +25,122 @@ class _ProductMainScreenState extends State<ProductMainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('상품 둘러보기'),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ✅ 개선된 Hero Section (오버플로우 해결!)
-            SliverToBoxAdapter(
-              child: Container(
-                height: 280,  // ✅ 높이 조정
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    // 배경 패턴
-                    Positioned.fill(
-                      child: Opacity(
-                        opacity: 0.1,
-                        child: CustomPaint(
-                          painter: _CirclePatternPainter(),
-                        ),
+      backgroundColor: Colors.white,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ✅ 풀스크린 Hero Section
+          SliverToBoxAdapter(
+            child: Stack(
+              children: [
+                // 배경 이미지 (풀스크린)
+                Container(
+                  width: double.infinity,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/finance_main.png'),
+                      fit: BoxFit.cover,
+                      colorFilter: ColorFilter.mode(
+                        Colors.black.withOpacity(0.4),
+                        BlendMode.darken,
                       ),
                     ),
-
-                    // 콘텐츠
-                    Padding(
+                  ),
+                  child: SafeArea(  // 👈 상단 노치 영역 확보
+                    child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // 아이콘
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.account_balance,
-                              size: 48,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
+                          const Spacer(),
 
-                          // 타이틀
+                          // 타이틀 (중앙)
                           const Text(
                             '당신의 재무 목표를\n실현하세요',
                             style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 46,
+                              fontWeight: FontWeight.w700,
                               color: Colors.white,
                               height: 1.3,
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
 
-                          // 서브타이틀
+                          // 서브타이틀 (중앙)
                           const Text(
                             '높은 금리와 다양한 혜택으로\n더 나은 미래를 준비하세요',
                             style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white70,
-                              height: 1.5,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                              height: 1.3,
                             ),
                             textAlign: TextAlign.center,
                           ),
+
+                          const Spacer(),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
 
-            // ✅ 카테고리별 상품
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF667eea),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          '카테고리별 상품',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                // 👈 뒤로가기 버튼 (왼쪽 상단)
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    const SizedBox(height: 16),
-                    _buildCategoryGrid(),
-                  ],
+                  ),
                 ),
+              ],
+            ),
+          ),
+
+          // ✅ 카테고리별 상품
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6A1B9A),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      const Text(
+                        '카테고리별 상품',
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCategoryGrid(),
+                ],
               ),
             ),
+          ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 50)),
-          ],
-        ),
+          const SliverToBoxAdapter(child: SizedBox(height: 50)),
+        ],
       ),
     );
   }
@@ -198,9 +194,10 @@ class _ProductMainScreenState extends State<ProductMainScreen> {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.5,
+        childAspectRatio: 1.3,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -249,13 +246,14 @@ class _ProductMainScreenState extends State<ProductMainScreen> {
     required VoidCallback onTap,
   }) {
     return Card(
+      color: Colors.white,
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           child: Column(
@@ -279,8 +277,8 @@ class _ProductMainScreenState extends State<ProductMainScreen> {
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,

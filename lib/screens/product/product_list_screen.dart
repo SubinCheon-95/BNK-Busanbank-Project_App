@@ -18,29 +18,36 @@ class ProductListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(title),
+        backgroundColor: const Color(0xFF6A1B9A),
+        foregroundColor: Colors.white,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: products.length,
-        itemBuilder: (ctx, idx) {
-          final product = products[idx];
-          return ProductCard(
-            product: product,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProductDetailScreen(
-                    baseUrl: baseUrl ?? '',
-                    product: product,
+      body: Container( // 👈 Container로 감싸기!
+        color: Colors.white,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: products.length,
+          itemBuilder: (ctx, idx) {
+            final product = products[idx];
+            return ProductCard(
+              product: product,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ProductDetailScreen(
+                          baseUrl: baseUrl ?? '',
+                          product: product,
+                        ),
                   ),
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
