@@ -126,6 +126,7 @@ class NewsResultScreen extends StatelessWidget {
               ),
             ),
             child: Stack(
+              alignment: Alignment.center,  // ✅ Stack 중앙 정렬!
               children: [
                 // ✅ 둥둥 떠다니는 단어들!
                 if (result.sentiment.label.contains('긍정'))
@@ -142,79 +143,82 @@ class NewsResultScreen extends StatelessWidget {
                   ),
 
                 // 기존 Column
-                Column(
-                  children: [
-                    // 초대형 아이콘
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _getSentimentIcon(),
-                        size: 120,  // 🔥 크게!
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    // 초대형 텍스트
-                    Text(
-                      result.sentiment.label,
-                      style: const TextStyle(
-                        fontSize: 56,  // 🔥 크게!
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black26,
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // 신뢰도
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Text(
-                        '감정 강도: ${_getSentimentStrength().toStringAsFixed(1)}%',
-                        style: const TextStyle(
-                          fontSize: 28,  // 🔥 크게!
-                          fontWeight: FontWeight.bold,
+                Center(  // ✅ 중앙 정렬!
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [  // ✅ 최소 크기
+                      // 초대형 아이콘
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          _getSentimentIcon(),
+                          size: 120,  // 🔥 크게!
                           color: Colors.white,
                         ),
                       ),
-                    ),
-                    if (result.sentiment.explain != null) ...[
-                      const SizedBox(height: 24),
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          _getStrengthDescription(_getSentimentStrength()),  // ✅ 함수 호출!
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                            height: 1.6,
-                          ),
-                          textAlign: TextAlign.center,
+                      const SizedBox(height: 32),
+                      // 초대형 텍스트
+                      Text(
+                        result.sentiment.label,
+                        style: const TextStyle(
+                          fontSize: 56,  // 🔥 크게!
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black26,
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      // 신뢰도
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Text(
+                          '감정 강도: ${_getSentimentStrength().toStringAsFixed(1)}%',
+                          style: const TextStyle(
+                            fontSize: 28,  // 🔥 크게!
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      if (result.sentiment.explain != null) ...[
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            _getStrengthDescription(_getSentimentStrength()),  // ✅ 함수 호출!
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              height: 1.6,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
+                  ),
+                ),  // ✅ Center 끝
               ],  // ✅ Stack children 끝!
             ),
           ),
