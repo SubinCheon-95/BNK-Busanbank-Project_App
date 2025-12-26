@@ -35,15 +35,24 @@ class NewsAnalysisResult {
   }
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ✅ SentimentResult 클래스 (매칭된 단어 추가!)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class SentimentResult {
   final String label;  // 긍정, 부정, 중립
   final double score;
   final String? explain;
 
+  // ✅ 매칭된 단어 리스트 추가!
+  final List<String> matchedPositiveWords;
+  final List<String> matchedNegativeWords;
+
   SentimentResult({
     required this.label,
     required this.score,
     this.explain,
+    this.matchedPositiveWords = const [],
+    this.matchedNegativeWords = const [],
   });
 
   factory SentimentResult.fromJson(Map<String, dynamic> json) {
@@ -51,6 +60,13 @@ class SentimentResult {
       label: json['label'] ?? '중립',
       score: (json['score'] ?? 0.0).toDouble(),
       explain: json['explain'],
+      // ✅ 매칭된 단어 파싱
+      matchedPositiveWords: json['matchedPositiveWords'] != null
+          ? List<String>.from(json['matchedPositiveWords'])
+          : [],
+      matchedNegativeWords: json['matchedNegativeWords'] != null
+          ? List<String>.from(json['matchedNegativeWords'])
+          : [],
     );
   }
 }
