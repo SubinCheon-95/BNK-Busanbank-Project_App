@@ -295,7 +295,7 @@ class _EsgFishingScreenState extends State<EsgFishingScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🌊 ESG 바다 청소 낚시'),
+        title: const Text('ESG 바다 청소 낚시'),
         backgroundColor: Colors.blue.shade700,
       ),
       body: Container(
@@ -423,7 +423,7 @@ class _EsgFishingScreenState extends State<EsgFishingScreen>
       animation: _hookAnimation,
       builder: (context, child) {
         return Positioned(
-          top: 100 + (_hookAnimation.value * 300),
+          top: 80 + (_hookAnimation.value * 300),
           left: MediaQuery.of(context).size.width / 2 - 50,
           child: Column(
             children: [
@@ -492,7 +492,7 @@ class _EsgFishingScreenState extends State<EsgFishingScreen>
     }
 
     return Positioned(
-      bottom: 120,
+      bottom: 80,
       left: 0,
       right: 0,
       child: Center(
@@ -535,6 +535,7 @@ class _EsgFishingScreenState extends State<EsgFishingScreen>
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   '💡 게임 방법',
@@ -552,7 +553,7 @@ class _EsgFishingScreenState extends State<EsgFishingScreen>
                     fontSize: 14,
                     color: Colors.grey.shade700,
                   ),
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.start,
                 ),
               ],
             ),
