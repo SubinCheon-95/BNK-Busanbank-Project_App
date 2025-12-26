@@ -94,6 +94,10 @@ dependencies:
   # 2025/12/23 _ 메인 화면 모델 구현 기능 추가 - 작성자: 천수빈
   model_viewer_plus: ^1.7.2
 
+  # 2025/12/16 - 주소 검색 의존성 추가 - 작성자: 오서정
+  kpostal: ^1.1.0
+  flutter_inappwebview: ^6.1.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

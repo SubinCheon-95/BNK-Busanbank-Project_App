@@ -3,6 +3,7 @@
   내용 : users 모델 추가
   작성자 : 오서정
   수정 : 2025/12/23 - 닉네임/아바타 필드 추가 - 진원
+  수정 : 2025/12/26 - 주소 필드 추가- 작성자: 오서정
 */
 class Users{
 
@@ -15,6 +16,9 @@ class Users{
   String role;
   String? nickname;       // 닉네임 (선택)
   String? avatarImage;    // 아바타 이미지 경로 (선택)
+  String? zip;
+  String? addr1;
+  String? addr2;
 
   Users({
     required this.userNo,
@@ -26,6 +30,9 @@ class Users{
     this.role = 'USER',
     this.nickname,
     this.avatarImage,
+    this.zip,
+    this.addr1,
+    this.addr2,
   });
 
   Map<String, dynamic> toJson(){
@@ -39,6 +46,9 @@ class Users{
       "role": role,
       "nickname": nickname,
       "avatarImage": avatarImage,
+      "zip": zip,
+      "addr1": addr1,
+      "addr2": addr2,
     };
   }
 
@@ -54,6 +64,9 @@ class Users{
       role: json['role'] ?? 'USER',
       nickname: json['nickname'],
       avatarImage: json['avatarImage'],
+      zip: json['zip'],
+      addr1: json['addr1'],
+      addr2: json['addr2'],
     );
   }
 

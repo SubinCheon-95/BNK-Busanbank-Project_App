@@ -2,6 +2,7 @@
   날짜 : 2025/12/17
   내용 : 회원가입 개인정보 구현
   작성자 : 오서정
+  수정: 2025/12/26 - 주소 추가 - 오서정
 */
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,7 @@ import 'package:tkbank/services/member_service.dart';
 import 'package:tkbank/utils/formatters/phone_number_formatter.dart';
 import 'package:tkbank/utils/validators.dart';
 import 'package:tkbank/widgets/register_step_indicator.dart';
+import 'package:kpostal/kpostal.dart';
 
 
 const DEV_PHONE = '010-1111-1111';
@@ -54,6 +56,17 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
   final rrnBackFocus = FocusNode();
   final emailFocus = FocusNode();
   final phoneFocus = FocusNode();
+
+
+  // ======================
+// Address Controller
+// ======================
+  final zipCtrl = TextEditingController();
+  final addr1Ctrl = TextEditingController();
+  final addr2Ctrl = TextEditingController();
+
+  final addr2Focus = FocusNode();
+
 
   // ======================
   // Error State
@@ -142,6 +155,13 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
     rrnBackFocus.dispose();
     emailFocus.dispose();
     phoneFocus.dispose();
+
+
+    zipCtrl.dispose();
+    addr1Ctrl.dispose();
+    addr2Ctrl.dispose();
+
+    addr2Focus.dispose();
 
     super.dispose();
   }
@@ -256,8 +276,9 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
 
               provider.setUserInfo(
                 rrn: rrnFrontCtrl.text + rrnBackCtrl.text,
-                addr1: '',
-                addr2: '',
+                zip: zipCtrl.text.trim().isEmpty ? null : zipCtrl.text.trim(),
+                addr1: addr1Ctrl.text.trim().isEmpty ? null : addr1Ctrl.text.trim(),
+                addr2: addr2Ctrl.text.trim().isEmpty ? null : addr2Ctrl.text.trim(),
               );
 
               provider.email = emailCtrl.text.trim();
@@ -543,6 +564,38 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
                   ),
                 _errorText(phoneError),
 
+                _label('주소 (선택)'),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _input(
+                        zipCtrl,
+                        enabled: false,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 48,
+                      child: OutlinedButton(
+                        onPressed: _searchAddress,
+                        child: const Text('주소 검색'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _input(
+                  addr1Ctrl,
+                  enabled: false,
+                ),
+                const SizedBox(height: 8),
+                _input(
+                  addr2Ctrl,
+                  focus: addr2Focus,
+                ),
+
+
                 const SizedBox(height: 40),
                 ElevatedButton(
                   onPressed: () {
@@ -632,4 +685,31 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
       ),
     );
   }
+  bool _isSearchingAddress = false;
+  Future<void> _searchAddress() async {
+    if (_isSearchingAddress) return;
+    _isSearchingAddress = true;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KpostalView(
+          callback: (Kpostal result) {
+            setState(() {
+              zipCtrl.text = result.postCode;
+              addr1Ctrl.text = result.address;
+            });
+
+            // ⭐ 주소 선택 직후 상세주소로 포커스 이동
+            Future.delayed(const Duration(milliseconds: 100), () {
+              FocusScope.of(context).requestFocus(addr2Focus);
+            });
+          },
+        ),
+      ),
+    );
+
+    _isSearchingAddress = false;
+  }
+
 }

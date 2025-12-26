@@ -1,3 +1,9 @@
+/*
+  날짜: 2025/12/26
+  내용: 회원가입 주소 입력 추가
+  작성자: 오서정
+  수정: 2025/12/26 - 주소 추가 - 오서정
+ */
 import 'package:flutter/material.dart';
 import 'package:tkbank/services/member_service.dart';
 
@@ -10,6 +16,7 @@ class RegisterProvider with ChangeNotifier {
 
   // STEP 3
   String? rrn;
+  String? zip;
   String? addr1;
   String? addr2;
 
@@ -54,10 +61,12 @@ class RegisterProvider with ChangeNotifier {
 
   void setUserInfo({
     required String rrn,
-    required String addr1,
-    required String addr2,
+    String? zip,
+    String? addr1,
+    String? addr2,
   }) {
     this.rrn = rrn;
+    this.zip = zip;
     this.addr1 = addr1;
     this.addr2 = addr2;
     notifyListeners();
@@ -84,6 +93,7 @@ class RegisterProvider with ChangeNotifier {
       "userName": userName,
       "hp": hp,
       "rrn": rrn,
+      "zip": zip,
       "addr1": addr1,
       "addr2": addr2,
       "accountPassword": accountPassword,
@@ -95,6 +105,7 @@ class RegisterProvider with ChangeNotifier {
     hp = null;
     userName = null;
     rrn = null;
+    zip = null;
     addr1 = null;
     addr2 = null;
     userId = null;
