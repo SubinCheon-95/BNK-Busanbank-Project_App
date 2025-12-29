@@ -166,7 +166,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
           const SizedBox(height: 16),
           // 닉네임 또는 사용자 ID 표시
           Text(
-            nickname ?? _userProfile?.userId ?? '',
+            nickname ?? _userProfile?.nickname ?? _userProfile?.userId ?? '',
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,

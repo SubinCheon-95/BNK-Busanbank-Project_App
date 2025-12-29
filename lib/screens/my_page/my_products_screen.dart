@@ -51,11 +51,16 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   }
 
   Future<void> _terminateProduct(UserProduct product) async {
+    print('[DEBUG] 해지 버튼 클릭됨 - 상품명: ${product.productName}');
+
     // Get userId before async operation to avoid BuildContext across async gaps
     final authProvider = context.read<AuthProvider>();
     final userId = authProvider.userId;
 
+    print('[DEBUG] userId: $userId');
+
     if (userId == null) {
+      print('[ERROR] userId가 null입니다');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('로그인이 필요합니다')),
@@ -64,6 +69,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
       return;
     }
 
+    print('[DEBUG] 해지 확인 다이얼로그 표시');
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -71,20 +77,28 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         content: Text('${product.productName}을(를) 해지하시겠습니까?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () {
+              print('[DEBUG] 취소 버튼 클릭');
+              Navigator.pop(context, false);
+            },
             child: const Text('취소'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () {
+              print('[DEBUG] 해지 버튼 클릭');
+              Navigator.pop(context, true);
+            },
             child: const Text('해지'),
           ),
         ],
       ),
     );
 
+    print('[DEBUG] 다이얼로그 결과: $confirmed');
     if (confirmed != true) return;
 
     try {
+      print('[DEBUG] 해지 요청 시작 - userId: $userId, productNo: ${product.productNo}, startDate: ${product.startDate}');
 
       await _productService.terminateProduct(
         userId: userId,
@@ -92,6 +106,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         startDate: product.startDate,
       );
 
+      print('[DEBUG] 해지 성공');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('상품이 해지되었습니다')),
@@ -99,6 +114,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         _loadProducts(); // 목록 새로고침
       }
     } catch (e) {
+      print('[ERROR] 해지 실패: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('상품 해지 실패: $e')),
@@ -136,6 +152,8 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   }
 
   Widget _buildProductCard(UserProduct product, NumberFormat formatter) {
+    print('[DEBUG] 상품 카드 빌드 - 상품명: ${product.productName}, isActive: ${product.isActive}');
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -179,20 +197,45 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               _buildInfoRow('계약기간', '${product.contractTerm}개월'),
             if (product.accountNo != null)
               _buildInfoRow('계좌번호', product.accountNo!),
-            if (product.isActive) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => _terminateProduct(product),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('상품 해지'),
-                ),
-              ),
-            ],
+            // 해지 버튼 영역
+            Builder(
+              builder: (context) {
+                if (product.isActive) {
+                  print('[DEBUG] 해지 버튼 렌더링 - 상품명: ${product.productName}');
+                  return Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      GestureDetector(
+                        onTap: () {
+                          print('[DEBUG] GestureDetector 터치됨!');
+                          _terminateProduct(product);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            '상품 해지',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  print('[DEBUG] 해지 버튼 미표시 - 상품명: ${product.productName}, isActive: false');
+                  return const SizedBox.shrink();
+                }
+              },
+            ),
           ],
         ),
       ),

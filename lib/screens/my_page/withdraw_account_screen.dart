@@ -43,7 +43,6 @@ class _WithdrawAccountScreenState extends State<WithdrawAccountScreen> {
         title: const Text('회원 탈퇴'),
         content: const Text(
           '정말로 탈퇴하시겠습니까?\n'
-          '탈퇴 후 7일 동안 재가입이 불가능합니다.',
         ),
         actions: [
           TextButton(

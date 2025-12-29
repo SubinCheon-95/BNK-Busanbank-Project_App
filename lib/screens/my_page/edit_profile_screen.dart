@@ -1,6 +1,8 @@
 // 2025/12/18 - 정보 수정 화면 - 작성자: 진원
+// 2025/12/29 - 다음 주소 검색 API 연동 - 작성자: 진원
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:kpostal/kpostal.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/member_service.dart';
 
@@ -67,6 +69,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _addr1Controller.dispose();
     _addr2Controller.dispose();
     super.dispose();
+  }
+
+  /// 다음 주소 검색 (2025/12/29 - 작성자: 진원)
+  Future<void> _searchAddress() async {
+    try {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => KpostalView(
+            useLocalServer: true,
+            localPort: 8080,
+            // 주소 선택 완료 콜백
+            callback: (Kpostal result) {
+              setState(() {
+                _zipController.text = result.postCode;
+                _addr1Controller.text = result.address;
+                // 상세주소 입력 필드로 포커스 이동
+                FocusScope.of(context).requestFocus(FocusNode());
+              });
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('주소 검색 실패: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _saveChanges() async {
@@ -171,14 +203,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _zipController,
-              decoration: const InputDecoration(
-                labelText: '우편번호',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.location_on),
-              ),
-              keyboardType: TextInputType.number,
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _zipController,
+                    decoration: const InputDecoration(
+                      labelText: '우편번호',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.location_on),
+                    ),
+                    keyboardType: TextInputType.number,
+                    readOnly: true,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 58,
+                  child: ElevatedButton(
+                    onPressed: _searchAddress,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2196F3),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    child: const Text('주소 검색'),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -188,6 +240,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.home),
               ),
+              readOnly: true,
             ),
             const SizedBox(height: 16),
             TextFormField(
