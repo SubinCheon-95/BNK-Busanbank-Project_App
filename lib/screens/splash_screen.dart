@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:tkbank/screens/main_screen.dart';
+import 'package:tkbank/main.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -26,7 +26,7 @@ class SplashScreen extends StatelessWidget {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const MainScreen(
+                    builder: (_) => const HomeScreen(
                       baseUrl: 'http://10.0.2.2:8080/busanbank/api',  // 👈 직접 입력!
                     ),
                   ),

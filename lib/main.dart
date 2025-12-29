@@ -25,7 +25,6 @@ import 'package:tkbank/screens/product/join/join_step2_screen.dart';
 import 'package:tkbank/models/product_join_request.dart';
 import 'screens/my_page/my_page_screen.dart';
 import 'screens/product/interest_calculator_screen.dart';  // ✅ 추가!
-import 'screens/splash_screen.dart'; // 25.12.22 천수빈
 import 'package:camera/camera.dart'; // 25.12.23 천수빈
 import 'package:permission_handler/permission_handler.dart'; // 25.12.23 천수빈
 import 'package:model_viewer_plus/model_viewer_plus.dart'; // 25.12.23 천수빈
@@ -115,13 +114,15 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+// _HomeScreenState 클래스 수정 (HomeScreen은 그대로)
 class _HomeScreenState extends State<HomeScreen> {
-  int _step = 0; // 0: 인사, 1: 질문, 2: 대화중, 3: 메뉴
+  static const double _messageInputHeight = 64.0;
+
+  int _step = 0;
   CameraController? _cameraController;
   bool _isCameraInitialized = false;
   final TextEditingController _messageController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  bool _showMenu = false; // 👈 메뉴 표시 여부
 
   @override
   void initState() {
@@ -161,8 +162,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _cameraController?.dispose();
-    _messageController.dispose(); // 👈 추가
-    _focusNode.dispose(); // 👈 추가
+    _messageController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -188,30 +189,19 @@ class _HomeScreenState extends State<HomeScreen> {
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
-          // 📹 카메라 배경
           _buildCameraBackground(),
-
-          // 🎭 마스코트 (항상 표시)
           _buildMascot(),
-
-          // 💬 단계별 대화창
           if (_step == 0) _buildGreeting(),
           if (_step == 1) _buildQuestion(),
 
-          // 📝 하단 입력창 (항상 표시)
+          // 하단 슬라이드 메뉴
+          _buildBottomMenuSection(isLoggedIn),
           _buildMessageInput(),
-
-          // 🔘 플로팅 메뉴 버튼 (오른쪽) - 새로 추가!
-          _buildFloatingMenuButton(),
-
-          // 📋 메뉴 (버튼 눌렀을 때만 표시)
-          if (_showMenu) _buildMenu(isLoggedIn),
         ],
       ),
     );
   }
 
-  // 📹 카메라 배경
   Widget _buildCameraBackground() {
     if (_isCameraInitialized && _cameraController != null) {
       return SizedBox.expand(
@@ -236,9 +226,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 메인 마스코트 (중앙 상단)
   Widget _buildMascot() {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     return Positioned(
       top: screenHeight * 0.28,
@@ -246,10 +238,10 @@ class _HomeScreenState extends State<HomeScreen> {
       right: 0,
       child: Center(
         child: SizedBox(
-          width: 400,
-          height: 500,
+          width: 350,
+          height: 450,
           child: ModelViewer(
-            src: 'assets/models/penguinman.glb',
+            src: 'assets/models/penguinman_hi.glb',
             alt: "딸깍은행 마스코트",
             autoRotate: false,
             cameraControls: false,
@@ -260,12 +252,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 💬 1단계: 인사 (도트 대화창)
   Widget _buildGreeting() {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     return Positioned(
-      top: screenHeight * 0.10,  // 👈 화면 높이의 10% 위치
+      top: screenHeight * 0.10,
       left: 24,
       right: 24,
       child: GestureDetector(
@@ -314,12 +308,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 💬 2단계: 질문 (화면 비율로!)
   Widget _buildQuestion() {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     return Positioned(
-      top: screenHeight * 0.1,  // 👈 화면 높이의 10% 위치
+      top: screenHeight * 0.1,
       left: 24,
       right: 24,
       child: GestureDetector(
@@ -337,29 +333,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Positioned.fill(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        '무엇을 도와드릴까요?',
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.center,
+                  // 꼬리 때문에 아래 여백을 더 주고, 위 여백을 줄임
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 34),
+                  child: Align(
+                    alignment: const Alignment(0, 0), // 👈 아래로 살짝 (0.05~0.12 사이 조절)
+                    child: const Text(
+                      '무엇을 도와드릴까요?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
                       ),
-                      const SizedBox(height: 1),
-                      Text(
-                        '딸깍이에게 무엇이든 물어보세요',
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.grey[700],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -370,37 +356,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 🔘 플로팅 메뉴 버튼 (화면 비율 유지 + SafeArea 고려!)
-  Widget _buildFloatingMenuButton() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    return Positioned(
-      right: 16,
-      bottom: 90 + bottomPadding,  // 👈 하단 네비게이션 바(75) + 여백(15) + 안전영역
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        child: FloatingActionButton(
-          onPressed: () {
-            setState(() => _showMenu = !_showMenu);
-          },
-          backgroundColor: const Color(0xFF6A1B9A),
-          elevation: 6,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Icon(
-              _showMenu ? Icons.close : Icons.menu,
-              key: ValueKey(_showMenu),
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 📝 하단 메시지 입력창
   Widget _buildMessageInput() {
     return Positioned(
       bottom: 0,
@@ -411,7 +366,10 @@ class _HomeScreenState extends State<HomeScreen> {
           left: 16,
           right: 16,
           top: 8,
-          bottom: MediaQuery.of(context).padding.bottom + 8,
+          bottom: MediaQuery
+              .of(context)
+              .padding
+              .bottom + 8,
         ),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -430,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: _messageController,
                 focusNode: _focusNode,
                 decoration: InputDecoration(
-                  hintText: '딸깍이에게 무엇이든 물어보세요...',
+                  hintText: '딸깍이에게 무엇이든 물어보세요.',
                   hintStyle: TextStyle(color: Colors.grey[400]),
                   filled: true,
                   fillColor: Colors.grey[100],
@@ -467,9 +425,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 메시지 전송 처리
   void _handleSendMessage(String message) {
-    if (message.trim().isEmpty) return;
+    if (message
+        .trim()
+        .isEmpty) return;
 
     print('AI 챗봇에게 메시지 전송: $message');
 
@@ -484,192 +443,314 @@ class _HomeScreenState extends State<HomeScreen> {
     _focusNode.unfocus();
   }
 
-  // 📋 3단계: 메뉴 (버튼으로 열기)
-  Widget _buildMenu(bool isLoggedIn) {
-    return GestureDetector(
-      onTap: () {
-        setState(() => _showMenu = false);
-      },
+  // 🎯 하단 수평 스크롤 메뉴 섹션
+  Widget _buildBottomMenuSection(bool isLoggedIn) {
+    // 메뉴 아이템 리스트
+    final List<_MenuItem> menuItems = [
+      _MenuItem(label: '상품 보기', icon: Icons.shopping_bag, onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => ProductMainScreen(baseUrl: widget.baseUrl)));
+      }),
+      _MenuItem(label: '금리계산기', icon: Icons.calculate, onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const InterestCalculatorScreen()));
+      }),
+      _MenuItem(label: '금융 게임', icon: Icons.games, onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => GameMenuScreen(baseUrl: widget.baseUrl)));
+      }),
+      _MenuItem(label: '고객센터', icon: Icons.support_agent, onPressed: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const CustomerSupportScreen()));
+      }),
+      _MenuItem(label: '더보기', icon: Icons.more_horiz, onPressed: () {
+        _showAllMenuModal();
+      }),
+    ];
+
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+
+    return Positioned(
+      bottom: _messageInputHeight + safeBottom,
+      left: 0,
+      right: 0,
       child: Container(
-        color: Colors.black.withOpacity(0.3),
-        child: Center(
-          child: GestureDetector(
-            onTap: () {},
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.85,  // 👈 0.75 → 0.85로 증가!
-                maxWidth: 500,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+        color: Colors.white,
+
+        padding: const EdgeInsets.fromLTRB(0, 12, 0, 16),
+
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 인기 메뉴 타이틀
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '인기 메뉴',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF6A1B9A),
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 헤더 (수정!)
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(16, 25, 16, 12),  // 👈 패딩 조정
-                    child: Stack(
-                      children: [
-                        // 타이틀 (센터)
-                        const Center(  // 👈 Center로 감싸기
-                          child: Text(
-                            '자주 찾는 메뉴',
-                            style: TextStyle(
-                              fontSize: 30,
-                              color: Color(0xFF6A1B9A),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        // X 버튼 (오른쪽 상단) - 수정!
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: IconButton(
-                            icon: const Icon(Icons.close, size: 28),
-                            onPressed: () {
-                              setState(() => _showMenu = false);
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // 메뉴 리스트
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          _tossMenuButton('금융상품 보기', Icons.shopping_bag, () {
-                            setState(() => _showMenu = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ProductMainScreen(baseUrl: widget.baseUrl),
-                              ),
-                            );
-                          }),
-                          _tossMenuButton('금리 계산기', Icons.calculate, () {
-                            setState(() => _showMenu = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const InterestCalculatorScreen(),
-                              ),
-                            );
-                          }),
-                          _tossMenuButton('금융게임 바로가기', Icons.games, () {
-                            setState(() => _showMenu = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => GameMenuScreen(baseUrl: widget.baseUrl),
-                              ),
-                            );
-                          }),
-                          _tossMenuButton('AI 뉴스 분석', Icons.auto_awesome, () {
-                            setState(() => _showMenu = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => NewsAnalysisMainScreen(baseUrl: widget.baseUrl),
-                              ),
-                            );
-                          }),
-                          _tossMenuButton('포인트 이력', Icons.stars, () {
-                            setState(() => _showMenu = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PointHistoryScreen(baseUrl: widget.baseUrl),
-                              ),
-                            );
-                          }),
-                          _tossMenuButton('고객센터', Icons.support_agent, () {
-                            setState(() => _showMenu = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CustomerSupportScreen(),
-                              ),
-                            );
-                          }),
-
-                          if (isLoggedIn) ...[
-                            _tossMenuButton('금열매 이벤트', Icons.eco, () {
-                              setState(() => _showMenu = false);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const SeedEventScreen(),
-                                ),
-                              );
-                            }),
-                            _tossMenuButton('인증센터', Icons.lock_outline, () {
-                              setState(() => _showMenu = false);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const SecurityCenterScreen(),
-                                ),
-                              );
-                            }),
-                            _tossMenuButton('마이페이지', Icons.person, () {
-                              setState(() => _showMenu = false);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const MyPageScreen(),
-                                ),
-                              );
-                            }),
-                          ],
-
-                          _tossMenuButton('로고 인증 이벤트', Icons.camera_alt, () {
-                            setState(() => _showMenu = false);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const VisionTestScreen(),
-                              ),
-                            );
-                          }),
-
-                          const SizedBox(height: 16),
-
-                          // 로그인/로그아웃 버튼
-                          if (!isLoggedIn)
-                            _tossLoginButton()
-                          else
-                            _tossLogoutButton(),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
+
+            const SizedBox(height: 0),
+
+            // 👇 수평 스크롤 리스트!
+            SizedBox(
+              height: 88,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10, // 👈 이게 핵심
+                ),
+                itemCount: menuItems.length,
+                itemBuilder: (context, index) {
+                  final item = menuItems[index];
+                  return _buildWideMenuButton(
+                    item.icon,
+                    item.label,
+                    item.onPressed,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 수평 스크롤용 메뉴 아이템
+  Widget _buildWideMenuButton(
+      IconData icon,
+      String label,
+      VoidCallback onPressed,
+      ) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 180, // 가로로 긴 직사각형
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.16),
+                blurRadius: 4,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // 아이콘 박스
+              Icon(
+                icon,
+                size: 30, // 아이콘만 단독이므로 살짝 키움
+                color: const Color(0xFF662382), // 👈 보라색
+              ),
+              const SizedBox(width: 16),
+
+              // 텍스트
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // 🎨 토스 스타일 메뉴 버튼 (수정!)
+  // 더보기 모달
+  void _showAllMenuModal() {
+    final authProvider = context.read<AuthProvider>();
+    final isLoggedIn = authProvider.isLoggedIn;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) =>
+          Container(
+            height: MediaQuery
+                .of(context)
+                .size
+                .height * 0.85,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                // 핸들
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                // 타이틀
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Text(
+                    '전체 메뉴',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6A1B9A),
+                    ),
+                  ),
+                ),
+
+                // 메뉴 리스트
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        _tossMenuButton('금융상품 보기', Icons.shopping_bag, () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ProductMainScreen(baseUrl: widget.baseUrl),
+                            ),
+                          );
+                        }),
+                        _tossMenuButton('금리 계산기', Icons.calculate, () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const InterestCalculatorScreen(),
+                            ),
+                          );
+                        }),
+                        _tossMenuButton('금융게임', Icons.games, () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  GameMenuScreen(baseUrl: widget.baseUrl),
+                            ),
+                          );
+                        }),
+                        _tossMenuButton('AI 뉴스', Icons.auto_awesome, () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  NewsAnalysisMainScreen(
+                                      baseUrl: widget.baseUrl),
+                            ),
+                          );
+                        }),
+                        _tossMenuButton('포인트 이력', Icons.stars, () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  PointHistoryScreen(baseUrl: widget.baseUrl),
+                            ),
+                          );
+                        }),
+                        _tossMenuButton('고객센터', Icons.support_agent, () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CustomerSupportScreen(),
+                            ),
+                          );
+                        }),
+
+                        if (isLoggedIn) ...[
+                          _tossMenuButton('금열매 이벤트', Icons.eco, () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SeedEventScreen(),
+                              ),
+                            );
+                          }),
+                          _tossMenuButton('인증센터', Icons.lock_outline, () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SecurityCenterScreen(),
+                              ),
+                            );
+                          }),
+                          _tossMenuButton('마이페이지', Icons.person, () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const MyPageScreen(),
+                              ),
+                            );
+                          }),
+                        ],
+
+                        _tossMenuButton('OCR 테스트', Icons.camera_alt, () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const VisionTestScreen(),
+                            ),
+                          );
+                        }),
+
+                        const SizedBox(height: 16),
+
+                        // 로그인/로그아웃
+                        if (!isLoggedIn)
+                          _tossLoginButton()
+                        else
+                          _tossLogoutButton(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  // 기존 토스 스타일 버튼들은 그대로 유지
   Widget _tossMenuButton(String label, IconData icon, VoidCallback onPressed) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -678,12 +759,12 @@ class _HomeScreenState extends State<HomeScreen> {
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(12),
-          splashColor: Colors.grey[100],  // 👈 탭 순간 효과
-          highlightColor: Colors.grey[100],  // 👈 누르고 있을 때 회색!
+          splashColor: Colors.grey[100],
+          highlightColor: Colors.grey[100],
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: BoxDecoration(
-              color: Colors.white,  // 👈 기본은 흰색!
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: Colors.grey[200]!,
@@ -692,7 +773,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Row(
               children: [
-                // 아이콘
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -706,7 +786,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // 텍스트
                 Expanded(
                   child: Text(
                     label,
@@ -717,7 +796,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                // 화살표
                 Icon(
                   Icons.chevron_right,
                   color: Colors.grey[400],
@@ -731,13 +809,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 🎨 토스 스타일 로그인 버튼
   Widget _tossLoginButton() {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          setState(() => _showMenu = false);
+          Navigator.pop(context);
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -762,7 +839,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 '로그인',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -774,7 +851,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 🎨 토스 스타일 로그아웃 버튼
   Widget _tossLogoutButton() {
     return Material(
       color: Colors.transparent,
@@ -782,23 +858,25 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () async {
           final confirm = await showDialog<bool>(
             context: context,
-            builder: (dialogContext) => AlertDialog(
-              title: const Text('로그아웃'),
-              content: const Text('로그아웃하시겠습니까?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('취소'),
+            builder: (dialogContext) =>
+                AlertDialog(
+                  title: const Text('로그아웃'),
+                  content: const Text('로그아웃하시겠습니까?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext, false),
+                      child: const Text('취소'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext, true),
+                      child: const Text('로그아웃'),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, true),
-                  child: const Text('로그아웃'),
-                ),
-              ],
-            ),
           );
 
-          if (confirm == true && context.mounted) {
+          if (confirm == true && mounted) { // 👈 context.mounted 대신 mounted
+            Navigator.pop(context); // 👈 이 줄 추가! (모달 닫기)
             await _logout(context);
           }
         },
@@ -833,3 +911,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// 👇 메뉴 아이템 클래스 (HomeScreen 밖에 추가)
+class _MenuItem {
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  _MenuItem({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+  });
+}
