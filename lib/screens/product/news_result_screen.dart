@@ -18,11 +18,11 @@ class NewsResultScreen extends StatelessWidget {
 
   Color _getSentimentColor() {
     if (result.sentiment.label.contains('긍정')) {
-      return Colors.green;
+      return Colors.indigo;
     } else if (result.sentiment.label.contains('부정')) {
-      return Colors.red;
+      return Colors.deepOrange;
     } else {
-      return Colors.orange;
+      return Colors.teal.shade800;
     }
   }
 
@@ -32,7 +32,7 @@ class NewsResultScreen extends StatelessWidget {
     } else if (result.sentiment.label.contains('부정')) {
       return Icons.sentiment_very_dissatisfied;
     } else {
-      return Icons.sentiment_neutral;
+      return Icons.sentiment_satisfied_outlined;
     }
   }
 
@@ -47,7 +47,7 @@ class NewsResultScreen extends StatelessWidget {
     } else if (percentage >= 20) {
       return '약한 감정 (20~40%)';
     } else {
-      return '매우 약한 감정 (0~20%)';
+      return '매우 중립적인 감정 (0~20%)';
     }
   }
 
@@ -76,20 +76,32 @@ class NewsResultScreen extends StatelessWidget {
   }
 
 
-  // ✅ 감정 강도 텍스트
-  String _getSentimentStrengthText() {
-    final strength = _getSentimentStrength();
+  // ✅ 감정 강도 텍스트, 표시할 단어 결정
+  List<String> _getDisplayWords() {
+    final label = result.sentiment.label;
+    final positive = result.sentiment.matchedPositiveWords;
+    final negative = result.sentiment.matchedNegativeWords;
 
-    if (strength < 20) {
-      return '매우 약함';
-    } else if (strength < 40) {
-      return '약함';
-    } else if (strength < 60) {
-      return '보통';
-    } else if (strength < 80) {
-      return '강함';
+    if (label.contains('긍정')) {
+      // 긍정: 긍정 단어 10개만
+      return positive.take(10).toList();
+    } else if (label.contains('부정')) {
+      // 부정: 부정 단어 10개만
+      return negative.take(10).toList();
     } else {
-      return '매우 강함';
+      // 중립: 긍정 5개 + 부정 5개
+      final pos5 = positive.take(5).toList();
+      final neg5 = negative.take(5).toList();
+      return [...pos5, ...neg5];
+    }
+  }
+
+  // ✅ 단어 색상 결정! (파란색 + 빨간색)
+  Color _getWordColor(String word) {
+    if (result.sentiment.matchedPositiveWords.contains(word)) {
+      return Colors.cyanAccent;  // 긍정: 파란색!
+    } else {
+      return Colors.yellow;   // 부정: 빨간바탕에 노란글자색!
     }
   }
 
@@ -128,18 +140,23 @@ class NewsResultScreen extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,  // ✅ Stack 중앙 정렬!
               children: [
-                // ✅ 둥둥 떠다니는 단어들!
-                if (result.sentiment.label.contains('긍정'))
-                  FloatingWordsOverlay(
-                    words: result.sentiment.matchedPositiveWords,
-                    color: Colors.white,
-                    maxWords: 10,
-                  )
-                else if (result.sentiment.label.contains('부정'))
-                  FloatingWordsOverlay(
-                    words: result.sentiment.matchedNegativeWords,
-                    color: Colors.white,
-                    maxWords: 10,
+                // ✅ 둥둥 떠다니는 단어들! (개별 색상!)
+                if (_getDisplayWords().isNotEmpty)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 450,  // ✅ 고정 높이로 크기 제한!
+                    child: Stack(
+                      children: _getDisplayWords().asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final word = entry.value;
+                        return FloatingWordsOverlay(
+                          words: [word],
+                          color: _getWordColor(word),  // ← 단어마다 색상!
+                          maxWords: 1,
+                          startIndex: index,  // ← 위치 지정!
+                        );
+                      }).toList(),
+                    ),
                   ),
 
                 // 기존 Column

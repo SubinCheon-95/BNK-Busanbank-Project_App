@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-/// 🔥 둥둥 떠다니는 단어 위젯 (에러 수정!)
+/// 🔥 둥둥 떠다니는 단어 위젯 (색상 구분!)
 ///
 /// - Positioned.fill()로 전체 영역 차지
-/// - 9개 위치에 골고루 배치
+/// - 10개 위치에 골고루 배치
 /// - 각 위치에서 살짝만 떠다님
+/// - startIndex로 개별 위치 지정 가능!
 class FloatingWordsOverlay extends StatefulWidget {
   final List<String> words;
   final Color color;
   final int maxWords;
+  final int startIndex;  // ✅ 추가!
 
   const FloatingWordsOverlay({
     super.key,
     required this.words,
     required this.color,
     this.maxWords = 10,
+    this.startIndex = 0,  // ✅ 기본값 0
   });
 
   @override
@@ -44,7 +47,7 @@ class _FloatingWordsOverlayState extends State<FloatingWordsOverlay>
       )..repeat(reverse: true);
 
       // ✅ 아주 작은 범위로만 떠다님
-      final smallRange = 0.04;  // ±0.02
+      final smallRange = 0.09;  // ±0.045
 
       final animation = Tween<Offset>(
         begin: Offset(
@@ -121,19 +124,22 @@ class _FloatingWordsOverlayState extends State<FloatingWordsOverlay>
   }
 
   Alignment _getAlignment(int index) {
-    // ✅ 9개 위치 - 골고루!
+    // ✅ 10개 위치 - 골고루!
     final positions = [
-      Alignment(-1.2, -0.8),  // 왼쪽 위
-      Alignment(0.0, -1.2),   // 중앙 위
-      Alignment(1.1, -0.6),   // 오른쪽 위
-      Alignment(-1.0, 0.2),   // 왼쪽 중간
-      Alignment(-0.9, -0.3),    // 중앙 (감정 텍스트)
-      Alignment(0.8, 0.0),    // 오른쪽 중간
-      Alignment(-1.1, 0.7),   // 왼쪽 아래
-      Alignment(0.0, 1.3),    // 중앙 아래
-      Alignment(1.1, 0.8),    // 오른쪽 아래
+      Alignment(-1.2, -0.9),   // 0: 왼쪽 위
+      Alignment(0.9, -0.5),    // 1: 오른쪽 위 중간
+      Alignment(0.0, -1.25),   // 2: 중앙 위
+      Alignment(1.1, -1.0),    // 3: 오른쪽 위
+      Alignment(-1.0, 0.2),    // 4: 왼쪽 중간
+      Alignment(-0.9, -0.3),   // 5: 왼쪽 상단
+      Alignment(0.8, 0.0),     // 6: 오른쪽 중간
+      Alignment(-1.1, 0.7),    // 7: 왼쪽 아래
+      Alignment(0.0, 1.3),     // 8: 중앙 아래
+      Alignment(1.1, 0.8),     // 9: 오른쪽 아래
     ];
 
-    return positions[index % positions.length];
+    // ✅ startIndex를 더해서 위치 결정!
+    final posIndex = (widget.startIndex + index) % positions.length;
+    return positions[posIndex];
   }
 }
