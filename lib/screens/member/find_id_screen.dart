@@ -5,7 +5,7 @@
 */
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tkbank/screens/member/find_id_result_screen.dart';
+import 'package:tkbank/screens/member/find/find_id_result_screen.dart';
 import 'package:tkbank/services/member_service.dart';
 import 'package:tkbank/utils/formatters/phone_number_formatter.dart';
 import 'package:tkbank/utils/validators.dart';

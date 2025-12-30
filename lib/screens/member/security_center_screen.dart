@@ -7,9 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tkbank/providers/auth_provider.dart';
 import 'package:tkbank/screens/member/login_screen.dart';
-import 'package:tkbank/screens/member/otp_manage_screen.dart';
-import 'package:tkbank/screens/member/otp_register_screen.dart';
+import 'package:tkbank/screens/member/otp/otp_manage_screen.dart';
+import 'package:tkbank/screens/member/otp/otp_register_screen.dart';
 import 'package:tkbank/screens/member/pin_register_screen.dart';
+import 'package:tkbank/screens/member/transfer_limit_screen.dart';
 import 'package:tkbank/services/biometric_auth_service.dart';
 import 'package:tkbank/services/biometric_storage_service.dart';
 import 'package:tkbank/services/otp_pin_storage_service.dart';
@@ -188,7 +189,7 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
                   final result = await Navigator.push<bool>(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const OtpRegisterScreen(),
+                      builder: (_) => const OtpManageScreen(),
                     ),
                   );
 
@@ -201,6 +202,20 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
                     );
                   }
                 }
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.sync_alt),
+              title: const Text('이체한도 변경'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const TransferLimitScreen(),
+                  ),
+                );
               },
             ),
 

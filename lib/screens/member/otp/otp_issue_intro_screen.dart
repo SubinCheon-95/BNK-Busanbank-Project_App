@@ -1,15 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:tkbank/screens/member/otp_register_screen.dart';
+import 'package:tkbank/screens/member/otp/otp_register_screen.dart';
 import 'package:tkbank/screens/member/pin_register_screen.dart';
 const Color bnkPrimary = Color(0xFF6A1B9A);   // 메인 보라
 const Color bnkPrimarySoft = Color(0xFFF3E5F5); // 연보라 배경
 const Color bnkGrayText = Color(0xFF6B7280);
 const Color bnkCardBg = Colors.white;
 
-class OtpIssueIntroScreen extends StatelessWidget {
+class OtpIssueIntroScreen extends StatefulWidget {
   const OtpIssueIntroScreen({super.key});
 
+  @override
+  State<OtpIssueIntroScreen> createState() => _OtpIssueIntroScreenState();
+}
+
+class _OtpIssueIntroScreenState extends State<OtpIssueIntroScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -174,13 +179,16 @@ class OtpIssueIntroScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12), // ⭐ 둥근 네모
                         ),
                       ),
-                      onPressed: () {
-                        Navigator.push(
+                      onPressed: () async {
+                        final result = await Navigator.push<bool>(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const OtpRegisterScreen(),
                           ),
                         );
+                        if (result == true && mounted) {
+                          Navigator.pop(context, true); // OtpIssueIntroScreen으로 전달
+                        }
                       },
                       child: const Text(
                         '(재)발급',

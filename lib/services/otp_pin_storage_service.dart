@@ -1,3 +1,8 @@
+/*
+  날짜: 2025/12/30
+  내용: OTP PIN 저장 서비스
+  작성자: 오서정
+*/
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class OtpPinStorageService {
@@ -11,6 +16,11 @@ class OtpPinStorageService {
   Future<bool> hasOtpPin() async {
     final pin = await _storage.read(key: _key);
     return pin != null;
+  }
+
+  Future<bool> verifyOtpPin(String inputPin) async {
+    final storedPin = await _storage.read(key: _key);
+    return storedPin != null && storedPin == inputPin;
   }
 
   Future<void> clearOtpPin() async {

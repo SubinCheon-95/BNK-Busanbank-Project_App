@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:tkbank/services/otp_pin_storage_service.dart';
 import 'package:tkbank/services/pin_storage_service.dart';
 import 'package:tkbank/widgets/pin_dots.dart';
+import 'package:tkbank/widgets/pin_keypad_panel.dart';
 
 const Color bnkPrimary = Color(0xFF6A1B9A);
 const Color bnkPrimarySoft = Color(0xFFF3E5F5);
@@ -130,92 +131,11 @@ class _OtpPinRegisterScreenState extends State<OtpPinRegisterScreen > {
 
           const Spacer(),
 
-          _PinKeyPad(
-            onTap: _onKeyTap,
+          PinKeypadPanel(
+            onNumber: _onKeyTap,
             onDelete: _onDelete,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PinKeyPad extends StatelessWidget {
-  final Function(String) onTap;
-  final VoidCallback onDelete;
-
-  const _PinKeyPad({
-    required this.onTap,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final keys = [
-      ['1','4','9'],
-      ['2','5','8'],
-      ['7','6','3'],
-      ['','0','del'],
-    ];
-
-    return SafeArea(
-      top: false,
-      child: Container(
-        width: double.infinity, // ⭐ 패널 풀폭
-        padding: const EdgeInsets.fromLTRB(12, 24, 12, 32),
-        decoration: const BoxDecoration(
-          color: bnkPrimary,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(24),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: keys.map((row) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: row.map((key) {
-                  if (key == '') {
-                    return const SizedBox(width: 80);
-                  }
-
-                  return GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      if (key == 'del') {
-                        onDelete();
-                      } else {
-                        onTap(key);
-                      }
-                    },
-                    child: SizedBox(
-                      width: 80,   // ⭐ 넓이 업
-                      height: 56,  // ⭐ 높이 업
-                      child: Center(
-                        child: key == 'del'
-                            ? const Icon(
-                          Icons.backspace_outlined,
-                          color: Colors.white,
-                          size: 26,
-                        )
-                            : Text(
-                          key,
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            );
-          }).toList(),
-        ),
       ),
     );
   }

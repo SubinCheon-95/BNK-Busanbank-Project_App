@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:tkbank/screens/member/otp_pin_register_screen.dart';
+import 'package:tkbank/screens/member/otp/otp_pin_register_screen.dart';
 import 'package:tkbank/screens/member/pin_auth_screen.dart';
 import 'package:tkbank/screens/member/security_center_screen.dart';
 const Color bnkPrimary = Color(0xFF6A1B9A);   // 메인 보라

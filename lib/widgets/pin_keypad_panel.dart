@@ -14,11 +14,12 @@ class PinKeypadPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final keys = [
-      ['1','4','9'],
-      ['2','5','8'],
-      ['7','6','3'],
+      ['1','2','3'],
+      ['4','5','6'],
+      ['7','8','9'],
       ['','0','del'],
     ];
+
 
     return SafeArea(
       top: false,
