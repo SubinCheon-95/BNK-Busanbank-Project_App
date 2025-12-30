@@ -50,14 +50,14 @@ class BitcoinService { // 비트코인 예측 이벤트 데이터 처리 - 작�
   }
 
   // 2️⃣ 이벤트 결과 전송 (POST)
-  Future<void> submitEventResult(bool success, int userNo, {bool needsAuth = false}) async {
+  Future<void> submitEventResult(String prediction, int userNo, {bool needsAuth = false}) async {
     final headers = await _getHeaders(needsAuth: needsAuth);
 
     final response = await http.post(
-      Uri.parse('$baseUrl/api/btcEvent'),
+      Uri.parse('$baseUrl/api/btcPredict'),
       headers: headers,
       body: jsonEncode({
-        'result': success ? 'success' : 'fail',
+        'prediction': prediction,
         'userNo': userNo.toString(),
       }),
     );

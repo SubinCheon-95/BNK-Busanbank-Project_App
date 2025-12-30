@@ -63,6 +63,7 @@ class _VisionTestScreenState extends State<VisionTestScreen> with SingleTickerPr
         foregroundColor: Colors.black87,
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 40),
         child: Column(
           children: [
             // 헤더 그라데이션 영역
@@ -469,13 +470,13 @@ class _VisionTestScreenState extends State<VisionTestScreen> with SingleTickerPr
         await requestPoint();
       } else if (!hasTarget) {
         setState(() {
-          result = '❌ 대상 이미지가 아닙니다';
+          result = '대상 이미지가 아닙니다';
         });
       }
     } catch (e, s) {
       log('OCR EXCEPTION', error: e, stackTrace: s);
       setState(() {
-        result = '❌ 에러가 발생했습니다: $e';
+        result = '에러가 발생했습니다: $e';
       });
     }
   }
