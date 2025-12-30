@@ -54,7 +54,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
       if (mounted) {
         setState(() {
-          _transactions = transactions;
+          // transactionId 기준으로 중복 제거
+          final seen = <int>{};
+          _transactions = transactions.where((transaction) {
+            if (seen.contains(transaction.transactionId)) {
+              return false;
+            }
+            seen.add(transaction.transactionId);
+            return true;
+          }).toList();
           _isLoading = false;
         });
       }
