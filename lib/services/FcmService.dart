@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -8,13 +9,17 @@ import 'package:tkbank/screens/btc/Bitcoin_prediction_screen.dart';
 import '../firebase_options.dart';
 import '../main.dart';
 import '../navigator_key.dart';
+import '../screens/btc/Bitcoin_fail_page.dart';
+import '../screens/btc/Bitcoin_success_page.dart';
 import '../screens/camera/vision_test_screen.dart';
 import '../screens/game/game_menu_screen.dart';
 import '../screens/product/news_analysis_screen.dart';
 import '../screens/product/product_main_screen.dart';
+import 'bitcoin_service.dart';
 import 'fcm_background_handler.dart';
 
 class FcmService { // 푸시 알림 서비스
+  static final BitcoinService _bitcoinService = BitcoinService();
   static const String baseUrl = 'http://10.0.2.2:8080/busanbank/api';
 
   static final FlutterLocalNotificationsPlugin _local =
@@ -43,14 +48,65 @@ class FcmService { // 푸시 알림 서비스
     _registerBackground();
 
     await FirebaseMessaging.instance.subscribeToTopic('all');
+
+    final RemoteMessage? initialMessage =
+    await FirebaseMessaging.instance.getInitialMessage();
+
+    if (initialMessage != null) {
+      _handleBtcResultIfNeeded(initialMessage.data);
+    }
   }
 
   // 🔹 포그라운드
   static void _registerForeground() {
     FirebaseMessaging.onMessage.listen((message) {
-      _show(message);
+      if (message.notification == null) {
+        _show(message);
+      }
+      else {
+        _local.show(
+          DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          message.notification!.title,
+          message.notification!.body,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'high_importance_channel_v2',
+              'High Importance Notifications',
+              importance: Importance.max,
+              priority: Priority.high,
+            ),
+          ),
+          payload: message.data['route'],
+        );
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      _handleBtcResultIfNeeded(message.data);
     });
   }
+
+  static void _handleBtcResultIfNeeded(Map<String, dynamic> data) async {
+    if (data['type'] == 'ADMIN_NOTIFICATION' && data.containsKey('success')) {
+      final bool isSuccess = data['success'] == 'Y';
+      final result = await _bitcoinService.fetchResult();
+
+      if (isSuccess) {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => BitcoinSuccessPage(
+            yesterday: result.yesterday,
+            today: result.today,)),
+        );
+      } else {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => BitcoinFailPage(
+            yesterday: result.yesterday,
+            today: result.today,)),
+        );
+      }
+    }
+  }
+
 
   // 🔹 백그라운드
   static void _registerBackground() {
@@ -59,6 +115,8 @@ class FcmService { // 푸시 알림 서비스
 
   // 🔹 로컬 알림 표시
   static Future<void> _show(RemoteMessage message) async {
+    final String payloadData = jsonEncode(message.data);
+
     await _local.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       message.data['title'] ?? '알림',
@@ -73,7 +131,7 @@ class FcmService { // 푸시 알림 서비스
           priority: Priority.high,
         ),
       ),
-      payload: message.data['route'], //추가사항
+      payload: payloadData,
     );
   }
 
@@ -82,13 +140,17 @@ class FcmService { // 푸시 알림 서비스
     const init = AndroidInitializationSettings('@mipmap/ic_launcher');
     _local.initialize(const InitializationSettings(android: init),
       onDidReceiveNotificationResponse:(response) { //추가사항
-        final route = response.payload;
+        final String? payload = response.payload;
 
-        if (route == null || route.isEmpty) {
-          return;
+        if (payload == null || payload.isEmpty) return;
+
+        try {
+          // JSON 문자열을 다시 Map<String, dynamic>으로 변환
+          final Map<String, dynamic> data = jsonDecode(payload);
+          _handleNotificationClick(data);
+        } catch (e) {
+          print("Payload parse error: $e");
         }
-
-        _handleNotificationClick(route);
     });
 
     const channel = AndroidNotificationChannel(
@@ -103,9 +165,15 @@ class FcmService { // 푸시 알림 서비스
         ?.createNotificationChannel(channel);
   }
 
-  static void _handleNotificationClick(String route) {
+  static void _handleNotificationClick(Map<String, dynamic> data) {
+    String route = data['route'] ?? '';
+    print('route 값 확인 = $route');
+
+    int yesterday = int.tryParse(data['yesterday'] ?? '0') ?? 0;
+    int today = int.tryParse(data['today'] ?? '0') ?? 0;
+
     switch(route) {
-      case '/product' :
+        case '/product' :
         navigatorKey.currentState?.push(
           MaterialPageRoute(builder: (_) => const ProductMainScreen(baseUrl: baseUrl)),
         ); // 지금 가입하면 혜택있는 상품이 있어요 - 고객님께 적합한 상품을 확인해 보세요.
@@ -133,6 +201,18 @@ class FcmService { // 푸시 알림 서비스
         navigatorKey.currentState?.push(
           MaterialPageRoute(builder: (_) => const BitcoinPredictionScreen()),
         ); // 오늘의 비트코인 방향 예측 - 어제보다 올랐을까요, 내렸을까요? 지금 선택해보세요
+        break;
+
+      case '/success':
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => BitcoinSuccessPage(yesterday: yesterday, today: today)),
+        );
+        break;
+
+      case '/fail':
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => BitcoinFailPage(yesterday: yesterday, today: today)),
+        );
         break;
 
       default:

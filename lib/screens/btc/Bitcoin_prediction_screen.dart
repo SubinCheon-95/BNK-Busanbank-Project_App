@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/bitcoin_service.dart';
-import 'Bitcoin_fail_page.dart';
-import 'Bitcoin_success_page.dart';
 
 class BitcoinPredictionScreen extends StatefulWidget { // 비트코인 예측 이벤트 - 작성자: 윤종인 2025.12.23
   final Function(String)? onPredictionSelected;
@@ -46,6 +44,77 @@ class _BitcoinPredictionScreenState extends State<BitcoinPredictionScreen> {
     }
   }
 
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check_circle_outline,
+                  size: 48,
+                  color: Colors.green.shade600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                '예측이 접수됐어요',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '내일 결과를 알려드릴게요',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    '확인',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   void _handlePrediction(String prediction) async {
     try {
@@ -58,174 +127,19 @@ class _BitcoinPredictionScreenState extends State<BitcoinPredictionScreen> {
         return;
       }
 
-      final result = await _bitcoinService.fetchResult();
-      print('실제 상승하락: ${result.actual}');
-      print('예상값: $prediction');
-
-      final bool isSuccess = prediction == result.actual;
-      print('isSuccess = $isSuccess');
-
       await _bitcoinService.submitEventResult(
-        isSuccess,
+        prediction,
         userNo,
         needsAuth: true
       );
 
-      if (isSuccess) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BitcoinSuccessPage(
-              yesterday: result.yesterday,
-              today: result.today,
-            ),
-          ),
-        );
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BitcoinFailPage(
-              yesterday: result.yesterday,
-              today: result.today,
-            ),
-          ),
-        );
+      if (mounted) {
+        _showSuccessDialog();
       }
     } catch (e) {
       print('예측 처리 실패: $e');
     }
   }
-
-  void showSuccessModal(int yesterday, int today) {
-    final priceChange =
-    ((today - yesterday) / yesterday * 100).toStringAsFixed(2);
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 🎉 이모지
-                const Text(
-                  '🎉',
-                  style: TextStyle(fontSize: 64),
-                ),
-                const SizedBox(height: 16),
-
-                // 제목
-                const Text(
-                  '예측 성공!',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                const Text(
-                  '축하합니다! 정확하게 예측하셨어요',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-
-                // 가격 정보 카드
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        '가격 변동',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '$yesterday → $today USD',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        priceChange.startsWith('-')
-                            ? '⬇ $priceChange%'
-                            : '⬆ $priceChange%',
-                        style: TextStyle(
-                          color: priceChange.startsWith('-')
-                              ? Colors.red
-                              : Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // 🎁 리워드
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.yellow.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    '🎁 리워드 지급 완료!',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // 확인 버튼
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text(
-                      '확인',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -377,7 +291,7 @@ class _BitcoinPredictionScreenState extends State<BitcoinPredictionScreen> {
               end: Alignment.bottomRight,
               colors: [Color(0xFF22C55E), Color(0xFF059669)],
             ),
-            onTap: _loading ? null : () => _handlePrediction('up'),
+            onTap: _loading ? null : () => _handlePrediction('UP'),
           ),
         ),
         const SizedBox(width: 12),
@@ -391,7 +305,7 @@ class _BitcoinPredictionScreenState extends State<BitcoinPredictionScreen> {
               end: Alignment.bottomRight,
               colors: [Color(0xFFEF4444), Color(0xFFE11D48)],
             ),
-            onTap: _loading ? null : () => _handlePrediction('down'),
+            onTap: _loading ? null : () => _handlePrediction('DOWN'),
           ),
         ),
       ],

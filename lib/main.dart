@@ -16,6 +16,7 @@ import 'package:tkbank/screens/member/login_screen.dart';
 import 'package:tkbank/services/seed_event_service.dart';
 import 'package:tkbank/services/token_storage_service.dart';
 import 'package:tkbank/screens/splash_screen.dart';
+import 'navigator_key.dart';
 import 'screens/product/product_main_screen.dart';
 import 'screens/member/point_history_screen.dart';
 import 'screens/game/game_menu_screen.dart';
@@ -69,6 +70,7 @@ class MyApp extends StatelessWidget {
         // 👇 전체 앱에 폰트 적용!
         fontFamily: 'Pretendard',
       ),
+      navigatorKey: navigatorKey, // 푸시 알림 페이지 이동을 위한 키 설정 - 작성자: 윤종인
       onGenerateRoute: (settings) {
         if (settings.name == '/product/join/step2') {
           final request = settings.arguments as ProductJoinRequest;
@@ -723,7 +725,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           }),
                         ],
 
-                        _tossMenuButton('OCR 테스트', Icons.camera_alt, () {
+                        _tossMenuButton('로고 인증 이벤트', Icons.camera_alt, () {
                           Navigator.pop(context);
                           Navigator.push(
                             context,

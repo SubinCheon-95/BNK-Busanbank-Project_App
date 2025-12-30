@@ -12,10 +12,31 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await _local.show(
+  final FlutterLocalNotificationsPlugin local =
+  FlutterLocalNotificationsPlugin();
+
+  const AndroidInitializationSettings initSettings =
+  AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  await local.initialize(
+    const InitializationSettings(android: initSettings),
+  );
+
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'high_importance_channel_v2',
+    'High Importance Notifications',
+    importance: Importance.high,
+  );
+
+  await local
+      .resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+
+  await local.show(
     DateTime.now().millisecondsSinceEpoch ~/ 1000,
-    message.data['title'] ?? '알림',
-    message.data['content'] ?? '',
+    message.notification?.title ?? message.data['title'] ?? '알림',
+    message.notification?.body ?? message.data['content'] ?? '',
     const NotificationDetails(
       android: AndroidNotificationDetails(
         'high_importance_channel_v2',
@@ -24,5 +45,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         priority: Priority.high,
       ),
     ),
+    payload: message.data['route'],
   );
 }
