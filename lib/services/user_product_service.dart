@@ -68,11 +68,12 @@ class UserProductService {
     }
   }
 
-  // 상품 해지
-  Future<void> terminateProduct({
+  // 상품 해지 (2025/12/30 - 해지금 입금 계좌 추가 - 작성자: 진원)
+  Future<Map<String, dynamic>> terminateProduct({
     required String userId,
     required int productNo,
     required String startDate,
+    required String depositAccountNo, // 입금 계좌번호 추가
   }) async {
     final token = await _tokenStorage.readToken();
     final headers = {
@@ -84,13 +85,19 @@ class UserProductService {
     final userIdInt = int.parse(userId);
 
     final response = await http.patch(
-      Uri.parse('$baseUrl/api/user-products/$userIdInt/$productNo/terminate?startDate=$startDate'),
+      Uri.parse('$baseUrl/api/user-products/$userIdInt/$productNo/terminate?startDate=$startDate&depositAccountNo=$depositAccountNo'),
       headers: headers,
     );
 
     if (response.statusCode == 200) {
       final result = jsonDecode(response.body);
-      if (result['success'] != true) {
+      if (result['success'] == true) {
+        return {
+          'success': true,
+          'refundAmount': result['refundAmount'],
+          'message': result['message'],
+        };
+      } else {
         throw Exception(result['message'] ?? '상품 해지 실패');
       }
     } else {

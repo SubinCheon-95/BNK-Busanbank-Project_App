@@ -1,6 +1,7 @@
 // 2025/12/18 - 마이페이지 메인 화면 - 작성자: 진원
 // 2025/12/23 - 프로필 수정 기능 추가 - 작성자: 진원
 // 2025/12/28 - 아바타 이미지 URL 처리 수정 - 작성자: 진원
+// 2025/12/29 - 내 계좌 메뉴 추가 - 작성자: 진원
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -14,6 +15,7 @@ import 'profile_edit_screen.dart';
 import 'coupon_list_screen.dart';
 import 'my_products_screen.dart';
 import 'settings_screen.dart';
+import '../account/account_list_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -220,6 +222,14 @@ class _MyPageScreenState extends State<MyPageScreen> {
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          ),
+        ),
+        _buildMenuItem(
+          icon: Icons.account_balance,
+          title: '내 계좌',
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AccountListScreen()),
           ),
         ),
         _buildMenuItem(

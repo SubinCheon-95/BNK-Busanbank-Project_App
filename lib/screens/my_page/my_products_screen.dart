@@ -1,9 +1,11 @@
 // 2025/12/18 - 나의 금융상품 화면 - 작성자: 진원
+// 2025/12/30 - 해지 시 입금 계좌 선택 추가 - 작성자: 진원
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/user_product_service.dart';
+import '../../services/account_service.dart';
 import '../../models/user_product.dart';
 
 class MyProductsScreen extends StatefulWidget {
@@ -50,16 +52,18 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     }
   }
 
+  // 2025/12/30 - 입금 계좌 선택 추가 - 작성자: 진원
   Future<void> _terminateProduct(UserProduct product) async {
     print('[DEBUG] 해지 버튼 클릭됨 - 상품명: ${product.productName}');
 
     // Get userId before async operation to avoid BuildContext across async gaps
     final authProvider = context.read<AuthProvider>();
     final userId = authProvider.userId;
+    final userNo = authProvider.userNo;
 
     print('[DEBUG] userId: $userId');
 
-    if (userId == null) {
+    if (userId == null || userNo == null) {
       print('[ERROR] userId가 null입니다');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -69,12 +73,27 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
       return;
     }
 
+    // 입금 계좌 선택
+    String? depositAccountNo = await _selectDepositAccount(userNo);
+    if (depositAccountNo == null) {
+      return; // 계좌 선택 취소
+    }
+
     print('[DEBUG] 해지 확인 다이얼로그 표시');
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('상품 해지'),
-        content: Text('${product.productName}을(를) 해지하시겠습니까?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${product.productName}을(를) 해지하시겠습니까?'),
+            const SizedBox(height: 16),
+            Text('입금 계좌: $depositAccountNo',
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () {
@@ -98,18 +117,21 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     if (confirmed != true) return;
 
     try {
-      print('[DEBUG] 해지 요청 시작 - userId: $userId, productNo: ${product.productNo}, startDate: ${product.startDate}');
+      print('[DEBUG] 해지 요청 시작 - userId: $userId, productNo: ${product.productNo}, depositAccountNo: $depositAccountNo');
 
-      await _productService.terminateProduct(
+      final result = await _productService.terminateProduct(
         userId: userId,
         productNo: product.productNo,
         startDate: product.startDate,
+        depositAccountNo: depositAccountNo,
       );
 
-      print('[DEBUG] 해지 성공');
+      print('[DEBUG] 해지 성공 - 해지금: ${result['refundAmount']}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('상품이 해지되었습니다')),
+          SnackBar(
+              content: Text(
+                  '상품이 해지되었습니다.\n해지금 ${NumberFormat('#,###').format(result['refundAmount'])}원이 입금되었습니다.')),
         );
         _loadProducts(); // 목록 새로고침
       }
@@ -120,6 +142,64 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           SnackBar(content: Text('상품 해지 실패: $e')),
         );
       }
+    }
+  }
+
+  // 입금 계좌 선택 다이얼로그
+  Future<String?> _selectDepositAccount(int userNo) async {
+    try {
+      // 사용자 계좌 목록 조회
+      final AccountService accountService = AccountService();
+      final accounts = await accountService.getUserAccounts(userNo);
+
+      if (accounts.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('입금 가능한 계좌가 없습니다')),
+          );
+        }
+        return null;
+      }
+
+      // 계좌 선택 다이얼로그
+      return await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('입금 계좌 선택'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: accounts.length,
+              itemBuilder: (context, index) {
+                final account = accounts[index];
+                return ListTile(
+                  title: Text(account.accountNo),
+                  subtitle: Text(account.accountType ?? 'TK Bank 계좌'),
+                  trailing: Text('${NumberFormat('#,###').format(account.balance)}원'),
+                  onTap: () {
+                    Navigator.pop(context, account.accountNo);
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      print('[ERROR] 계좌 목록 조회 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('계좌 목록 조회 실패: $e')),
+        );
+      }
+      return null;
     }
   }
 
