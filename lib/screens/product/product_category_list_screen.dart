@@ -4,6 +4,8 @@ import 'package:tkbank/services/product_service.dart';
 import 'product_detail_screen.dart';
 import '../product/interest_calculator_screen.dart';  // ✅ 금리계산기!
 
+// [25.12.29] 전체적으로 폰트 키움, 색상 변경 - 수빈
+
 /// 카테고리별 상품 리스트 화면
 class ProductCategoryListScreen extends StatefulWidget {
   final String baseUrl;
@@ -81,13 +83,6 @@ class _ProductCategoryListScreenState
               gradient: const LinearGradient(
                 colors: [Color(0xFF667eea), Color(0xFF764ba2)],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.purple.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: ElevatedButton.icon(
               onPressed: () {
@@ -98,11 +93,11 @@ class _ProductCategoryListScreenState
                   ),
                 );
               },
-              icon: const Icon(Icons.calculate, size: 24),
+              icon: const Icon(Icons.calculate, size: 26),
               label: const Text(
                 '금리 계산기',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -184,15 +179,12 @@ class _ProductCategoryListScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 배지
+              // 배지 [25.12.29] 배지 패딩값 수정 - 수빈
               Row(
                 children: [
-                  if (product.joinTypes?.contains('MOBILE') == true)
+                  if (product.joinTypes?.contains('MOBILE') == true) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.purple,
                         borderRadius: BorderRadius.circular(4),
@@ -201,17 +193,16 @@ class _ProductCategoryListScreenState
                         '모바일',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 11,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  const SizedBox(width: 8),
+                    const SizedBox(width: 8),
+                  ],
+
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.orange,
                       borderRadius: BorderRadius.circular(4),
@@ -220,7 +211,7 @@ class _ProductCategoryListScreenState
                       '신상품',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 11,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -234,8 +225,8 @@ class _ProductCategoryListScreenState
               Text(
                 product.name,
                 style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
 
@@ -245,8 +236,8 @@ class _ProductCategoryListScreenState
               Text(
                 product.description,
                 style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
+                  fontSize: 18,
+                  color: const Color(0xFF1C1C1E),
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -271,15 +262,15 @@ class _ProductCategoryListScreenState
                           const Text(
                             '최고 연',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
+                              fontSize: 14,
+                              color: const Color(0xFF1C1C1E),
                             ),
                           ),
                           Text(
                             '${_formatNumber(product.maturityRate)}%',
                             style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
                               color: Colors.blue,
                             ),
                           ),
@@ -289,8 +280,8 @@ class _ProductCategoryListScreenState
                         child: Text(
                           '(기본 연 ${_formatNumber(product.baseRate)}%, 12개월 세전)',
                           style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
+                            fontSize: 14,
+                            color: const Color(0xFF1C1C1E),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -325,19 +316,19 @@ class _ProductCategoryListScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: Colors.grey[300],
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.grey[700]),
+          Icon(icon, size: 18, color: const Color(0xFF1C1C1E)),
           const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[700],
+              fontSize: 14,
+              color: const Color(0xFF1C1C1E),
             ),
           ),
         ],

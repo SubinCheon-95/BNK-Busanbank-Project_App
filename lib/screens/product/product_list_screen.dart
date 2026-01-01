@@ -21,7 +21,7 @@ class ProductListScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(title),
-        backgroundColor: const Color(0xFF6A1B9A),
+        backgroundColor: Color(0xFF6A1B9A),
         foregroundColor: Colors.white,
       ),
       body: Container( // 👈 Container로 감싸기!
