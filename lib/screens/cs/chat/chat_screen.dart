@@ -30,6 +30,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   bool _isChatStarted = false;
   bool _isEnded = false;
+  bool _isAgentTyping = false;
+  Timer? _typingTimer;
 
   StreamSubscription<String>? _wsSub;
 
@@ -71,8 +73,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _typingTimer?.cancel();
     _wsSub?.cancel();
-    // ❌ 컨트롤러 dispose는 상위에서 관리 (여기서 하면 이어하기 불가)
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -130,8 +132,31 @@ class _ChatScreenState extends State<ChatScreen> {
     final senderType = (obj['senderType'] ?? '').toString(); // USER/AGENT
     final message = (obj['message'] ?? '').toString();
 
+    if (type == 'TYPING' && senderType.toUpperCase() == 'AGENT') {
+      final typing = obj['isTyping'] == true || obj['typing'] == true;
+
+      setState(() => _isAgentTyping = typing);
+      _scrollToBottom();
+
+      // ✅ stop 신호 누락 대비 자동 종료(웹이랑 동일한 안전장치)
+      _typingTimer?.cancel();
+      if (typing) {
+        _typingTimer = Timer(const Duration(seconds: 3), () {
+          if (!mounted) return;
+          setState(() => _isAgentTyping = false);
+        });
+      }
+      return;
+    }
+
     if (type == 'CHAT') {
-      // 서버가 USER 메시지를 에코로 다시 보내면 중복이라 무시(로컬에서 이미 찍음)
+      // ✅ 상담원 메시지 오면 typing 종료
+      if (senderType.toUpperCase() == 'AGENT') {
+        _typingTimer?.cancel();
+        setState(() => _isAgentTyping = false);
+      }
+
+      // 서버가 USER 메시지를 에코로 다시 보내면 중복이라 무시
       if (senderType.toUpperCase() == 'USER') return;
 
       setState(() => _messages.add(UiMessage(UiKind.agent, message)));
@@ -146,7 +171,9 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     if (type == 'END') {
+      _typingTimer?.cancel();
       setState(() {
+        _isAgentTyping = false; // ✅ 종료 시 typing도 내림
         _messages.add(UiMessage(UiKind.system, message.isEmpty ? '상담이 종료되었습니다.' : message));
         _isEnded = true;
       });
@@ -442,6 +469,36 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _buildTypingIndicator() {
+    if (!_isAgentTyping) return const SizedBox.shrink();
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildAgentAvatar(),
+        const SizedBox(width: 8),
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              )
+            ],
+          ),
+          child: const _TypingDots(
+            text: '상담사가 입력 중',
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildBubble(UiMessage m) {
     if (m.kind == UiKind.system) {
       return Center(
@@ -548,6 +605,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   _buildIntroSection(),
                   const SizedBox(height: 8),
                   ..._messages.map(_buildBubble),
+                  _buildTypingIndicator(),
                   const SizedBox(height: 8),
                 ],
               ),
@@ -585,3 +643,47 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+
+class _TypingDots extends StatefulWidget {
+  final String text;
+  final Duration interval;
+
+  const _TypingDots({
+    required this.text,
+    this.interval = const Duration(milliseconds: 350),
+  });
+
+  @override
+  State<_TypingDots> createState() => _TypingDotsState();
+}
+
+class _TypingDotsState extends State<_TypingDots> {
+  Timer? _timer;
+  int _step = 0; // 0..3
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(widget.interval, (_) {
+      if (!mounted) return;
+      setState(() => _step = (_step + 1) % 4);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dots = '.'.padLeft(_step, ' ').padRight(3, ' ');
+    // _step=0 => "   ", 1=>" . ", 2=>" ..", 3=>"..."
+    return Text(
+      '${widget.text}$dots',
+      style: const TextStyle(fontSize: 13, color: Colors.black54),
+    );
+  }
+}
+

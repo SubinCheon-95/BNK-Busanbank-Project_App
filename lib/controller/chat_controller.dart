@@ -1,4 +1,8 @@
+
+import 'dart:async';
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 
 import '../services/cs/chat/chat_api_service.dart';
 import '../services/cs/chat/chat_websocket_service.dart';
@@ -10,13 +14,16 @@ class ChatController {
 
   int? sessionId;
 
-  // 서버에서 USER 식별은 토큰/세션으로 처리하는 걸 추천
-  // (userNo를 Flutter에서 굳이 만들 필요가 없게)
   int senderId = 0;
   String senderType = "USER";
 
   // ✅ 화면 재진입 복원용 캐시
   final List<UiMessage> cachedMessages = [];
+
+  // ✅ 상담원 typing 상태
+  final ValueNotifier<bool> agentTyping = ValueNotifier<bool>(false);
+
+  StreamSubscription<String>? _sub;
 
   ChatController({
     required this.api,
@@ -30,9 +37,8 @@ class ChatController {
   Future<bool> startChat(String inquiryType) async {
     // 1) 세션 없으면 생성(API)
     if (sessionId == null) {
-      final created = await api.startChatSession(
-        inquiryType: inquiryType,
-      );
+      final created = await api.startChatSession(inquiryType: inquiryType);
+
       if (created == null) return false;
 
       sessionId = created;
@@ -42,17 +48,66 @@ class ChatController {
     // 2) WebSocket 연결 + ENTER
     if (!ws.isConnected) {
       ws.connect();
+
+      // ✅ 수신 리스너는 연결 직후 1번만 붙이기
+      _attachIncomingListenerOnce();
+
       ws.sendText(jsonEncode({
         "type": "ENTER",
         "sessionId": sessionId,
         "senderType": senderType,
-        "senderId": senderId, // 지금은 0이어도 OK(서버에서 세션 userNo로 보정 권장)
+        "senderId": senderId,
       }));
     }
 
     // 3) 첫 메시지(문의유형) 전송
     sendChatMessage(inquiryType);
     return true;
+  }
+
+  void _attachIncomingListenerOnce() {
+    if (_sub != null) return;
+
+    _sub = ws.stream.listen((raw) {
+      // 문자열 그대로 UI로 쓰는 곳이 이미 있다면:
+      // 거기에서도 파싱하겠지만, typing은 여기서 확실히 처리해두는 게 안전합니다.
+
+      Map<String, dynamic>? msg;
+      try {
+        msg = jsonDecode(raw) as Map<String, dynamic>;
+      } catch (_) {
+        return; // JSON 아니면 무시(또는 로그)
+      }
+
+      final type = msg["type"]?.toString();
+      final sender = msg["senderType"]?.toString();
+      final msgSessionId = msg["sessionId"];
+
+      // ✅ 현재 세션 아닌 것 무시 (TYPING도 포함해서 세션 필터 적용)
+      if (sessionId != null && msgSessionId != null) {
+        final s = (msgSessionId is int) ? msgSessionId : int.tryParse(msgSessionId.toString());
+        if (s != null && s != sessionId) return;
+      }
+
+      // ✅ TYPING 처리
+      if (type == "TYPING" && sender == "AGENT") {
+        final isTyping = (msg["isTyping"] == true) || (msg["typing"] == true);
+        agentTyping.value = isTyping;
+        return;
+      }
+
+      // ✅ 상담원 CHAT 오면 typing 자동 OFF (웹이랑 동일)
+      if (type == "CHAT" && sender == "AGENT") {
+        agentTyping.value = false;
+        return;
+      }
+
+      // ✅ END 오면 typing OFF
+      if (type == "END") {
+        agentTyping.value = false;
+        return;
+      }
+    });
   }
 
   void sendChatMessage(String text) {
@@ -87,21 +142,29 @@ class ChatController {
       "senderType": senderType,
       "senderId": senderId,
     }));
+
+    // ✅ 화면도 즉시 OFF
+    agentTyping.value = false;
   }
 
   /// ✅ 나가기(상담 유지): 세션은 유지하고 소켓만 끊기
   void detach() {
     ws.disconnect();
+    agentTyping.value = false;
   }
 
   /// ✅ 종료: 세션/연결/캐시 정리(히스토리는 별도 API로)
   void disconnectAndReset({bool clearCache = false}) {
     ws.disconnect();
     sessionId = null;
+    agentTyping.value = false;
     if (clearCache) cachedMessages.clear();
   }
 
   void dispose() {
+    _sub?.cancel();
+    _sub = null;
     ws.dispose();
+    agentTyping.dispose();
   }
 }
