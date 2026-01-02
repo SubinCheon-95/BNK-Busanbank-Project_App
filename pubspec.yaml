@@ -104,6 +104,9 @@ dependencies:
   # 2025/01/01 - 신분증(OCR) 이미지 인식 의존성 추가 - 작성자: 오서정
   image: ^4.2.0
 
+  # 2025/01/02 - 전화상담 agora 의존성 추가 - 우지희
+  agora_rtc_engine: ^6.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

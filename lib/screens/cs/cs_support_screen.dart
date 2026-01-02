@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tkbank/call/call_screen.dart';
 import 'package:tkbank/screens/cs/counsel_history_hub_screen.dart';
 import 'package:tkbank/screens/cs/email/email_counsel_form_screen.dart';
 
@@ -264,7 +265,10 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     debugPrint('tap: 전화상담');
-                    _callCenter(context);
+
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CallScreen()),
+                    );
                   },
                 ),
               ],
