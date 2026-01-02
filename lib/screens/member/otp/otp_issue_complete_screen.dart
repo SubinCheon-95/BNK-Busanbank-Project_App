@@ -57,7 +57,7 @@ class OtpIssueCompleteScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('한도변경금액',
+                const Text('한도 변경 가능 금액',
                     style: TextStyle(fontSize: 13, color: bnkGrayText)),
                 const SizedBox(height: 10),
                 const Divider(height: 1),

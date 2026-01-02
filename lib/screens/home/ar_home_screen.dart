@@ -23,6 +23,15 @@ import 'package:tkbank/screens/my_page/my_page_screen.dart';
 import 'package:tkbank/screens/camera/vision_test_screen.dart';
 import 'easy_home_screen.dart';
 
+// 모션 상태 enum
+enum MascotMotion {
+  intro,      // 진입 시
+  idle,       // 정지.ver
+  nod,        // 고개 끄덕임 (나중에 추가)
+  wave,       // 손 흔들기 (나중에 추가)
+  typing,     // 타이핑 반응 (나중에 추가)
+}
+
 class ArHomeScreen extends StatefulWidget {
   final String baseUrl;
 
@@ -38,7 +47,17 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   int _step = 0;
   CameraController? _cameraController;
   bool _isCameraInitialized = false;
-  bool _showIntro = true;
+
+  // 모션 관리
+  MascotMotion _currentMotion = MascotMotion.intro;
+  final Map<MascotMotion, String> _motionFiles = {
+    MascotMotion.intro: 'assets/models/A_intro.glb',
+    MascotMotion.idle: 'assets/models/penguinman.glb',
+    // 나중에 추가할 모션들
+    // MascotMotion.nod: 'assets/models/penguin_nod.glb',
+    // MascotMotion.wave: 'assets/models/penguin_wave.glb',
+    // MascotMotion.typing: 'assets/models/penguin_typing.glb',
+  };
 
   final TextEditingController _messageController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
@@ -53,16 +72,31 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // 화면 진입 시마다 Intro 강제 재생
-    _showIntro = true;
+    // 화면 진입 시 인트로 모션 재생
+    _playMotion(MascotMotion.intro);
 
+    // 2.1초 후 idle로 전환
     Future.delayed(const Duration(milliseconds: 2100), () {
       if (mounted) {
-        setState(() {
-          _showIntro = false;
-        });
+        _playMotion(MascotMotion.idle);
       }
     });
+  }
+
+  // 모션 재생 함수
+  void _playMotion(MascotMotion motion, {bool returnToIdle = false}) {
+    setState(() {
+      _currentMotion = motion;
+    });
+
+    // 특정 모션 재생 후 idle로 복귀
+    if (returnToIdle && motion != MascotMotion.idle) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          _playMotion(MascotMotion.idle);
+        }
+      });
+    }
   }
 
   Future<void> _initializeCamera() async {
@@ -148,9 +182,9 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                   );
                 },
                 icon: const Icon(
-                  Icons.arrow_back,
+                  Icons.chevron_left,
                   color: AppColors.white,
-                  size: 24,
+                  size: 34,
                 ),
               ),
             ),
@@ -209,17 +243,29 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
         child: SizedBox(
           width: 350,
           height: 450,
-          child: ModelViewer(
-            key: ValueKey(_showIntro),
-            src: _showIntro
-                ? 'assets/models/A_intro.glb'
-                : 'assets/models/penguinman.glb',
-            alt: "딸깍은행 마스코트",
+          child: Stack(
+            children: MascotMotion.values.map((motion) {
+              // 아직 파일이 없는 모션은 스킵
+              if (!_motionFiles.containsKey(motion)) return const SizedBox.shrink();
 
-            autoPlay: true,
-            autoRotate: false,
-            cameraControls: false,
-            backgroundColor: Colors.transparent,
+              final isActive = _currentMotion == motion;
+              return AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                opacity: isActive ? 1.0 : 0.0,
+                child: IgnorePointer(
+                  ignoring: !isActive,
+                  child: ModelViewer(
+                    key: ValueKey(motion),
+                    src: _motionFiles[motion]!,
+                    alt: "딸깍은행 마스코트",
+                    autoPlay: true,
+                    autoRotate: false,
+                    cameraControls: false,
+                    backgroundColor: Colors.transparent,
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ),
       ),
@@ -227,17 +273,18 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   }
 
   Widget _buildGreeting() {
-    final screenHeight = MediaQuery
-        .of(context)
-        .size
-        .height;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Positioned(
       top: screenHeight * 0.10,
       left: 24,
       right: 24,
       child: GestureDetector(
-        onTap: () => setState(() => _step = 1),
+        onTap: () {
+          setState(() => _step = 1);
+          // 나중에 nod 모션 추가하면 활성화
+          // _playMotion(MascotMotion.nod, returnToIdle: true);
+        },
         child: SizedBox(
           height: 180,
           child: Stack(
@@ -284,10 +331,7 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   }
 
   Widget _buildQuestion() {
-    final screenHeight = MediaQuery
-        .of(context)
-        .size
-        .height;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Positioned(
       top: screenHeight * 0.1,
@@ -296,6 +340,8 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
       child: GestureDetector(
         onTap: () {
           _focusNode.requestFocus();
+          // 나중에 nod 모션 추가하면 활성화
+          // _playMotion(MascotMotion.nod, returnToIdle: true);
         },
         child: SizedBox(
           height: 180,
@@ -308,9 +354,8 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
               ),
               Positioned.fill(
                 child: Padding(
-                  // 꼬리 때문에 아래 여백을 더 주고, 위 여백을 줄임
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 34),
-                  child: Align(
+                    child: Align(
                     alignment: const Alignment(0, 0),
                     child: const Text(
                       '무엇을 도와드릴까요?',
@@ -372,6 +417,14 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                     vertical: 14,
                   ),
                 ),
+                onChanged: (text) {
+                  // 나중에 typing 모션 추가하면 활성화
+                  // if (text.isNotEmpty && _currentMotion != MascotMotion.typing) {
+                  //   _playMotion(MascotMotion.typing);
+                  // } else if (text.isEmpty && _currentMotion == MascotMotion.typing) {
+                  //   _playMotion(MascotMotion.idle);
+                  // }
+                },
                 onSubmitted: (value) {
                   _handleSendMessage(value);
                 },
@@ -401,6 +454,9 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
         .trim()
         .isEmpty) return;
 
+    // 나중에 wave 모션 추가하면 활성화
+    // _playMotion(MascotMotion.wave, returnToIdle: true);
+
     print('AI 챗봇에게 메시지 전송: $message');
 
     Navigator.push(
@@ -423,162 +479,161 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) =>
-          Container(
-            height: MediaQuery
-                .of(context)
-                .size
-                .height * 0.85,
-            decoration: const BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      builder: (context) => Container(
+        height: MediaQuery
+            .of(context)
+            .size
+            .height * 0.85,
+        decoration: const BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // 핸들
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.gray3,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            child: Column(
-              children: [
-                // 핸들
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.gray3,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+
+            // 타이틀
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Text(
+                '전체 메뉴',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
                 ),
-
-                // 타이틀
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: Text(
-                    '전체 메뉴',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-
-                // 메뉴 리스트
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        _tossMenuButton('금융상품 보기', Icons.shopping_bag, () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  ProductMainScreen(baseUrl: widget.baseUrl),
-                            ),
-                          );
-                        }),
-                        _tossMenuButton('금리 계산기', Icons.calculate, () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const InterestCalculatorScreen(),
-                            ),
-                          );
-                        }),
-                        _tossMenuButton('금융게임', Icons.games, () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  GameMenuScreen(baseUrl: widget.baseUrl),
-                            ),
-                          );
-                        }),
-                        _tossMenuButton('AI 뉴스', Icons.auto_awesome, () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  NewsAnalysisMainScreen(
-                                      baseUrl: widget.baseUrl),
-                            ),
-                          );
-                        }),
-                        _tossMenuButton('포인트 이력', Icons.stars, () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  PointHistoryScreen(baseUrl: widget.baseUrl),
-                            ),
-                          );
-                        }),
-                        _tossMenuButton('고객센터', Icons.support_agent, () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const CustomerSupportScreen(),
-                            ),
-                          );
-                        }),
-
-                        if (isLoggedIn) ...[
-                          _tossMenuButton('금열매 이벤트', Icons.eco, () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const SeedEventScreen(),
-                              ),
-                            );
-                          }),
-                          _tossMenuButton('인증센터', Icons.lock_outline, () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const SecurityCenterScreen(),
-                              ),
-                            );
-                          }),
-                          _tossMenuButton('마이페이지', Icons.person, () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const MyPageScreen(),
-                              ),
-                            );
-                          }),
-                        ],
-
-                        _tossMenuButton('로고 인증 이벤트', Icons.camera_alt, () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const VisionTestScreen(),
-                            ),
-                          );
-                        }),
-
-                        const SizedBox(height: 20),
-
-                        // 로그인/로그아웃
-                        if (!isLoggedIn)
-                          _tossLoginButton()
-                        else
-                          _tossLogoutButton(),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+
+            // 메뉴 리스트
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _tossMenuButton('금융상품 보기', Icons.shopping_bag, () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ProductMainScreen(baseUrl: widget.baseUrl),
+                        ),
+                      );
+                    }),
+                    _tossMenuButton('금리 계산기', Icons.calculate, () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InterestCalculatorScreen(),
+                        ),
+                      );
+                    }),
+                    _tossMenuButton('금융게임', Icons.games, () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              GameMenuScreen(baseUrl: widget.baseUrl),
+                        ),
+                      );
+                    }),
+                    _tossMenuButton('AI 뉴스', Icons.auto_awesome, () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              NewsAnalysisMainScreen(
+                                  baseUrl: widget.baseUrl),
+                        ),
+                      );
+                    }),
+                    _tossMenuButton('포인트 이력', Icons.stars, () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              PointHistoryScreen(baseUrl: widget.baseUrl),
+                        ),
+                      );
+                    }),
+                    _tossMenuButton('고객센터', Icons.support_agent, () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const CustomerSupportScreen(),
+                        ),
+                      );
+                    }),
+
+                    if (isLoggedIn) ...[
+                      _tossMenuButton('금열매 이벤트', Icons.eco, () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SeedEventScreen(),
+                          ),
+                        );
+                      }),
+                      _tossMenuButton('인증센터', Icons.lock_outline, () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SecurityCenterScreen(),
+                          ),
+                        );
+                      }),
+                      _tossMenuButton('마이페이지', Icons.person, () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MyPageScreen(),
+                          ),
+                        );
+                      }),
+                    ],
+
+                    _tossMenuButton('로고 인증 이벤트', Icons.camera_alt, () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const VisionTestScreen(),
+                        ),
+                      );
+                    }),
+
+                    const SizedBox(height: 20),
+
+                    // 로그인/로그아웃
+                    if (!isLoggedIn)
+                      _tossLoginButton()
+                    else
+                      _tossLogoutButton(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

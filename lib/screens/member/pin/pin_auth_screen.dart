@@ -10,9 +10,9 @@ import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:tkbank/widgets/pin_dots.dart';
 
-import '../../providers/auth_provider.dart';
-import '../../services/pin_storage_service.dart';
-import '../../widgets/pin_keypad_panel.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../services/pin_storage_service.dart';
+import '../../../widgets/pin_keypad_panel.dart';
 
 class PinAuthScreen extends StatefulWidget {
   const PinAuthScreen({super.key});

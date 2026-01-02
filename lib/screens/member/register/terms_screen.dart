@@ -5,7 +5,7 @@
 */
 import 'package:flutter/material.dart';
 import 'package:tkbank/models/term.dart';
-import 'package:tkbank/screens/member/phone_verify_screen.dart';
+import 'package:tkbank/screens/member/register/phone_verify_screen.dart';
 import 'package:tkbank/services/member_service.dart';
 import 'package:tkbank/widgets/register_step_indicator.dart';
 import 'term_webview_screen.dart';

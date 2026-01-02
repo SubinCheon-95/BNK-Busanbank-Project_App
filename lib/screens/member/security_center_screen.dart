@@ -9,7 +9,7 @@ import 'package:tkbank/providers/auth_provider.dart';
 import 'package:tkbank/screens/member/login_screen.dart';
 import 'package:tkbank/screens/member/otp/otp_manage_screen.dart';
 import 'package:tkbank/screens/member/otp/otp_register_screen.dart';
-import 'package:tkbank/screens/member/pin_register_screen.dart';
+import 'package:tkbank/screens/member/pin/pin_register_screen.dart';
 import 'package:tkbank/screens/member/transfer_limit_screen.dart';
 import 'package:tkbank/services/biometric_auth_service.dart';
 import 'package:tkbank/services/biometric_storage_service.dart';

@@ -1,39 +1,41 @@
+/*
+  날짜 : 2025/12/18
+  내용 : 아이디 찾기 (휴대폰 인증)
+  작성자 : 오서정
+*/
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tkbank/screens/member/find_pw_reset_screen.dart';
+import 'package:tkbank/screens/member/find/find_id_result_screen.dart';
 import 'package:tkbank/services/member_service.dart';
 import 'package:tkbank/utils/formatters/phone_number_formatter.dart';
 import 'package:tkbank/utils/validators.dart';
 
 const DEV_PHONE = '010-1111-1111';
 
-class FindPwScreen extends StatefulWidget {
-  const FindPwScreen({super.key});
+class FindIdScreen extends StatefulWidget {
+  const FindIdScreen({super.key});
 
   @override
-  State<FindPwScreen> createState() => _FindPwScreenState();
+  State<FindIdScreen> createState() => _FindIdScreenState();
 }
 
-class _FindPwScreenState extends State<FindPwScreen>
+class _FindIdScreenState extends State<FindIdScreen>
     with SingleTickerProviderStateMixin {
 
   // ======================
   // Controller / Focus
   // ======================
   final nameCtrl = TextEditingController();
-  final userIdCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
   final codeCtrl = TextEditingController();
 
   final nameFocus = FocusNode();
-  final userIdFocus = FocusNode();
   final phoneFocus = FocusNode();
 
   // ======================
   // State
   // ======================
   String? nameError;
-  String? userIdError;
   String? phoneError;
 
   bool codeRequested = false;
@@ -67,10 +69,6 @@ class _FindPwScreenState extends State<FindPwScreen>
       if (!nameFocus.hasFocus) _validateName();
     });
 
-    userIdFocus.addListener(() {
-      if (!userIdFocus.hasFocus) _validateUserId();
-    });
-
     phoneFocus.addListener(() {
       if (!phoneFocus.hasFocus) _validatePhoneOnly();
     });
@@ -80,11 +78,9 @@ class _FindPwScreenState extends State<FindPwScreen>
   void dispose() {
     _shakeCtrl.dispose();
     nameCtrl.dispose();
-    userIdCtrl.dispose();
     phoneCtrl.dispose();
     codeCtrl.dispose();
     nameFocus.dispose();
-    userIdFocus.dispose();
     phoneFocus.dispose();
     super.dispose();
   }
@@ -99,18 +95,11 @@ class _FindPwScreenState extends State<FindPwScreen>
     return ok;
   }
 
-  bool _validateUserId() {
-    final ok = userIdCtrl.text.trim().isNotEmpty;
-    setState(() => userIdError = ok ? null : '아이디를 입력해주세요.');
-    if (!ok) _shakeCtrl.forward(from: 0);
-    return ok;
-  }
-
   bool _validatePhoneOnly() {
     if (phoneCtrl.text.trim() == DEV_PHONE) {
       setState(() {
         phoneError = null;
-        isPhoneVerified = true;
+        isPhoneVerified = true;   // 🔥 핵심
         codeRequested = false;
         codeError = false;
       });
@@ -130,6 +119,7 @@ class _FindPwScreenState extends State<FindPwScreen>
     final ok = _validatePhoneOnly();
     if (!ok) return;
 
+    // ✅ 개발용 우회
     if (phoneCtrl.text.trim() == DEV_PHONE) {
       setState(() {
         isPhoneVerified = true;
@@ -168,26 +158,23 @@ class _FindPwScreenState extends State<FindPwScreen>
   }
 
   // ======================
-  // 비밀번호 찾기
+  // 아이디 찾기
   // ======================
-  Future<void> _findPw() async {
-    final ok =
-    _validateName() & _validateUserId() & isPhoneVerified;
-
-    if (!ok) return;
+  Future<void> _findId() async {
+    final nameOk = _validateName();
+    if (!nameOk || !isPhoneVerified) return;
 
     try {
-      await MemberService().verifyUserForPw(
+      final result = await MemberService().findUserIdByHp(
         userName: nameCtrl.text.trim(),
-        userId: userIdCtrl.text.trim(),
         hp: phoneCtrl.text.trim(),
       );
 
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => FindPwResetScreen(
-            userId: userIdCtrl.text.trim(),
+          builder: (_) => FindIdResultScreen(
+            userId: result['userId'], userName: result['userName'],
           ),
         ),
       );
@@ -211,8 +198,8 @@ class _FindPwScreenState extends State<FindPwScreen>
         child: SizedBox(
           height: 52,
           child: ElevatedButton(
-            onPressed: _findPw,
-            child: const Text('비밀번호 재설정'),
+            onPressed: _findId,
+            child: const Text('아이디 찾기'),
           ),
         ),
       ),
@@ -239,7 +226,7 @@ class _FindPwScreenState extends State<FindPwScreen>
 
                 const SizedBox(height: 20),
                 const Text(
-                  '비밀번호 찾기',
+                  '아이디 찾기',
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 32),
@@ -247,10 +234,6 @@ class _FindPwScreenState extends State<FindPwScreen>
                 _label('이름'),
                 _input(nameCtrl, focus: nameFocus),
                 _error(nameError),
-
-                _label('아이디'),
-                _input(userIdCtrl, focus: userIdFocus),
-                _error(userIdError),
 
                 _label('휴대폰 번호'),
                 Row(
@@ -311,8 +294,7 @@ class _FindPwScreenState extends State<FindPwScreen>
                     padding: EdgeInsets.only(top: 8),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle,
-                            color: Colors.green, size: 16),
+                        Icon(Icons.check_circle, color: Colors.green, size: 16),
                         SizedBox(width: 6),
                         Text(
                           '휴대폰 인증이 완료되었습니다.',
@@ -321,20 +303,8 @@ class _FindPwScreenState extends State<FindPwScreen>
                       ],
                     ),
                   ),
-
-                const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => FindPwResetScreen(userId: '',)),
-                    );
-                  },
-                  child: const Text('다음 (개발용)'),
-                ),
               ],
             ),
-
           ),
         ),
       ),
@@ -354,6 +324,7 @@ class _FindPwScreenState extends State<FindPwScreen>
   Widget _input(
       TextEditingController ctrl, {
         FocusNode? focus,
+        bool obscure = false,
         bool enabled = true,
         TextInputType keyboard = TextInputType.text,
         int? maxLength,
@@ -375,6 +346,7 @@ class _FindPwScreenState extends State<FindPwScreen>
         controller: ctrl,
         focusNode: focus,
         enabled: enabled,
+        obscureText: obscure,
         keyboardType: keyboard,
         maxLength: maxLength,
         inputFormatters: formatters,

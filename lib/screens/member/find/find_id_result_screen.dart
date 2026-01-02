@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
-import 'package:tkbank/screens/member/find_pw_screen.dart';
+import 'package:tkbank/screens/member/find/find_pw_screen.dart';
 import 'package:tkbank/screens/member/login_screen.dart';
 
 class FindIdResultScreen extends StatelessWidget {

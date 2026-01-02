@@ -6,7 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:tkbank/screens/member/account_setup_screen.dart';
+import 'package:tkbank/screens/member/register/account_setup_screen.dart';
 
 import 'package:tkbank/services/transfer_limit_service.dart';
 import 'package:tkbank/services/otp_code_service.dart';

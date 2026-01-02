@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tkbank/providers/register_provider.dart';
-import 'package:tkbank/screens/member/account_setup_screen.dart';
+import 'package:tkbank/screens/member/register/account_setup_screen.dart';
 import 'package:tkbank/services/member_service.dart';
 import 'package:tkbank/utils/formatters/phone_number_formatter.dart';
 import 'package:tkbank/utils/validators.dart';

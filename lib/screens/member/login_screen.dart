@@ -12,10 +12,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:provider/provider.dart';
 import 'package:tkbank/providers/auth_provider.dart';
-import 'package:tkbank/screens/member/find_id_screen.dart';
-import 'package:tkbank/screens/member/find_pw_screen.dart';
-import 'package:tkbank/screens/member/pin_auth_screen.dart';
-import 'package:tkbank/screens/member/terms_screen.dart';
+import 'package:tkbank/screens/member/find/find_id_screen.dart';
+import 'package:tkbank/screens/member/find/find_pw_screen.dart';
+import 'package:tkbank/screens/member/pin/pin_auth_screen.dart';
+import 'package:tkbank/screens/member/register/terms_screen.dart';
 import 'package:tkbank/services/biometric_auth_service.dart';
 import 'package:tkbank/services/biometric_storage_service.dart';
 import 'package:tkbank/services/pin_storage_service.dart';

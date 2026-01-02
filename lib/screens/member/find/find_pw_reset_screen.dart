@@ -4,7 +4,7 @@
   작성자 : 오서정
 */
 import 'package:flutter/material.dart';
-import 'package:tkbank/screens/member/find_pw_result_screen.dart';
+import 'package:tkbank/screens/member/find/find_pw_result_screen.dart';
 import 'package:tkbank/services/member_service.dart';
 import 'package:tkbank/utils/validators.dart';
 

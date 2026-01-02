@@ -1,5 +1,6 @@
+
 import 'package:flutter/material.dart';
-import '../screens/member/pin_register_screen.dart'; // 색상 상수 쓰면
+import '../screens/member/pin/pin_register_screen.dart'; // 색상 상수 쓰면
 
 class PinKeypadPanel extends StatelessWidget {
   final Function(String) onNumber;

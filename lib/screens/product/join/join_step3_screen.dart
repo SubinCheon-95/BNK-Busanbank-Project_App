@@ -375,7 +375,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
     // ✅ 상품 기본 금리 (하드코딩 X!)
     final baseRate = widget.request.baseRate ?? 0.0;
     final couponBonus = _getSelectedCouponRate();
-    final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;
+    final pointBonus = (_selectedPointAmount ?? 0) * 0.001;
     final totalRate = baseRate + couponBonus + pointBonus;
 
     return Container(
@@ -462,7 +462,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
     // ✅ 동적 금리 계산
     final baseRate = widget.request.baseRate ?? 0.0;
     final couponBonus = _getSelectedCouponRate();
-    final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;
+    final pointBonus = (_selectedPointAmount ?? 0) * 0.001;
     final totalRate = baseRate + couponBonus + pointBonus;
 
     final expectedProfit = _calculateProfit(principal, term, totalRate);
@@ -554,7 +554,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
     // ✅ 동적 금리 계산
     final baseRate = widget.request.baseRate ?? 0.0;
     final couponBonus = _getSelectedCouponRate();
-    final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;
+    final pointBonus = (_selectedPointAmount ?? 0) * 0.001;
     final totalRate = baseRate + couponBonus + pointBonus;
 
     return Table(
@@ -833,7 +833,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
 
     final baseRate = widget.request.baseRate ?? 0.0;
     final bonusRate = _getSelectedCouponRate();
-    final pointBonus = (_selectedPointAmount ?? 0) / 1000 * 0.1;
+    final pointBonus = (_selectedPointAmount ?? 0) * 0.001;
     final totalRate = baseRate + bonusRate + pointBonus;
 
     // ✅ 여기를 변경

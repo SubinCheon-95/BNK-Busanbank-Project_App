@@ -1,23 +1,17 @@
 /*
   날짜: 2025/12/30
-  내용: 자동 로그아웃 화면
+  내용: 자동 로그아웃 화면 (하단 버튼 고정형, Lottie 적용, 흰 배경)
   작성자: 오서정
 */
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:lottie/lottie.dart';
 import 'package:tkbank/main.dart';
-import 'package:tkbank/providers/auth_provider.dart';
-import 'package:tkbank/services/token_storage_service.dart';
 import 'package:tkbank/screens/home/easy_home_screen.dart';
 
-// 색상 정의
+// 🎨 Color System
 const Color bnkPrimary = Color(0xFF6A1B9A);
-const Color bnkPrimarySoft = Color(0xFFF3E5F5);
-const Color bnkGray = Color(0xFF9CA3AF);
-const Color pinPanelColor = bnkPrimary;        // 메인 보라
-const Color pinTextColor = Colors.white;
-const Color pinSubTextColor = Colors.white70;
+const Color bnkGrayText = Color(0xFF6B7280);
 
 class AutoLogoutScreen extends StatefulWidget {
   const AutoLogoutScreen({super.key});
@@ -27,105 +21,141 @@ class AutoLogoutScreen extends StatefulWidget {
 }
 
 class _AutoLogoutScreenState extends State<AutoLogoutScreen> {
-  final TokenStorageService _tokenStorage = TokenStorageService();
+  bool _snackShown = false;
 
   @override
-  void initState() {
-    super.initState();
-    _logout();
-  }
-  Future<void> _logout() async {
-    final authProvider = context.read<AuthProvider>();
-    await authProvider.logout();
-  }
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
+    // ✅ 진입 시 1회 안내
+    if (!_snackShown) {
+      _snackShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('서비스 이용이 없어 자동 로그아웃되었습니다'),
+          ),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bnkPrimarySoft, // 배경 보라 연하게
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.logout, size: 80, color: bnkPrimary),
-              const SizedBox(height: 24),
-              const Text(
-                "자동 로그아웃 되었습니다.",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: bnkPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                "보안을 위해 일정 시간이 지나면 자동으로 로그아웃 됩니다.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: bnkGray,
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: bnkPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {
-                    // 홈 화면으로 이동, 기존 스택 제거
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => EasyHomeScreen(baseUrl: MyApp.baseUrl), // 필수 파라미터 전달
+      backgroundColor: Colors.white, // ✅ 흰색으로 고정
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ================== 상단 콘텐츠 ==================
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ✅ Lottie
+                      Lottie.asset(
+                        'assets/lottie/Timeout.json',
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.contain,
+                        repeat: true,
                       ),
-                          (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    "홈으로 이동",
-                    style: TextStyle(
-                      color: pinTextColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        '자동 로그아웃 되었습니다',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: bnkPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        '보안을 위해 20분 동안 서비스 이용이 없어\n자동으로 로그아웃 되었습니다.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          height: 1.5,
+                          color: bnkGrayText,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: bnkGray,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+            ),
+
+            // ================== 하단 버튼 ==================
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              child: Row(
+                children: [
+                  // 🔹 앱 종료 (보조)
+                  Expanded(
+                    child: SizedBox(
+                      height: 52,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: bnkPrimary,
+                          side: const BorderSide(color: bnkPrimary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () => SystemNavigator.pop(),
+                        child: const Text(
+                          '앱 종료',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  onPressed: () {
-                    SystemNavigator.pop(); // 앱 종료
-                  },
-                  child: const Text(
-                    "앱 종료",
-                    style: TextStyle(
-                      color: pinTextColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(width: 12),
+
+                  // 🔹 홈으로 이동 (메인)
+                  Expanded(
+                    child: SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: bnkPrimary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  EasyHomeScreen(baseUrl: MyApp.baseUrl),
+                            ),
+                                (route) => false,
+                          );
+                        },
+                        child: const Text(
+                          '홈으로 이동',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
