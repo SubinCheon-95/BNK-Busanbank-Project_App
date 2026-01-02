@@ -261,13 +261,16 @@ class _EasyHomeScreenState extends State<EasyHomeScreen> {
                 ],
               ),
               child: ClipOval(
-                child: Image.asset(
-                  'assets/images/penguinman.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.account_circle,
-                    size: 100,
-                    color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Image.asset(
+                    'assets/images/penguinman.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.account_circle,
+                      size: 100,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
