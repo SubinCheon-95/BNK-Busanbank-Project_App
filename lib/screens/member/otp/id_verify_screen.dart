@@ -184,9 +184,9 @@ class _IdVerifyScreenState extends State<IdVerifyScreen> {
       setState(() {
         _success = ok;
         _message = ok
-            ? '신분증 정보가 인식되었습니다.'
+            ? '신분증 인증이 완료되었습니다.'
             : (!matched
-            ? '신분증 정보가 로그인 사용자와 일치하지 않아요.'
+            ? '신분증 정보가 일치하지 않습니다.'
             : '이름/주민번호를 충분히 인식하지 못했어요.\n가이드에 맞춰 다시 촬영해 주세요.');
       });
 
