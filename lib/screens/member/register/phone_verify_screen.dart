@@ -3,6 +3,7 @@
   내용 : 회원가입 개인정보 구현
   작성자 : 오서정
   수정: 2025/12/26 - 주소 추가 - 오서정
+  수정: 2025/01/04 - UI 수정 - 작성자: 오서정
 */
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,13 +11,14 @@ import 'package:provider/provider.dart';
 import 'package:tkbank/providers/register_provider.dart';
 import 'package:tkbank/screens/member/register/account_setup_screen.dart';
 import 'package:tkbank/services/member_service.dart';
+import 'package:tkbank/theme/app_colors.dart';
 import 'package:tkbank/utils/formatters/phone_number_formatter.dart';
 import 'package:tkbank/utils/validators.dart';
 import 'package:tkbank/widgets/register_step_indicator.dart';
 import 'package:kpostal/kpostal.dart';
 
 
-const DEV_PHONE = '010-1111-1111';
+const DEV_PHONE = '010-8902-3754';
 
 
 class PhoneVerifyScreen extends StatefulWidget {
@@ -28,6 +30,29 @@ class PhoneVerifyScreen extends StatefulWidget {
 
 class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
     with SingleTickerProviderStateMixin {
+  bool get _canGoNext {
+    final nameOk = Validators.isValidName(nameCtrl.text.trim());
+    final juminOk = Validators.isValidJumin(rrnFrontCtrl.text.trim(), rrnBackCtrl.text.trim());
+    final emailFormatOk = Validators.isValidEmail(emailCtrl.text.trim());
+    final phoneOk = Validators.isValidHp(phoneCtrl.text.trim()) || phoneCtrl.text.trim() == DEV_PHONE;
+
+    // ✅ 중복검사까지 끝나야 true
+    final emailOk = emailFormatOk && emailChecked && !emailDuplicated;
+
+    // ✅ 휴대폰 인증 완료 필수
+    return nameOk && juminOk && emailOk && phoneOk && isPhoneVerified;
+  }
+
+
+  void _bindNextButtonRefresh() {
+    void refresh() => setState(() {});
+    nameCtrl.addListener(refresh);
+    rrnFrontCtrl.addListener(refresh);
+    rrnBackCtrl.addListener(refresh);
+    emailCtrl.addListener(refresh);
+    phoneCtrl.addListener(refresh);
+  }
+
 
   // 2025/12/22 - 이메일 도메인 추천 기능 추가 - 작성자: 오서정
   final List<String> _emailDomains = [
@@ -137,6 +162,8 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
     phoneFocus.addListener(() {
       if (!phoneFocus.hasFocus) _validatePhone();
     });
+
+    _bindNextButtonRefresh();
   }
 
   @override
@@ -263,7 +290,9 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
         child: SizedBox(
           height: 52,
           child: ElevatedButton(
-            onPressed: () async {
+            onPressed: _canGoNext
+                ? () async {
+              // 마지막 방어(서버 중복검사 등)
               final ok = await _validateAll();
               if (!ok) return;
 
@@ -287,11 +316,35 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
                 context,
                 MaterialPageRoute(builder: (_) => const AccountSetupScreen()),
               );
-            },
-            child: const Text('다음'),
+            }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              disabledBackgroundColor: AppColors.primary.withOpacity(0.3),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text(
+              '다음',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
+
         ),
       ),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
 
       body: SafeArea(
         child: SingleChildScrollView(
@@ -307,18 +360,11 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// 🔙 뒤로가기
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                  onPressed: () => Navigator.pop(context),
-                ),
-
-                const SizedBox(height: 12),
                 RegisterStepIndicator(step: 2),
                 const SizedBox(height: 32),
 
                 const Text(
-                  '정보등록',
+                  '개인정보등록',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w700,
@@ -461,6 +507,18 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
                     SizedBox(
                       height: 48,
                       child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                          isPhoneVerified ? AppColors.gray3 : AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         onPressed: isPhoneVerified
                             ? null
                             : () async {
@@ -578,6 +636,16 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
                     SizedBox(
                       height: 48,
                       child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         onPressed: _searchAddress,
                         child: const Text('주소 검색'),
                       ),
@@ -593,19 +661,9 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
                 _input(
                   addr2Ctrl,
                   focus: addr2Focus,
+                  hintText: '상세주소를 입력해주세요',
                 ),
 
-
-                const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => AccountSetupScreen()),
-                    );
-                  },
-                  child: const Text('다음 (개발용)'),
-                ),
 
 
               ],
@@ -645,6 +703,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
         ValueChanged<String>? onChanged,
         bool isError = false,
         bool enabled = true,
+        String? hintText
       }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -665,11 +724,12 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
         maxLength: maxLength,
         onChanged: onChanged,
         inputFormatters: formatters,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           border: InputBorder.none,        // 🔥 핵심
           focusedBorder: InputBorder.none, // 🔥 핵심
           enabledBorder: InputBorder.none, // 🔥 핵심
           counterText: '',
+          hintText: hintText,
         ),
       ),
     );

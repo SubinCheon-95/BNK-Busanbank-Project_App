@@ -10,65 +10,73 @@ class VoiceCallApi {
 
   Uri _u(String path) => Uri.parse('$baseUrl$path');
 
-  Future<Map<String, dynamic>> enqueue({required String sessionId}) async {
+  Future<String> _mustToken() async {
     final token = await _tokenStorage.readToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('토큰 없음: 로그인 필요');
+    }
+    return token;
+  }
 
-    // 🔍 ① 토큰 확인 로그
-    print("📌 tokenLen=${token?.length} tokenHead=${token == null ? 'null' : token.substring(0, 20)}");
+  Future<Map<String, dynamic>> enqueue({required String sessionId}) async {
+    final token = await _mustToken();
 
     final res = await http.post(
-      _u('/cs/call/voice/enqueue/$sessionId'),
+      _u('/api/call/voice/enqueue/$sessionId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
     );
 
-    // 🔍 ② 실제 전송된 Authorization / 응답 확인
-    print("📌 sentAuth=${'Bearer ${token ?? ''}'.substring(0, 30)}...");
-    print("📌 status=${res.statusCode} body=${utf8.decode(res.bodyBytes)}");
+    final body = utf8.decode(res.bodyBytes);
+    print("📌 [enqueue] status=${res.statusCode} body=$body");
 
     _ensureOk(res, 'enqueue');
-    return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    return jsonDecode(body) as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> end({required String sessionId}) async {
-    final token = await _tokenStorage.readToken();
-    if (token == null || token.isEmpty) {
-      throw Exception('토큰 없음: 로그인 필요');
-    }
+  /// ✅ status 조회 (WAITING / ACCEPTED / ENDED)
+  Future<Map<String, dynamic>> status({required String sessionId}) async {
+    final token = await _mustToken();
 
-    final res = await http.post(
-      _u('/cs/call/voice/$sessionId/end'),
+    final res = await http.get(
+      _u('/api/call/voice/$sessionId/status'),
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
     );
 
-    _ensureOk(res, 'end');
-    final body = utf8.decode(res.bodyBytes).trim();
-    return body.isEmpty ? {'ok': true} : (jsonDecode(body) as Map<String, dynamic>);
+    final body = utf8.decode(res.bodyBytes);
+    print("📌 [status] status=${res.statusCode} body=$body");
+
+    _ensureOk(res, 'status');
+    return jsonDecode(body) as Map<String, dynamic>;
   }
 
-  Future<List<dynamic>> waiting() async {
-    final token = await _tokenStorage.readToken();
-    if (token == null || token.isEmpty) {
-      throw Exception('토큰 없음: 로그인 필요');
-    }
+  /// ✅ 고객 종료는 /api/call/{sessionId}/end (너가 만든 CallEndController)
+  Future<Map<String, dynamic>> end({required String sessionId, String reason = ''}) async {
+    final token = await _mustToken();
 
-    final res = await http.get(
-      _u('/cs/call/voice/waiting'),
-      headers: {'Authorization': 'Bearer $token'},
+    final res = await http.post(
+      _u('/api/call/$sessionId/end'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'reason': reason}),
     );
 
-    _ensureOk(res, 'waiting');
-    return jsonDecode(utf8.decode(res.bodyBytes)) as List<dynamic>;
+    final body = utf8.decode(res.bodyBytes);
+    print("📌 [end] status=${res.statusCode} body=$body");
+
+    _ensureOk(res, 'end');
+    return body.trim().isEmpty ? {'ok': true} : (jsonDecode(body) as Map<String, dynamic>);
   }
 
   void _ensureOk(http.Response res, String where) {
     if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception('$where failed: ${res.statusCode} ${res.body}');
+      throw Exception('$where failed: ${res.statusCode} ${utf8.decode(res.bodyBytes)}');
     }
   }
 }

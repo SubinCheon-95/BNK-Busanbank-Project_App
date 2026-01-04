@@ -77,6 +77,13 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('로그인 실패: $err')),
         );
+        // 2026/01/04 - 로그인 실패 시 모달 추가 - 작성자: 오서정
+        if (!mounted) return;
+
+        _showLoginFailDialog(
+          context,
+          '아이디 또는 비밀번호가 일치하지 않습니다.\n다시 확인해 주세요.',
+        );
       }
     }
   }
@@ -448,6 +455,23 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // 2026/01/04 - 로그인 실패 시 모달 추가 - 작성자: 오서정
+  void _showLoginFailDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('로그인 실패'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
 
 
 }

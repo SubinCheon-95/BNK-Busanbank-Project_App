@@ -7,6 +7,6 @@ class ApiConfig {
   );
 
   static String get baseUrl => 'http://$host:8080/busanbank';
-  static String get wsUrl   => 'ws://$host:8080/busanbank/ws/chat';
+  static String get wsBase  => 'ws://$host:8080/busanbank';
 }
 

@@ -1,14 +1,13 @@
+// 2025/01/04 - 비밀번호 유효성 검사 수정 - 작성자: 오서정
 class Validators {
   /// 아이디 (영문 소문자 시작, 영문+숫자 5~20자)
   static bool isValidUserId(String userId) {
     return RegExp(r'^[a-z]+[a-z0-9]{4,19}$').hasMatch(userId);
   }
 
-  /// 비밀번호 (영문+숫자+특수문자 포함 5~16자)
+  /// 비밀번호 (영문+숫자+특수문자 포함 8~16자)
   static bool isValidPassword(String password) {
-    return RegExp(
-      r'^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&()\-_=+]).{5,16}$',
-    ).hasMatch(password);
+    return RegExp(r'^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&()\-_=+]).{8,16}$',).hasMatch(password);
   }
 
   /// 이름 (한글 2~10자)
@@ -18,9 +17,7 @@ class Validators {
 
   /// 이메일
   static bool isValidEmail(String email) {
-    return RegExp(
-      r'^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$',
-    ).hasMatch(email);
+    return RegExp(r'^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$',).hasMatch(email);
   }
 
   /// 휴대폰 번호 (010-1234-5678)

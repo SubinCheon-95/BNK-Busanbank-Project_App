@@ -159,12 +159,13 @@ class MemberService{
         'hp': hp,
       }),
     );
-
+// 2025/01/04 - 아이디/비밀번호 찾기 실패 시 수정 - 작성자: 오서정
+    final decoded = jsonDecode(utf8.decode(res.bodyBytes));
     if (res.statusCode != 200) {
-      throw Exception(utf8.decode(res.bodyBytes));
+      throw Exception(decoded['message'] ?? '아이디 찾기에 실패했습니다.');
     }
 
-    return jsonDecode(res.body);
+    return decoded;
   }
 
   // 2025/12/18 - 비밀번호 찾기 기능 - 작성자: 오서정
@@ -182,10 +183,18 @@ class MemberService{
         'hp': hp,
       }),
     );
+  // 2025/01/04 - 아이디/비밀번호 찾기 실패 시 수정 - 작성자: 오서정
+    // ✅ 200이면 그냥 성공 (body 없어도 OK)
+    if (res.statusCode == 200) return;
 
-    if (res.statusCode != 200) {
-      throw Exception(jsonDecode(res.body)['message']);
+    // ✅ 실패(400)는 JSON(message) 내려오니까 그때만 decode
+    final bodyStr = utf8.decode(res.bodyBytes).trim();
+    if (bodyStr.isNotEmpty) {
+      final decoded = jsonDecode(bodyStr);
+      throw Exception(decoded['message'] ?? '비밀번호 찾기에 실패했습니다.');
     }
+
+    throw Exception('비밀번호 찾기에 실패했습니다.');
   }
 
   // 2025/12/18 - 비밀번호 재설정 기능 - 작성자: 오서정

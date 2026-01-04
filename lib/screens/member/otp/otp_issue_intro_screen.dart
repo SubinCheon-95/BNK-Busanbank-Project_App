@@ -2,11 +2,13 @@
   날짜: 2025/12/29
   내용: OTP 등록 안내 화면
   이름: 오서정
+  수정: 2025/01/04 - 연결 화면 수정 - 작성자: 오서정
 */
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tkbank/screens/member/otp/otp_register_screen.dart';
+import 'package:tkbank/screens/member/otp/otp_terms_screen.dart';
 import 'package:tkbank/screens/member/pin/pin_register_screen.dart';
 const Color bnkPrimary = Color(0xFF6A1B9A);   // 메인 보라
 const Color bnkPrimarySoft = Color(0xFFF3E5F5); // 연보라 배경
@@ -189,7 +191,7 @@ class _OtpIssueIntroScreenState extends State<OtpIssueIntroScreen> {
                         final result = await Navigator.push<bool>(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const OtpRegisterScreen(),
+                            builder: (_) => const OtpTermsScreen(),
                           ),
                         );
                         if (result == true && mounted) {

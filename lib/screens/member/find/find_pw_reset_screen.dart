@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:tkbank/screens/member/find/find_pw_result_screen.dart';
 import 'package:tkbank/services/member_service.dart';
+import 'package:tkbank/theme/app_colors.dart';
 import 'package:tkbank/utils/validators.dart';
 
 class FindPwResetScreen extends StatefulWidget {
@@ -132,16 +133,37 @@ class _FindPwResetScreenState extends State<FindPwResetScreen>
       backgroundColor: Colors.white,
 
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24), // ✅ 통일
         child: SizedBox(
-          height: 52,
+          height: 56, // ✅ 통일
           child: ElevatedButton(
             onPressed: _changePw,
-            child: const Text('비밀번호 변경'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              disabledBackgroundColor: AppColors.primary.withOpacity(0.3),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text(
+              '비밀번호 변경',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ),
-
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -156,14 +178,6 @@ class _FindPwResetScreenState extends State<FindPwResetScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                /// 🔙 뒤로가기
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new),
-                  onPressed: () => Navigator.pop(context),
-                ),
-
-                const SizedBox(height: 20),
                 const Text(
                   '비밀번호 재설정',
                   style: TextStyle(
@@ -210,16 +224,6 @@ class _FindPwResetScreenState extends State<FindPwResetScreen>
                 ),
                 _error(pwConfirmError),
 
-                const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => FindPwResultScreen()),
-                    );
-                  },
-                  child: const Text('다음 (개발용)'),
-                ),
 
               ],
             ),

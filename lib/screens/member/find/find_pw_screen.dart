@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tkbank/screens/member/find/find_pw_reset_screen.dart';
 import 'package:tkbank/services/member_service.dart';
+import 'package:tkbank/theme/app_colors.dart';
 import 'package:tkbank/utils/formatters/phone_number_formatter.dart';
 import 'package:tkbank/utils/validators.dart';
 
@@ -207,16 +208,37 @@ class _FindPwScreenState extends State<FindPwScreen>
       backgroundColor: Colors.white,
 
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24), // ✅ 통일
         child: SizedBox(
-          height: 52,
+          height: 56, // ✅ 통일
           child: ElevatedButton(
             onPressed: _findPw,
-            child: const Text('비밀번호 재설정'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              disabledBackgroundColor: AppColors.primary.withOpacity(0.3),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text(
+              '비밀번호 재설정',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ),
-
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -231,13 +253,6 @@ class _FindPwScreenState extends State<FindPwScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new),
-                  onPressed: () => Navigator.pop(context),
-                ),
-
-                const SizedBox(height: 20),
                 const Text(
                   '비밀번호 찾기',
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
@@ -269,10 +284,22 @@ class _FindPwScreenState extends State<FindPwScreen>
                         isError: phoneError != null,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    SizedBox(
+                    const SizedBox(width: 8),SizedBox(
                       height: 48,
                       child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isPhoneVerified ? AppColors.gray3 : AppColors.primary,
+                          disabledBackgroundColor: AppColors.gray3,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          elevation: 0,
+                        ),
                         onPressed: isPhoneVerified ? null : _sendCode,
                         child: Text(isPhoneVerified ? '완료' : '인증하기'),
                       ),
@@ -322,16 +349,6 @@ class _FindPwScreenState extends State<FindPwScreen>
                     ),
                   ),
 
-                const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => FindPwResetScreen(userId: '',)),
-                    );
-                  },
-                  child: const Text('다음 (개발용)'),
-                ),
               ],
             ),
 
