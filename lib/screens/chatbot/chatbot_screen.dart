@@ -4,12 +4,17 @@
   작성자: 오서정
 */
 import 'package:flutter/material.dart';
+import 'package:tkbank/config/app_config.dart';
 import 'package:tkbank/main.dart';
 import 'package:tkbank/models/chatbot_message.dart';
+import 'package:tkbank/screens/camera/vision_test_screen.dart';
 import 'package:tkbank/screens/cs/cs_support_screen.dart';
+import 'package:tkbank/screens/event/seed_event_screen.dart';
 import 'package:tkbank/screens/game/game_menu_screen.dart';
 import 'package:tkbank/screens/member/point_history_screen.dart';
+import 'package:tkbank/screens/member/security_center_screen.dart';
 import 'package:tkbank/screens/my_page/my_page_screen.dart';
+import 'package:tkbank/screens/product/interest_calculator_screen.dart';
 import 'package:tkbank/screens/product/news_analysis_screen.dart';
 import 'package:tkbank/screens/product/product_main_screen.dart';
 import 'package:tkbank/services/chatbot_service.dart';
@@ -22,8 +27,6 @@ class ChatbotScreen extends StatefulWidget {
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
-
-  static const String baseUrl = 'http://10.0.2.2:8080/busanbank/api';
 
   bool _showDialogue = false;
   bool _showIntro = true;
@@ -55,7 +58,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     "MOVE_POINT": "포인트로 이동",
     "MOVE_GAME": "금융게임으로 이동",
     "MOVE_CS": "고객센터로 이동",
-    "MOVE_AI": "AI뉴스분석&상품추천로 이동"
+    "MOVE_AI": "AI뉴스분석&상품추천로 이동",
+    "MOVE_INTEREST_CALC": "금리계산기로 이동",
+    "MOVE_SEED_EVENT": "금열매 이벤트로 이동",
+    "MOVE_SECURITY_CENTER": "인증센터로 이동",
+    "MOVE_VISION_EVENT": "로고 인증 이벤트로 이동",
   };
 
   void _handleAction(String code) {
@@ -66,25 +73,28 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           MaterialPageRoute(builder: (_) => const MyPageScreen()),
         );
         break;
-        
+
       case "MOVE_PRODUCT":
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => ProductMainScreen(baseUrl: baseUrl)),
+          MaterialPageRoute(
+              builder: (_) => ProductMainScreen(baseUrl: AppConfig.baseUrl)),
         );
         break;
 
       case "MOVE_POINT":
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => PointHistoryScreen(baseUrl: baseUrl)),
+          MaterialPageRoute(
+              builder: (_) => PointHistoryScreen(baseUrl: AppConfig.baseUrl)),
         );
         break;
 
       case "MOVE_GAME":
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => GameMenuScreen(baseUrl: baseUrl)),
+          MaterialPageRoute(
+              builder: (_) => GameMenuScreen(baseUrl: AppConfig.baseUrl)),
         );
         break;
 
@@ -98,12 +108,33 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       case "MOVE_AI":
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => NewsAnalysisMainScreen(baseUrl: baseUrl),),
+          MaterialPageRoute(builder: (_) =>
+              NewsAnalysisMainScreen(baseUrl: AppConfig.baseUrl),),
         );
         break;
 
+      case "MOVE_INTEREST_CALC":
+        Navigator.push(context, MaterialPageRoute(
+            builder: (_) => const InterestCalculatorScreen()));
+        break;
+
+      case "MOVE_SEED_EVENT":
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const SeedEventScreen()));
+        break;
+
+      case "MOVE_SECURITY_CENTER":
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const SecurityCenterScreen()));
+        break;
+
+      case "MOVE_VISION_EVENT":
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const VisionTestScreen()));
+        break;
     }
-  }
+
+    }
 
   final TextEditingController _controller = TextEditingController();
   final ChatbotService _service = ChatbotService();
@@ -286,7 +317,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "펭귄맨",
+            "딸깍이",
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.blueGrey.shade700,
@@ -360,7 +391,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             child: TextField(
               controller: _controller,
               decoration: const InputDecoration(
-                hintText: "펭귄맨에게 말을 걸어보세요...",
+                hintText: "딸깍이에게 말을 걸어보세요...",
                 border: InputBorder.none,
               ),
               onSubmitted: (_) => _sendMessage(),
@@ -393,7 +424,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "펭귄맨",
+            "딸깍이",
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.blueGrey.shade700,
@@ -401,7 +432,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            "안녕! 나는 딸각은행의 펭귄맨이야 \n반가워!",
+            "안녕! 나는 딸각은행의 딸깍이야 \n반가워!",
             style: TextStyle(fontSize: 15, height: 1.4),
           ),
         ],
