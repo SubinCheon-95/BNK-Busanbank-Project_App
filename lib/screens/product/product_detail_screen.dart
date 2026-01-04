@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tkbank/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/product.dart';
 import '../../models/product_join_request.dart';
@@ -35,111 +36,134 @@ class ProductDetailScreen extends StatelessWidget {
       applyRate: product.baseRate,
     );
 
+    final h = MediaQuery.of(context).size.height;
+    final w = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(product.name),
-        backgroundColor: const Color(0xFF6A1B9A),
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 상품명
-              Text(
-                product.name,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // 설명
-              Text(
-                product.description,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[700],
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 금리 정보
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      _buildInfoRow(
-                        '기본 금리',
-                        '연 ${product.baseRate.toStringAsFixed(2)}%',
-                        Icons.trending_up,
-                        Colors.blue,
-                      ),
-                      const Divider(height: 24),
-                      _buildInfoRow(
-                        '최고 금리',
-                        '연 ${product.maturityRate.toStringAsFixed(2)}%',
-                        Icons.star,
-                        Colors.orange,
-                      ),
-                      const Divider(height: 24),
-                      _buildInfoRow(
-                        '상품 유형',
-                        product.type == "01" ? "예금" : "적금",
-                        Icons.account_balance,
-                        Colors.purple,
-                      ),
-                    ],
+      backgroundColor: AppColors.gray1,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 100, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 상품명 타이틀
+                  Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
+
+                  const SizedBox(height: 10),
+
+                  // 설명
+                  Text(
+                    product.description,
+                    softWrap: true,
+                    textWidthBasis: TextWidthBasis.parent,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.gray5,
+                      height: 1.6,
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // 금리 정보
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          _buildInfoRow(
+                            '기본 금리',
+                            '연 ${product.baseRate.toStringAsFixed(2)}%',
+                            Icons.trending_up,
+                            AppColors.red,
+                          ),
+                          const SizedBox(height: 20),
+                          _dashedDivider(),
+                          const SizedBox(height: 20),
+                          _buildInfoRow(
+                            '최고 금리',
+                            '연 ${product.maturityRate.toStringAsFixed(2)}%',
+                            Icons.star,
+                            AppColors.yellow,
+                          ),
+                          const SizedBox(height: 20),
+                          _dashedDivider(),
+                          const SizedBox(height: 20),
+                          _buildInfoRow(
+                            '상품 유형',
+                            product.type == "01" ? "예금" : "적금",
+                            Icons.account_balance,
+                            AppColors.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 100),
+                ],
               ),
-              const SizedBox(height: 100),
-            ],
+            ),
           ),
-        ),
+
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 8,
+            child: IconButton(
+              icon: const Icon(
+                Icons.chevron_left,
+                color: AppColors.black,
+                size: 34,
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
       ),
 
       // 하단 고정 버튼
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 25, 20, 20),
         decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+          color: AppColors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
         child: SafeArea(
           child: SizedBox(
             width: double.infinity,
-            height: 56,
+            height: h * 0.09,
             child: ElevatedButton(
               onPressed: () => _handleJoin(context, joinReq),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6A1B9A),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 elevation: 0,
               ),
               child: const Text(
                 '가입 신청하기',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
@@ -187,19 +211,19 @@ class ProductDetailScreen extends StatelessWidget {
     );
   }
 
-  // ✅ 로그인 체크 후 가입 진행!
+  // 로그인 체크 후 가입 진행
   void _handleJoin(BuildContext context, ProductJoinRequest joinReq) {
     final authProvider = context.read<AuthProvider>();
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ✅ 1. joinTypes 체크
+    // 1. joinTypes 체크
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     final joinTypes = product.joinTypes ?? [];
 
     print('📌 상품 가입 타입: $joinTypes');
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ✅ 2. MOBILE 가입 불가능한 경우 → 영업점 지도로
+    // 2. MOBILE 가입 불가능한 경우 → 영업점 지도로
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     if (!joinTypes.contains('MOBILE')) {
       print('📌 MOBILE 가입 불가 → 영업점 지도로 이동');
@@ -227,7 +251,7 @@ class ProductDetailScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(dialogContext);
 
-                // ✅ 영업점 지도로 이동
+                // 영업점 지도로 이동
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -246,7 +270,7 @@ class ProductDetailScreen extends StatelessWidget {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ✅ 3. MOBILE 가입 가능 → 로그인 체크
+    // 3. MOBILE 가입 가능 → 로그인 체크
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     print('📌 MOBILE 가입 가능 → 로그인 체크');
 
@@ -281,14 +305,14 @@ class ProductDetailScreen extends StatelessWidget {
         ),
       );
     } else {
-      // ✅ 4. 로그인 됨 → 가입 진행
+      // 4. 로그인 됨 → 가입 진행
       print('📌 로그인 완료 → 가입 진행');
       _navigateToJoin(context, joinReq);
     }
   }
 
   void _navigateToJoin(BuildContext context, ProductJoinRequest joinReq) {
-    // ✅ STEP1으로 이동
+    // STEP1으로 이동
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -299,4 +323,22 @@ class ProductDetailScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _dashedDivider() {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      return Row(
+        children: List.generate(
+          (constraints.maxWidth / 6).floor(),
+              (index) => Expanded(
+            child: Container(
+              height: 1,
+              color: index.isEven ? Colors.grey[300] : Colors.transparent,
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }

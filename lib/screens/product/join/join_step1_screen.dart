@@ -1,16 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:tkbank/theme/app_colors.dart';
 import '../../../models/product_join_request.dart';
 import '../../../models/product_terms.dart';
 import '../../../services/product_join_service.dart';
 import 'join_step2_screen.dart';
-
-/// 🔥 STEP 1: 약관 동의
-///
-/// 기능:
-/// - DB에서 약관 조회
-/// - 필수/선택 약관 구분
-/// - 전체 동의 토글
-/// - 약관 상세 보기
 
 class JoinStep1Screen extends StatefulWidget {
   final String baseUrl;
@@ -43,16 +36,6 @@ class _JoinStep1ScreenState extends State<JoinStep1Screen> {
   Future<void> _loadTerms() async {
     try {
       final terms = await _joinService.getTerms(widget.request.productNo!);
-
-      // ✅ 디버깅 로그 추가!
-      print('📋 약관 조회 완료: ${terms.length}개');
-      for (var term in terms) {
-        print('   - termsId: ${term.termId}');
-        print('   - termsTitle: ${term.termTitle}');
-        print('   - termsContent 길이: ${term.termContent.length}');
-        print('   - isRequired: ${term.isRequired}');
-      }
-
       setState(() {
         _terms = terms;
         for (final term in terms) {
@@ -61,24 +44,17 @@ class _JoinStep1ScreenState extends State<JoinStep1Screen> {
         _loading = false;
       });
     } catch (e) {
-      print('❌ 약관 조회 실패: $e');
       setState(() => _loading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('약관 조회 실패: $e')),
-        );
-      }
     }
   }
 
-  bool get _allAgreed {
-    if (_terms.isEmpty) return false;
-    return _terms.every((t) => _agreed[t.termId] == true);
-  }
+  bool get _allAgreed =>
+      _terms.isNotEmpty && _terms.every((t) => _agreed[t.termId] == true);
 
   bool _areRequiredTermsAgreed() {
-    final required = _terms.where((t) => t.isRequired);
-    return required.every((t) => _agreed[t.termId] == true);
+    return _terms
+        .where((t) => t.isRequired)
+        .every((t) => _agreed[t.termId] == true);
   }
 
   void _toggleAll(bool? value) {
@@ -90,28 +66,19 @@ class _JoinStep1ScreenState extends State<JoinStep1Screen> {
   }
 
   void _goNext() {
-    if (!_areRequiredTermsAgreed()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('필수 약관에 모두 동의해주세요.')),
-      );
-      return;
-    }
+    if (!_areRequiredTermsAgreed()) return;
 
     final agreedIds = _agreed.entries
         .where((e) => e.value)
         .map((e) => e.key)
         .toList();
 
-    final updated = widget.request.copyWith(
-      agreedTermIds: agreedIds,
-    );
-
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => JoinStep2Screen(
           baseUrl: widget.baseUrl,
-          request: updated,
+          request: widget.request.copyWith(agreedTermIds: agreedIds),
         ),
       ),
     );
@@ -121,257 +88,337 @@ class _JoinStep1ScreenState extends State<JoinStep1Screen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.9,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (_, controller) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          term.termTitle,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const Divider(),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: controller,
-                      child: Text(
-                        term.termContent.isNotEmpty
-                            ? term.termContent
-                            : '약관 내용이 없습니다.',  // ✅ null 체크!
-                        style: const TextStyle(fontSize: 14, height: 1.5),
-                      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    term.termTitle,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const Divider(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Text(
+                  term.termContent.isNotEmpty
+                      ? term.termContent
+                      : '약관 내용이 없습니다.',
+                  style: const TextStyle(fontSize: 14, height: 1.6),
+                ),
               ),
-            );
-          },
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('STEP 1/4 - 약관 동의'),
-      ),
-      body: Column(
+      backgroundColor: AppColors.gray1,
+      body: Stack(
         children: [
-          // 진행 바
-          _buildProgressBar(),
+          // 본문
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 80),
 
-          // 상품명
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              widget.request.productName,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-
-          // 약관 목록
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _terms.isEmpty
-                ? const Center(
-              child: Text(
-                '약관 정보가 없습니다.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            )
-                : ListView(
-              children: [
-                // ✅ 전체 동의 (유지!)
-                Container(
-                  color: Colors.grey[100],
-                  child: CheckboxListTile(
-                    value: _allAgreed,
-                    onChanged: _toggleAll,
-                    title: const Text(
-                      '전체 동의',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // 왼쪽 타이틀
+                    const Expanded(
+                      child: Text(
+                        '약관 동의',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
-                    controlAffinity:
-                    ListTileControlAffinity.leading,
+
+                    // 오른쪽 STEP 표시
+                    _buildMiniStepIndicator(currentStep: 1),
+                  ],
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                child: Text(
+                  widget.request.productName,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.gray5,
                   ),
                 ),
+              ),
 
-                const Divider(height: 1),
-
-                // ✅ 개별 약관 (수정!)
-                ..._terms.map((term) {
-                  return Column(
-                    children: [
-                      CheckboxListTile(
-                        value: _agreed[term.termId],
-                        onChanged: (v) {
-                          setState(() {
-                            _agreed[term.termId] = v ?? false;
-                          });
-                        },
-                        title: Row(
+              // 약관 리스트
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView(
+                  children: [
+                    // 전체 동의
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Row(
                           children: [
-                            // ✅ 필수/선택 표시
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: term.isRequired
-                                    ? Colors.red
-                                    : Colors.grey,
-                                borderRadius:
-                                BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                term.isRequired ? '필수' : '선택',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            Checkbox(
+                              value: _allAgreed,
+                              onChanged: _toggleAll,
+
+                              activeColor: AppColors.primary,
+                              checkColor: AppColors.white,
+                              side: const BorderSide(
+                                color: AppColors.gray4,
+                                width: 1.5,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            // ✅ 약관 제목 표시 (핵심 수정!)
-                            Expanded(
+                            const SizedBox(width: 10),
+                            const Expanded(
                               child: Text(
-                                term.termTitle,  // ← 이게 중요!
-                                style: const TextStyle(fontSize: 14),
-                                overflow: TextOverflow.ellipsis,
+                                '전체 동의',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        secondary: IconButton(
-                          icon: const Icon(
-                            Icons.description_outlined,
-                            size: 20,
-                          ),
-                          onPressed: () => _showTermDetail(term),
-                        ),
-                        controlAffinity:
-                        ListTileControlAffinity.leading,
                       ),
-                      const Divider(height: 1),
-                    ],
-                  );
-                }).toList(),
-              ],
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    // 개별 약관
+                    Container(
+                      margin:
+                      const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Column(
+                          children: _terms
+                              .asMap()
+                              .entries
+                              .map((entry) {
+                            final index = entry.key;
+                            final term = entry.value;
+
+                            return Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Checkbox(
+                                      value:
+                                      _agreed[term.termId],
+                                      onChanged: (v) {
+                                        setState(() {
+                                          _agreed[term.termId] =
+                                              v ?? false;
+                                        });
+                                      },
+
+                                      activeColor: AppColors.primary,
+                                      checkColor: AppColors.white,
+                                      side: const BorderSide(
+                                        color: AppColors.gray4,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Container(
+                                      padding:
+                                      const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: term.isRequired
+                                            ? AppColors.red
+                                            : AppColors.gray4,
+                                        borderRadius:
+                                        BorderRadius.circular(5),
+                                      ),
+                                      child: Text(
+                                        term.isRequired
+                                            ? '필수'
+                                            : '선택',
+                                        style: const TextStyle(
+                                          color: AppColors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        term.termTitle,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        overflow:
+                                        TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.description_outlined,
+                                        size: 22,
+                                      ),
+                                      onPressed: () =>
+                                          _showTermDetail(term),
+                                    ),
+                                  ],
+                                ),
+                                if (index !=
+                                    _terms.length - 1) ...[
+                                  const SizedBox(height: 15),
+                                  _dashedDivider(),
+                                  const SizedBox(height: 15),
+                                ],
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // 뒤로가기 버튼
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 8,
+            child: IconButton(
+              icon: const Icon(
+                Icons.chevron_left,
+                size: 34,
+                color: AppColors.black,
+              ),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
-
-          // 하단 버튼
-          _buildBottomButton(),
         ],
       ),
-    );
-  }
 
-  Widget _buildProgressBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          _buildStep(1, true),
-          _buildLine(false),
-          _buildStep(2, false),
-          _buildLine(false),
-          _buildStep(3, false),
-          _buildLine(false),
-          _buildStep(4, false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStep(int step, bool active) {
-    return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: active ? Theme.of(context).primaryColor : Colors.grey[300],
-      ),
-      child: Center(
-        child: Text(
-          '$step',
-          style: TextStyle(
-            color: active ? Colors.white : Colors.grey[600],
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+      // 하단 버튼
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(20, 25, 20, 20),
+        decoration: const BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: h * 0.09,
+            child: ElevatedButton(
+              onPressed: _areRequiredTermsAgreed() ? _goNext : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+                disabledBackgroundColor:
+                AppColors.gray4.withOpacity(0.3),
+              ),
+              child: const Text(
+                '다음',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLine(bool active) {
-    return Expanded(
-      child: Container(
-        height: 2,
-        color: active ? Theme.of(context).primaryColor : Colors.grey[300],
+  Widget _buildMiniStepIndicator({required int currentStep}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$currentStep / 4',
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: AppColors.primary,
+        ),
       ),
     );
   }
 
-  Widget _buildBottomButton() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
+  // 점선 Divider
+  Widget _dashedDivider() {
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        return Row(
+          children: List.generate(
+            (constraints.maxWidth / 6).floor(),
+                (index) =>
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color:
+                    index.isEven ? AppColors.gray4 : Colors.transparent,
+                  ),
+                ),
           ),
-        ],
-      ),
-      child: SafeArea(
-        child: ElevatedButton(
-          onPressed: _areRequiredTermsAgreed() ? _goNext : null,
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 56),
-          ),
-          child: const Text(
-            '다음 (STEP 2)',
-            style: TextStyle(fontSize: 18),
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

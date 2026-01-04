@@ -126,7 +126,7 @@ class _EasyMenuBarState extends State<EasyMenuBar> {
           ),
         ),
 
-        // 👇 가로 스크롤 카드
+        // 가로 스크롤 카드
         SizedBox(
           height: 260,
           child: ListView.builder(

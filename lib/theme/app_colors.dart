@@ -17,6 +17,7 @@ class AppColors {
   static const red    = Color(0xFFFF7473);
   static const yellow = Color(0xFFFFC952);
   static const green  = Color(0xFF67D5B5);
+  static const yellowGreen  = Color(0xFFB0E75E);
 
   // Grayscale
   static const gray2 = Color(0xFFF5F5F5);

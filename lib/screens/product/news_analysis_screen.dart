@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../services/flutter_api_service.dart';
 import '../../models/news_analysis_result.dart';
 import 'news_result_screen.dart';
+import 'package:tkbank/theme/app_colors.dart';
 
 class NewsAnalysisMainScreen extends StatefulWidget {
   final String baseUrl;
@@ -37,7 +38,7 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
     super.dispose();
   }
 
-  /// URL 기반 분석
+  // URL 기반 분석
   Future<void> _analyzeUrl() async {
     final url = _urlController.text.trim();
 
@@ -75,7 +76,7 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
     }
   }
 
-  /// 이미지 선택
+  // 이미지 선택
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -95,7 +96,7 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
     }
   }
 
-  /// 이미지 기반 분석
+  // 이미지 기반 분석
   Future<void> _analyzeImage() async {
     if (_selectedImage == null) {
       _showError('이미지를 선택해주세요.');
@@ -130,7 +131,7 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.red,
       ),
     );
   }
@@ -138,98 +139,138 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('AI 뉴스 분석'),
-        backgroundColor: const Color(0xFF6A1B9A),
-        foregroundColor: Colors.white,
-      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 🎨 헤더 (웹 버전 그대로!)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(40),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF6A1B9A), Color(0xFF9C27B0)],
+
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // 상단 이미지
+                Container(
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height * 0.35,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/ai_main.png'),
+                      fit: BoxFit.cover,
+                      colorFilter: ColorFilter.mode(
+                        Colors.black38,
+                        BlendMode.darken,
+                      ),
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Stack(
+                      children: [
+                        // 뒤로가기 버튼
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.chevron_left,
+                              color: AppColors.white,
+                              size: 34,
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+
+                        // 중앙 타이틀 & 카피
+                        Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              top: MediaQuery.of(context).size.height * 0.03,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Text(
+                                  '기사/콘텐츠 분석 (AI)',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.white,
+                                    height: 1.35,
+                                  ),
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  'URL을 입력하고 "AI 분석" 버튼을 누르면\n기사 요약 / 키워드 / 추천 상품을 제공합니다',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.white,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      size: 64,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    '기사/콘텐츠 분석 (AI)',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+
+                // 아래 콘텐츠와 연결되는 라운드 영역
+                Positioned(
+                  bottom: MediaQuery.of(context).size.height * -0.05,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.1,
+                    decoration: const BoxDecoration(
+                      color: AppColors.gray1,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(25),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'URL을 입력하고 "AI 분석" 버튼을 누르면',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    '기사 요약 / 키워드 / 감성 / 추천 상품을 제공합니다',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
 
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Column(
                 children: [
                   // 📝 URL 입력 섹션
-                  Card(
-                    elevation: 8,
-                    shadowColor: Colors.blue.withOpacity(0.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.black.withOpacity(0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 0), // ← 아래로 떨어지는 그림자
+                        ),
+                      ],
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(28),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                    colors: [Colors.blue[400]!, Colors.blue[600]!],
+                                    colors: [AppColors.blue, Colors.blue[600]!],
                                   ),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(
                                   Icons.link,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   size: 28,
                                 ),
                               ),
@@ -243,14 +284,14 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
                           TextField(
                             controller: _urlController,
                             decoration: InputDecoration(
                               hintText: '뉴스 기사 URL을 입력하세요',
                               hintStyle: TextStyle(color: Colors.grey[400]),
                               filled: true,
-                              fillColor: Colors.grey[50],
+                              fillColor: AppColors.gray1,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
@@ -258,11 +299,11 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: const BorderSide(
-                                  color: Colors.blue,
+                                  color: AppColors.blue,
                                   width: 2,
                                 ),
                               ),
-                              prefixIcon: const Icon(Icons.web, color: Colors.blue),
+                              prefixIcon: const Icon(Icons.web, color: AppColors.blue),
                               contentPadding: const EdgeInsets.all(20),
                             ),
                             style: const TextStyle(fontSize: 16),
@@ -287,16 +328,16 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
                                 _analyzing ? '분석 중...' : 'AI 분석',
                                 style: const TextStyle(
                                   fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
+                                backgroundColor: AppColors.blue,
+                                foregroundColor: AppColors.white,
+                                elevation: 0, // ← 반드시 0
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                elevation: 4,
                               ),
                             ),
                           ),
@@ -305,50 +346,37 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 32),
-
-                  // 구분선
-                  Row(
-                    children: [
-                      Expanded(child: Divider(color: Colors.grey[300], thickness: 2)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Text(
-                          '또는',
-                          style: TextStyle(
-                            color: Colors.grey[700],
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
-                      Expanded(child: Divider(color: Colors.grey[300], thickness: 2)),
-                    ],
-                  ),
-
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
+                  _dashedDivider(),
+                  const SizedBox(height: 40),
 
                   // 📷 이미지 업로드 섹션
-                  Card(
-                    elevation: 8,
-                    shadowColor: Colors.purple.withOpacity(0.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.black.withOpacity(0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 0), // 아래로 떨어지는 그림자
+                        ),
+                      ],
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(28),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                    colors: [Colors.purple[400]!, Colors.purple[600]!],
+                                    colors: [AppColors.pink, AppColors.primary],
                                   ),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(
                                   Icons.image,
@@ -366,6 +394,7 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
                               ),
                             ],
                           ),
+
                           const SizedBox(height: 24),
 
                           // 이미지 선택 버튼
@@ -409,7 +438,7 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
                                     ),
                                     foregroundColor: Colors.purple,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
                                 ),
@@ -420,7 +449,7 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
                           if (_selectedImage != null) ...[
                             const SizedBox(height: 24),
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(10),
                               child: Image.file(
                                 _selectedImage!,
                                 height: 200,
@@ -429,9 +458,14 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            SizedBox(
+
+                            // 분석 버튼
+                            Container(
                               width: double.infinity,
                               height: 60,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               child: ElevatedButton.icon(
                                 onPressed: _analyzing ? null : _analyzeImage,
                                 icon: _analyzing
@@ -448,16 +482,16 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
                                   _analyzing ? '분석 중...' : 'AI 분석',
                                   style: const TextStyle(
                                     fontSize: 20,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.purple,
-                                  foregroundColor: Colors.white,
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: AppColors.white,
+                                  elevation: 0,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  elevation: 4,
                                 ),
                               ),
                             ),
@@ -472,6 +506,27 @@ class _NewsAnalysisMainScreenState extends State<NewsAnalysisMainScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  // 점선 Divider
+  Widget _dashedDivider() {
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        return Row(
+          children: List.generate(
+            (constraints.maxWidth / 6).floor(),
+                (index) =>
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color:
+                    index.isEven ? AppColors.gray4 : Colors.transparent,
+                  ),
+                ),
+          ),
+        );
+      },
     );
   }
 }

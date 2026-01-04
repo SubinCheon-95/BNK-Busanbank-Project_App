@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tkbank/theme/app_colors.dart';
 
 /// 💰 금리계산기 화면
 class InterestCalculatorScreen extends StatefulWidget {
@@ -75,119 +76,138 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('금리 계산기'),
-        centerTitle: true,
-        backgroundColor: const Color(0xFF6A1B9A),
-        foregroundColor: Colors.white,
+      backgroundColor: Color.alphaBlend(
+        AppColors.white.withOpacity(0.6),
+        AppColors.primary,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 상품 유형 선택
-            const Text(
-              '상품 유형',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+
+      body: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 80),
+
+              // 타이틀
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Semantics(
+                  label: '금리계산기',
+                  child: Image.asset(
+                    'assets/images/title_calculator.png',
+                    height: 120,
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTypeButton('예금', '01'),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildTypeButton('적금', '02'),
-                ),
-              ],
-            ),
 
-            const SizedBox(height: 32),
-
-            // 가입금액 / 월 납입액
-            _buildInputField(
-              label: _productType == '01' ? '가입 금액' : '월 납입액',
-              controller: _principalController,
-              hintText: _productType == '01' ? '1,000,000' : '100,000',
-              suffix: '원',
-            ),
-
-            const SizedBox(height: 24),
-
-            // 연 이율
-            _buildInputField(
-              label: '연 이율',
-              controller: _rateController,
-              hintText: '3.5',
-              suffix: '%',
-            ),
-
-            const SizedBox(height: 24),
-
-            // 가입 기간
-            _buildInputField(
-              label: '가입 기간',
-              controller: _termController,
-              hintText: '12',
-              suffix: '개월',
-            ),
-
-            const SizedBox(height: 32),
-
-            // 계산 버튼
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _calculate,
-                    icon: const Icon(Icons.calculate),
-                    label: const Text(
-                      '계산하기',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6A1B9A),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+              // 본문 (26/01/04_수빈)
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  children: [
+                    // 타이틀
+                    _sectionCard(
+                      title: const Text(
+                        '상품 유형',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.black,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(child: _buildTypeButton('예금', '01')),
+                          const SizedBox(width: 12),
+                          Expanded(child: _buildTypeButton('적금', '02')),
+                        ],
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: _reset,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('초기화'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[300],
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
+
+                    const SizedBox(height: 20),
+
+                    _sectionCard(
+                      title: Text(
+                        _productType == '01' ? '가입 금액' : '월 납입액',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      child: _buildInputField(
+                        label: '',
+                        controller: _principalController,
+                        hintText: _productType == '01' ? '직접 입력(원)' : '직접 입력(원)',
+                        suffix: '원',
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+
+                    const SizedBox(height: 20),
+
+                    // 연 이율
+                    _sectionCard(
+                      title: const Text(
+                        '연 이율',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      child: _buildInputField(
+                        label: '',
+                        controller: _rateController,
+                        hintText: '연 이율(%)',
+                        suffix: '%',
+                      ),
                     ),
-                  ),
+
+                    const SizedBox(height: 20),
+
+                    // 가입 기간
+                    _sectionCard(
+                      title: const Text(
+                        '가입 기간',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      child: _buildInputField(
+                        label: '',
+                        controller: _termController,
+                        hintText: '가입 기간(개월)',
+                        suffix: '개월',
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // 결과
+                    if (_totalAmount > 0) _buildResultSection(),
+                  ],
                 ),
-              ],
+              ),
+            ],
+          ),
+
+          // 뒤로가기 버튼
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 8,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_left, size: 34),
+              onPressed: () => Navigator.pop(context),
+              color: AppColors.gray1,
             ),
-
-            const SizedBox(height: 32),
-
-            // 결과
-            if (_totalAmount > 0) _buildResultSection(),
-          ],
-        ),
+          ),
+        ],
       ),
+
+      // 하단 CTA
+      bottomNavigationBar: _buildBottomCTA(context),
     );
   }
 
@@ -201,13 +221,13 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
         });
       },
       style: OutlinedButton.styleFrom(
-        backgroundColor: isSelected ? const Color(0xFF6A1B9A) : Colors.white,
-        foregroundColor: isSelected ? Colors.white : const Color(0xFF6A1B9A),
+        backgroundColor: isSelected ? AppColors.primary : AppColors.white,
+        foregroundColor: isSelected ? AppColors.white : AppColors.primary,
         side: BorderSide(
           color: const Color(0xFF6A1B9A),
           width: isSelected ? 2 : 1,
         ),
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 18),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -215,101 +235,76 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 16,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          fontSize: 18,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
         ),
       ),
     );
   }
 
+  // 입력창 UI 수정 (26/01/04_수빈)
   Widget _buildInputField({
     required String label,
     required TextEditingController controller,
     required String hintText,
     required String suffix,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),  // ✅ 소수점 허용!
-          inputFormatters: suffix == '%'
-              ? [
-            // ✅ 금리는 숫자 + 소수점만 허용
-            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-          ]
-              : [
-            // ✅ 금액/기간은 숫자만 허용
-            FilteringTextInputFormatter.digitsOnly,
-          ],
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: const TextStyle(
-              color: Colors.black26,  // ✅ 더 연하게!
-              fontWeight: FontWeight.normal,
-            ),
-            suffixText: suffix,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-          ),
-          onChanged: (value) {
-            // 천 단위 콤마 자동 추가 (금액만)
-            if (suffix == '원' && value.isNotEmpty) {
-              final number = int.tryParse(value.replaceAll(',', ''));
-              if (number != null) {
-                final formatted = _formatNumber(number.toDouble());
-                controller.value = TextEditingValue(
-                  text: formatted,
-                  selection: TextSelection.collapsed(offset: formatted.length),
-                );
-              }
-            }
-          },
-        ),
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true), // 소수점 허용
+      inputFormatters: suffix == '%'
+          ? [
+        // 금리는 숫자 + 소수점만 허용
+        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+      ]
+          : [
+        // 금액/기간은 숫자만 허용
+        FilteringTextInputFormatter.digitsOnly,
       ],
+      decoration: _inputDecoration(
+        label: hintText.isNotEmpty ? hintText : label,
+        suffix: suffix,
+      ),
+      onChanged: (value) {
+        // 천 단위 콤마 자동 추가 (금액만)
+        if (suffix == '원' && value.isNotEmpty) {
+          final number = int.tryParse(value.replaceAll(',', ''));
+          if (number != null) {
+            final formatted = _formatNumber(number.toDouble());
+            controller.value = TextEditingValue(
+              text: formatted,
+              selection: TextSelection.collapsed(offset: formatted.length),
+            );
+          }
+        }
+      },
     );
   }
 
+  // 결과창 UI 수정 (26/01/04_수빈)
   Widget _buildResultSection() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
+          colors: [AppColors.pink, AppColors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
         ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.purple.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(
+          color: AppColors.white,
+          width: 2,
+        ),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         children: [
           const Text(
             '계산 결과',
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: AppColors.white,
             ),
           ),
           const SizedBox(height: 20),
@@ -322,7 +317,9 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
             ),
           ),
 
-          const Divider(color: Colors.white30, height: 32),
+          const SizedBox(height: 20),
+          _dashedDivider(),
+          const SizedBox(height: 20),
 
           _buildResultRow(
             label: '예상 이자',
@@ -330,7 +327,9 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
             isHighlight: true,
           ),
 
-          const Divider(color: Colors.white30, height: 32),
+          const SizedBox(height: 20),
+          _dashedDivider(),
+          const SizedBox(height: 20),
 
           _buildResultRow(
             label: '만기 금액',
@@ -355,7 +354,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
           label,
           style: TextStyle(
             fontSize: isTotal ? 18 : 16,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
             color: Colors.white,
           ),
         ),
@@ -363,13 +362,178 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
           '$value원',
           style: TextStyle(
             fontSize: isTotal ? 24 : 18,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w700,
             color: isHighlight
-                ? Colors.yellow
-                : (isTotal ? Colors.white : Colors.white),
+                ? AppColors.yellowGreen
+                : (isTotal ? AppColors.white : AppColors.white),
           ),
         ),
       ],
+    );
+  }
+
+  // 공통 섹션 카드 추가 (26/01/04_수빈)
+  Widget _sectionCard({
+    required Widget title,
+    required Widget child,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          title,
+          const SizedBox(height: 15),
+          child,
+        ],
+      ),
+    );
+  }
+
+  // 점선 Divider 추가 (26/01/04_수빈)
+  Widget _dashedDivider() {
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        return Row(
+          children: List.generate(
+            (constraints.maxWidth / 6).floor(),
+                (index) => Expanded(
+              child: Container(
+                height: 1,
+                color: index.isEven ? AppColors.white : Colors.transparent,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 입력창/선택창 공용 UI 추가 (26/01/04_수빈)
+  InputDecoration _inputDecoration({
+    required String label,
+    String? suffix,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      suffixText: suffix,
+      labelStyle: const TextStyle(
+        color: AppColors.gray5,
+        fontWeight: FontWeight.w500,
+      ),
+      floatingLabelStyle: const TextStyle(
+        color: AppColors.primary,
+        fontWeight: FontWeight.w700,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(
+          color: AppColors.gray4,
+          width: 1,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(
+          color: AppColors.primary,
+          width: 2,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(
+          color: AppColors.red,
+          width: 1.5,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(
+          color: AppColors.red,
+          width: 2,
+        ),
+      ),
+    );
+  }
+
+  // 계산하기/초기화 버튼 추가 (26/01/04_수빈)
+  Widget _buildBottomCTA(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
+    final btnHeight = h * 0.09;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 25, 20, 20),
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          height: btnHeight,
+          child: Row(
+            children: [
+              // 왼쪽(보조): 초기화
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _reset,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.gray4,
+                    side: BorderSide(color: AppColors.gray4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(double.infinity, btnHeight),
+                  ),
+                  child: const Text(
+                    '초기화',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // 오른쪽(메인): 계산하기
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _calculate,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    disabledBackgroundColor: AppColors.gray4.withOpacity(0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(double.infinity, btnHeight),
+                  ),
+                  child: const Text(
+                    '계산하기',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

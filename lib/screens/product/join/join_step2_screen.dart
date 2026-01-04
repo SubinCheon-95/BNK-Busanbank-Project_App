@@ -5,10 +5,9 @@ import '../../../models/branch.dart';
 import '../../../models/employee.dart';
 import '../../../services/flutter_api_service.dart';
 import 'join_step3_screen.dart';
-import '../../../services/token_storage_service.dart';
-import '../../member/login_screen.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
+import 'package:tkbank/theme/app_colors.dart';
 
 /// 🔥 STEP 2: 지점/직원 선택, 금액/기간 입력
 ///
@@ -19,7 +18,7 @@ import '../../../providers/auth_provider.dart';
 /// - 가입 금액 선택 (ChoiceChip + 직접 입력)
 /// - 가입 기간 선택 (ChoiceChip + 직접 입력)
 /// - 알림 설정 (SMS/Email)
-///
+
 class JoinStep2Screen extends StatefulWidget {
   final String baseUrl;
   final ProductJoinRequest request;
@@ -63,10 +62,7 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
     super.initState();
     _apiService = FlutterApiService(baseUrl: widget.baseUrl);
 
-    // ✅ STEP 2부터 로그인 체크! 있던거 삭제합니다!
-    // _checkLoginAndLoadData();
-
-    // ✅ 지점 목록 로드!
+    // 지점 목록 로드
     _loadBranches();
 
     // 기존 값 복원
@@ -90,73 +86,15 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
     _smsNotify = req.notificationSms == 'Y';
     _emailNotify = req.notificationEmail == 'Y';
 
-    // ✅ 기존 선택값 복원
+    // 기존 선택값 복원
     _selectedBranchId = req.branchId;
     _selectedEmpId = req.empId;
 
-    // ✅ 지점이 이미 선택되어 있으면 직원 로드
+    // 지점이 이미 선택되어 있으면 직원 로드
     if (_selectedBranchId != null) {
       _loadEmployees(_selectedBranchId!);
     }
   }
-
-  /// ✅ 로그인 체크 및 데이터 로드 모두 주석처리!!!
-  // Future<void> _checkLoginAndLoadData() async {
-  //   final token = await TokenStorageService().readToken();
-  //
-  //   if (token == null) {
-  //     // ❌ 로그인 안 됨
-  //     if (!mounted) return;  // ✅ mounted 체크!
-  //
-  //     // ✅ 다이얼로그 표시 후 결과 대기
-  //     final result = await showDialog<bool>(
-  //       context: context,
-  //       barrierDismissible: false,
-  //       builder: (dialogContext) => AlertDialog(  // ✅ dialogContext 사용!
-  //         title: const Row(
-  //           children: [
-  //             Icon(Icons.lock, color: Colors.orange, size: 28),
-  //             SizedBox(width: 12),
-  //             Text('로그인 필요'),
-  //           ],
-  //         ),
-  //         content: const Text('상품 가입을 진행하려면 로그인이 필요합니다.'),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.pop(dialogContext, true);  // ✅ true 반환 (로그인하기)
-  //             },
-  //             child: const Text('로그인하기'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.pop(dialogContext, false);  // ✅ false 반환 (취소)
-  //             },
-  //             child: const Text('취소'),
-  //           ),
-  //         ],
-  //       ),
-  //     );
-  //
-  //     if (!mounted) return;  // ✅ mounted 체크!
-  //
-  //     // ✅ 결과에 따라 처리
-  //     if (result == true) {
-  //       // 로그인하기 선택
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => const LoginScreen()),
-  //       );
-  //     } else {
-  //       // 취소 선택
-  //       Navigator.pop(context);
-  //     }
-  //     return;
-  //   }
-  //
-  //   // ✅ 로그인 됨 → 데이터 로드
-  //   _loadBranches();
-  // }
 
   @override
   void dispose() {
@@ -207,7 +145,7 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
 
   void _selectAmount(int amount) {
     setState(() {
-      _amountCtrl.text = amount.toString();
+      _amountCtrl.text = _formatNumber(amount.toString());
     });
   }
 
@@ -223,7 +161,29 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
     return DateTime(today.year, today.month + months, today.day);
   }
 
-  void _goNext() async {  // ✅ async 추가!
+  // 버튼 활성화 조건 함수 추가 (26/01/04_수빈)
+  bool _canGoNext() {
+    // 영업점 / 담당자
+    if (_selectedBranchId == null) return false;
+    if (_selectedEmpId == null) return false;
+
+    // 계좌 비밀번호
+    if (_pwCtrl.text.length != 4) return false;
+    if (_pwCtrl.text != _pwConfirmCtrl.text) return false;
+
+    // 가입 금액
+    final amount =
+        int.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0;
+    if (amount <= 0) return false;
+
+    // 가입 기간
+    final term = int.tryParse(_termCtrl.text) ?? 0;
+    if (term <= 0) return false;
+
+    return true;
+  }
+
+  void _goNext() async {  // async 추가
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('입력 항목을 확인해주세요.')),
@@ -232,7 +192,7 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ✅ 계좌 비밀번호 검증 추가!
+    // 계좌 비밀번호 검증 추가
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     final accountPassword = _pwCtrl.text;
 
@@ -243,7 +203,7 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
       return;
     }
 
-    // ✅ AuthProvider에서 userNo 가져오기
+    // AuthProvider에서 userNo 가져오기
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userNo = authProvider.userNo;
 
@@ -254,7 +214,7 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
       return;
     }
 
-    // ✅ 로딩 표시
+    // 로딩 표시
     if (!mounted) return;
     showDialog(
       context: context,
@@ -263,7 +223,7 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
     );
 
     try {
-      // ✅ 계좌 비밀번호 검증 API 호출
+      // 계좌 비밀번호 검증 API 호출
       print('[DEBUG] 계좌 비밀번호 검증 시작 - userNo: $userNo');
 
       final response = await _apiService.verifyAccountPassword(
@@ -273,7 +233,7 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
 
       print('[DEBUG] 계좌 비밀번호 검증 결과: $response');
 
-      // ✅ 로딩 닫기
+      // 로딩 닫기
       if (mounted) Navigator.pop(context);
 
       if (response['success'] != true) {
@@ -285,11 +245,11 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
         return;
       }
 
-      // ✅ 검증 성공 → STEP 3으로 이동
+      // 검증 성공 → STEP 3으로 이동
       print('[DEBUG] ✅ 계좌 비밀번호 검증 성공!');
 
     } catch (e) {
-      // ✅ 로딩 닫기
+      // 로딩 닫기
       if (mounted) Navigator.pop(context);
 
       print('[ERROR] 계좌 비밀번호 검증 실패: $e');
@@ -334,431 +294,847 @@ class _JoinStep2ScreenState extends State<JoinStep2Screen> {
 
   @override
   Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('STEP 2/4 - 가입 정보 입력'),
-      ),
-      body: Column(
+      backgroundColor: AppColors.gray1,
+
+      body: Stack(
         children: [
-          // 진행 바
-          _buildProgressBar(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 80),
 
-          // 폼
-          Expanded(
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // 상품명
-                  Text(
-                    widget.request.productName,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  // 지점 선택
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  const Text(
-                    '영업점 선택',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  _loadingBranches
-                      ? const Center(child: CircularProgressIndicator())
-                      : DropdownButtonFormField<int>(
-                    value: _selectedBranchId,
-                    decoration: const InputDecoration(
-                      labelText: '지점',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: _branches
-                        .map((b) => DropdownMenuItem(
-                      value: b.branchId,
-                      child: Text(b.branchName),
-                    ))
-                        .toList(),
-                    onChanged: (id) {
-                      setState(() => _selectedBranchId = id);
-                      if (id != null) {
-                        _loadEmployees(id);
-                      }
-                    },
-                    validator: (v) => v == null ? '지점을 선택하세요' : null,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  // 직원 선택
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  _loadingEmployees
-                      ? const Center(child: CircularProgressIndicator())
-                      : DropdownButtonFormField<int>(
-                    value: _selectedEmpId,
-                    decoration: const InputDecoration(
-                      labelText: '담당자',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: _employees
-                        .map((e) => DropdownMenuItem(
-                      value: e.empId,
-                      child: Text(e.empName),
-                    ))
-                        .toList(),
-                    onChanged: (id) {
-                      setState(() => _selectedEmpId = id);
-                    },
-                    validator: (v) => v == null ? '담당자를 선택하세요' : null,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  // 계좌 비밀번호
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  const Text(
-                    '계좌 비밀번호',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  TextFormField(
-                    controller: _pwCtrl,
-                    obscureText: true,
-                    maxLength: 4,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    decoration: const InputDecoration(
-                      labelText: '4자리 숫자 비밀번호',
-                      border: OutlineInputBorder(),
-                      counterText: '',
-                    ),
-                    validator: (v) {
-                      if (v == null || v.isEmpty) {
-                        return '비밀번호를 입력하세요';
-                      }
-                      if (v.length != 4) {
-                        return '4자리 숫자를 입력하세요';
-                      }
-                      if (int.tryParse(v) == null) {
-                        return '숫자만 입력 가능합니다';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextFormField(
-                    controller: _pwConfirmCtrl,
-                    obscureText: true,
-                    maxLength: 4,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    decoration: const InputDecoration(
-                      labelText: '비밀번호 확인',
-                      border: OutlineInputBorder(),
-                      counterText: '',
-                    ),
-                    validator: (v) {
-                      if (v != _pwCtrl.text) {
-                        return '비밀번호가 일치하지 않습니다';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  // 가입 금액
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  const Text(
-                    '가입 금액',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ChoiceChip(
-                        label: const Text('100만원'),
-                        selected: _amountCtrl.text == '1000000',
-                        onSelected: (_) => _selectAmount(1000000),
+              // 타이틀
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '가입 정보 입력',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                        ),
                       ),
-                      ChoiceChip(
-                        label: const Text('500만원'),
-                        selected: _amountCtrl.text == '5000000',
-                        onSelected: (_) => _selectAmount(5000000),
-                      ),
-                      ChoiceChip(
-                        label: const Text('1,000만원'),
-                        selected: _amountCtrl.text == '10000000',
-                        onSelected: (_) => _selectAmount(10000000),
-                      ),
-                      ChoiceChip(
-                        label: const Text('3,000만원'),
-                        selected: _amountCtrl.text == '30000000',
-                        onSelected: (_) => _selectAmount(30000000),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextFormField(
-                    controller: _amountCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    decoration: const InputDecoration(
-                      labelText: '직접 입력 (원)',
-                      border: OutlineInputBorder(),
                     ),
-                    validator: (v) {
-                      final val = int.tryParse(v?.replaceAll(',', '') ?? '');
-                      if (val == null || val <= 0) {
-                        return '가입 금액을 입력해주세요';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  // 가입 기간
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  const Text(
-                    '가입 기간',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [3, 6, 12, 24, 36].map((m) {
-                      return ChoiceChip(
-                        label: Text('${m}개월'),
-                        selected: _termCtrl.text == '$m',
-                        onSelected: (_) => _selectTerm(m),
-                      );
-                    }).toList(),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextFormField(
-                    controller: _termCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    decoration: const InputDecoration(
-                      labelText: '직접 입력 (개월)',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (v) {
-                      final val = int.tryParse(v ?? '');
-                      if (val == null || val <= 0) {
-                        return '가입 기간을 입력해주세요';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  // 알림 설정
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                  const Text(
-                    '알림 설정 (선택)',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  SwitchListTile(
-                    title: const Text('문자(SMS) 알림 받기'),
-                    value: _smsNotify,
-                    onChanged: (v) => setState(() => _smsNotify = v),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-
-                  if (_smsNotify) ...[
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _hpCtrl,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: '휴대폰 번호 (010-1234-5678)',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) {
-                        if (_smsNotify && (v == null || v.isEmpty)) {
-                          return '휴대폰 번호를 입력해주세요';
-                        }
-                        return null;
-                      },
-                    ),
+                    _buildMiniStepIndicator(currentStep: 2),
                   ],
-
-                  const SizedBox(height: 8),
-
-                  SwitchListTile(
-                    title: const Text('이메일 알림 받기'),
-                    value: _emailNotify,
-                    onChanged: (v) => setState(() => _emailNotify = v),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-
-                  if (_emailNotify) ...[
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: '이메일 주소',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) {
-                        if (_emailNotify && (v == null || v.isEmpty)) {
-                          return '이메일 주소를 입력해주세요';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-
-                  const SizedBox(height: 24),
-                ],
+                ),
               ),
+
+              // 상품명 타이틀
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                child: Text(
+                  widget.request.productName,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.gray5,
+                  ),
+                ),
+              ),
+
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    children: [
+
+                      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      // 지점 선택
+                      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      _sectionCard(
+                        title: Row(
+                          children: const [
+                            Text(
+                              '영업점 / 담당자 선택',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.black,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '*',
+                              style: TextStyle(
+                                color: AppColors.red,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            _loadingBranches
+                              ? const Center(child: CircularProgressIndicator())
+                              : DropdownButtonFormField<int>(
+                              value: _selectedBranchId,
+                              decoration: _inputDecoration(label: '지점'),
+
+                              isDense: true,
+                              icon: const Padding(
+                                padding: EdgeInsets.only(right: 8),
+                                child: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: AppColors.gray4,
+                                  size: 24,
+                                ),
+                              ),
+                              dropdownColor: AppColors.white,
+
+                              items: _branches
+                                  .map((b) => DropdownMenuItem(
+                                value: b.branchId,
+                                child: Text(b.branchName),
+                              ))
+                                  .toList(),
+                              onChanged: (id) {
+                                setState(() => _selectedBranchId = id);
+                                if (id != null) _loadEmployees(id);
+                              },
+                              validator: (v) => v == null ? '지점을 선택하세요' : null,
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            _loadingEmployees
+                              ? const Center(child: CircularProgressIndicator())
+                              : DropdownButtonFormField<int>(
+                              value: _selectedEmpId,
+                              decoration: _inputDecoration(label: '담당자'),
+
+                              isDense: true,
+                              icon: const Padding(
+                                padding: EdgeInsets.only(right: 8),
+                                child: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: AppColors.gray4,
+                                  size: 24,
+                                ),
+                              ),
+                              dropdownColor: AppColors.white,
+
+                              items: _employees
+                                  .map((e) => DropdownMenuItem(
+                                value: e.empId,
+                                child: Text(e.empName),
+                              ))
+                                  .toList(),
+                              onChanged: (id) => setState(() => _selectedEmpId = id),
+                              validator: (v) => v == null ? '담당자를 선택하세요' : null,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      // 계좌 비밀번호
+                      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      _sectionCard(
+                        title: Row(
+                          children: const [
+                            Text(
+                              '계좌 비밀번호',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '*',
+                              style: TextStyle(
+                                color: AppColors.red,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                          TextFormField(
+                            controller: _pwCtrl,
+                            obscureText: true,
+                            maxLength: 4,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            decoration: _inputDecoration(label: '4자리 숫자 비밀번호'),
+
+                            onChanged: (_) => setState(() {}),
+
+                            validator: (v) {
+                              if (v == null || v.isEmpty) {
+                                return '비밀번호를 입력하세요';
+                              }
+                              if (v.length != 4) {
+                                return '4자리 숫자를 입력하세요';
+                              }
+                              return null;
+                            },
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          TextFormField(
+                            controller: _pwConfirmCtrl,
+                            obscureText: true,
+                            maxLength: 4,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            decoration: _inputDecoration(label: '비밀번호 확인'),
+
+                            onChanged: (_) => setState(() {}),
+
+                            validator: (v) {
+                              if (v != _pwCtrl.text) {
+                                return '비밀번호가 일치하지 않습니다';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      // 가입 금액
+                      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      _sectionCard(
+                        title: Row(
+                          children: const [
+                            Text(
+                              '가입 금액',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '*',
+                              style: TextStyle(
+                                color: AppColors.red,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _amountChip('100만원', 1000000),
+                                _amountChip('500만원', 5000000),
+                                _amountChip('1,000만원', 10000000),
+                                _amountChip('3,000만원', 30000000),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _amountCtrl,
+
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+
+                              decoration: InputDecoration(
+                                labelText: '직접 입력(원)',
+                                suffixText: '원',
+
+                                // 기본 라벨 색
+                                labelStyle: const TextStyle(
+                                  color: AppColors.gray5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+
+                                // 활성화되거나 위로 뜰 때 라벨 색
+                                floatingLabelStyle: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+
+                                // 기본 테두리
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.gray4,
+                                    width: 1,
+                                  ),
+                                ),
+
+                                // 활성화 시
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.primary,
+                                    width: 2,
+                                  ),
+                                ),
+
+                                // 에러
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.red,
+                                    width: 1.5,
+                                  ),
+                                ),
+
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.red,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+
+                              onChanged: (value) {
+                                final formatted = _formatNumber(value);
+                                _amountCtrl.value = TextEditingValue(
+                                  text: formatted,
+                                  selection: TextSelection.collapsed(offset: formatted.length),
+                                );
+
+                                setState(() {});
+                              },
+
+                              validator: (v) {
+                                final val = int.tryParse(v?.replaceAll(',', '') ?? '');
+                                if (val == null || val <= 0) {
+                                  return '가입 금액을 입력해주세요';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      // 가입 기간
+                      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      _sectionCard(
+                        title: Row(
+                          children: const [
+                            Text(
+                              '가입 기간',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '*',
+                              style: TextStyle(
+                                color: AppColors.red,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [3, 6, 12, 24, 36]
+                                  .map((m) => _termChip(m))
+                                  .toList(),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            TextFormField(
+                              controller: _termCtrl,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+
+                              decoration: InputDecoration(
+                                labelText: '직접 입력(개월)',
+                                suffixText: '개월',
+
+                                // 기본 라벨 색
+                                labelStyle: const TextStyle(
+                                  color: AppColors.gray5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+
+                                // 활성화되거나 위로 뜰 때 라벨 색
+                                floatingLabelStyle: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+
+                                // 기본 테두리
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.gray4,
+                                    width: 1,
+                                  ),
+                                ),
+
+                                // 활성화 시
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.primary,
+                                    width: 2,
+                                  ),
+                                ),
+
+                                // 에러
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.red,
+                                    width: 1.5,
+                                  ),
+                                ),
+
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.red,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+
+                              onChanged: (_) => setState(() {}),
+
+                              validator: (v) {
+                                final val = int.tryParse(v ?? '');
+                                if (val == null || val <= 0) {
+                                  return '가입 기간을 입력해주세요';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      // 알림 설정
+                      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      _sectionCard(
+                        title: Row(
+                          children: const [
+                            Text(
+                              '알림 설정 (선택)',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            SwitchListTile(
+                              title: const Text('문자(SMS) 알림'),
+                              value: _smsNotify,
+                              onChanged: (v) => setState(() => _smsNotify = v),
+
+                              activeColor: AppColors.white,
+                              activeTrackColor: AppColors.primary,
+
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            if (_smsNotify) ...[
+                              const SizedBox(height: 8),
+
+                              TextFormField(
+                                controller: _hpCtrl,
+                                keyboardType: TextInputType.phone,
+
+                                decoration: InputDecoration(
+                                  labelText: '휴대폰 번호',
+
+                                  // 기본 라벨
+                                  labelStyle: const TextStyle(
+                                    color: AppColors.gray5,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+
+                                  // 포커스 라벨
+                                  floatingLabelStyle: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.gray4,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.red,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.red,
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+
+                            const SizedBox(height: 8),
+
+                            SwitchListTile(
+                              title: const Text('이메일 알림'),
+                              value: _emailNotify,
+                              onChanged: (v) => setState(() => _emailNotify = v),
+
+                              activeColor: AppColors.white,
+                              activeTrackColor: AppColors.primary,
+
+                              contentPadding: EdgeInsets.zero,
+                            ),
+
+                            if (_emailNotify) ...[
+                              const SizedBox(height: 8),
+
+                              TextFormField(
+                                controller: _emailCtrl,
+                                keyboardType: TextInputType.emailAddress,
+
+                                decoration: InputDecoration(
+                                  labelText: '이메일 주소',
+
+                                  labelStyle: const TextStyle(
+                                    color: AppColors.gray5,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  floatingLabelStyle: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(color: AppColors.gray4),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 8,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_left, size: 34),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
-
-          // 하단 버튼
-          _buildBottomButtons(),
         ],
       ),
+
+      bottomNavigationBar: _buildBottomCTA(h),
     );
   }
 
-  Widget _buildProgressBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          _buildStep(1, true),
-          _buildLine(true),
-          _buildStep(2, true),
-          _buildLine(false),
-          _buildStep(3, false),
-          _buildLine(false),
-          _buildStep(4, false),
-        ],
-      ),
-    );
-  }
+  // ==============================
+  // 숫자 포맷 유틸
+  // ==============================
+    String _formatNumber(String value) {
+      if (value.isEmpty) return '';
 
-  Widget _buildStep(int step, bool active) {
+      final number = int.parse(value.replaceAll(',', ''));
+      return number.toString().replaceAllMapped(
+        RegExp(r'\B(?=(\d{3})+(?!\d))'),
+            (match) => ',',
+      );
+    }
+
+  // ==============================
+  // 공통 섹션 카드
+  // ==============================
+  Widget _sectionCard({
+    required Widget title,
+    required Widget child,
+  }) {
     return Container(
-      width: 32,
-      height: 32,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: active ? Theme.of(context).primaryColor : Colors.grey[300],
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Center(
-        child: Text(
-          '$step',
-          style: TextStyle(
-            color: active ? Colors.white : Colors.grey[600],
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          title,
+          const SizedBox(height: 15),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _amountChip(String label, int value) {
+    final currentAmount =
+    int.tryParse(_amountCtrl.text.replaceAll(',', ''));
+
+    final bool selected = currentAmount == value;
+
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: selected ? AppColors.white : AppColors.primary,
+        ),
+      ),
+      selected: selected,
+
+      checkmarkColor: AppColors.white,
+      selectedColor: AppColors.primary,
+      backgroundColor: AppColors.primary.withOpacity(0.08),
+
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: selected
+              ? AppColors.primary
+              : AppColors.primary.withOpacity(0.3),
+        ),
+      ),
+
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 10,
+      ),
+
+      onSelected: (_) => _selectAmount(value),
+    );
+  }
+
+  Widget _termChip(int month) {
+    final bool selected = _termCtrl.text == '$month';
+
+    return ChoiceChip(
+      label: Text(
+        '${month}개월',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: selected ? AppColors.white : AppColors.primary,
+        ),
+      ),
+      selected: selected,
+
+      checkmarkColor: AppColors.white,
+      selectedColor: AppColors.primary,
+      backgroundColor: AppColors.primary.withOpacity(0.08),
+
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: selected
+              ? AppColors.primary
+              : AppColors.primary.withOpacity(0.3),
+        ),
+      ),
+
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 10,
+      ),
+
+      onSelected: (_) => _selectTerm(month),
+    );
+  }
+
+  Widget _buildMiniStepIndicator({required int currentStep}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$currentStep / 4',
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: AppColors.primary,
         ),
       ),
     );
   }
 
-  Widget _buildLine(bool active) {
-    return Expanded(
-      child: Container(
-        height: 2,
-        color: active ? Theme.of(context).primaryColor : Colors.grey[300],
-      ),
+  // 점선 Divider
+  Widget _dashedDivider() {
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        return Row(
+          children: List.generate(
+            (constraints.maxWidth / 6).floor(),
+                (index) =>
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color:
+                    index.isEven ? AppColors.gray4 : Colors.transparent,
+                  ),
+                ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildBottomButtons() {
+  Widget _buildBottomCTA(double h) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
+      padding: const EdgeInsets.fromLTRB(20, 25, 20, 20),
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
       ),
       child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(0, 56),
-                ),
-                child: const Text('이전'),
+        child: SizedBox(
+          width: double.infinity,
+          height: h * 0.09,
+          child: ElevatedButton(
+            onPressed: _canGoNext() ? _goNext : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              '다음',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: ElevatedButton(
-                onPressed: _goNext,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(0, 56),
-                ),
-                child: const Text('다음 (STEP 3)'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
+
+InputDecoration _inputDecoration({
+  required String label,
+  String? suffix,
+}) {
+  return InputDecoration(
+    labelText: label,
+    suffixText: suffix,
+
+    labelStyle: const TextStyle(
+      color: AppColors.gray5,
+      fontWeight: FontWeight.w500,
+    ),
+    floatingLabelStyle: const TextStyle(
+      color: AppColors.primary,
+      fontWeight: FontWeight.w700,
+    ),
+
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(
+        color: AppColors.gray4,
+        width: 1,
+      ),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(
+        color: AppColors.primary,
+        width: 2,
+      ),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(
+        color: AppColors.red,
+        width: 1.5,
+      ),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(
+        color: AppColors.red,
+        width: 2,
+      ),
+    ),
+  );
 }

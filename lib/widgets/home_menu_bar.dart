@@ -98,7 +98,7 @@ class _HomeMenuBarState extends State<HomeMenuBar> {
           top: Radius.circular(20),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(0, 10, 0, 20),
+      padding: const EdgeInsets.fromLTRB(0, 10, 0, 40),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -173,7 +173,7 @@ class _HomeMenuBarState extends State<HomeMenuBar> {
           width: 190,
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
           decoration: BoxDecoration(
-            color: isActive ? AppColors.primary : AppColors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
@@ -187,17 +187,17 @@ class _HomeMenuBarState extends State<HomeMenuBar> {
               Icon(
                 item.icon,
                 size: 30,
-                color: isActive ? AppColors.white : AppColors.primary,
+                color: AppColors.primary,
               ),
               const SizedBox(width: 6),
               Expanded(
                 child: Center(
                   child: Text(
                     item.label,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
-                      color: isActive ? AppColors.white : AppColors.black,
+                      color: AppColors.black,
                     ),
                   ),
                 ),

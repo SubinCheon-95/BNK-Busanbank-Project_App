@@ -110,7 +110,7 @@ class _MyAppState extends State<MyApp> {
               useMaterial3: true,
               colorSchemeSeed: AppColors.white, // [25.12.29] 전체 배경 연보라색 제거 - 수빈
 
-              // 👇 전체 앱에 폰트 적용!
+              // 전체 앱에 폰트 적용
               fontFamily: 'Pretendard',
             ),
             navigatorKey: navigatorKey,

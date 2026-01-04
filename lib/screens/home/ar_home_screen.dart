@@ -25,11 +25,11 @@ import 'easy_home_screen.dart';
 
 // 모션 상태 enum
 enum MascotMotion {
-  intro,      // 진입 시
-  idle,       // 정지.ver
-  nod,        // 고개 끄덕임 (나중에 추가)
-  wave,       // 손 흔들기 (나중에 추가)
-  typing,     // 타이핑 반응 (나중에 추가)
+  intro,
+  idle,
+  nod,
+  wave,
+  typing,
 }
 
 class ArHomeScreen extends StatefulWidget {
@@ -42,8 +42,6 @@ class ArHomeScreen extends StatefulWidget {
 }
 
 class _ArHomeScreenState extends State<ArHomeScreen> {
-  static const double _messageInputHeight = 64.0;
-
   int _step = 0;
   CameraController? _cameraController;
   bool _isCameraInitialized = false;
@@ -53,10 +51,6 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   final Map<MascotMotion, String> _motionFiles = {
     MascotMotion.intro: 'assets/models/A_intro.glb',
     MascotMotion.idle: 'assets/models/penguinman.glb',
-    // 나중에 추가할 모션들
-    // MascotMotion.nod: 'assets/models/penguin_nod.glb',
-    // MascotMotion.wave: 'assets/models/penguin_wave.glb',
-    // MascotMotion.typing: 'assets/models/penguin_typing.glb',
   };
 
   final TextEditingController _messageController = TextEditingController();
@@ -72,10 +66,8 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // 화면 진입 시 인트로 모션 재생
     _playMotion(MascotMotion.intro);
 
-    // 2.1초 후 idle로 전환
     Future.delayed(const Duration(milliseconds: 2100), () {
       if (mounted) {
         _playMotion(MascotMotion.idle);
@@ -83,13 +75,11 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
     });
   }
 
-  // 모션 재생 함수
   void _playMotion(MascotMotion motion, {bool returnToIdle = false}) {
     setState(() {
       _currentMotion = motion;
     });
 
-    // 특정 모션 재생 후 idle로 복귀
     if (returnToIdle && motion != MascotMotion.idle) {
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (mounted) {
@@ -153,6 +143,9 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final isLoggedIn = authProvider.isLoggedIn;
+    // 👇 화면 크기
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -192,7 +185,7 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
 
           // 하단 슬라이드 메뉴
           Positioned(
-            bottom: _messageInputHeight + MediaQuery.of(context).padding.bottom,
+            bottom: screenHeight * 0.05 + MediaQuery.of(context).padding.bottom,
             left: 0,
             right: 0,
             child: HomeMenuBar(
@@ -234,6 +227,7 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
 
   Widget _buildMascot() {
     final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Positioned(
       top: screenHeight * 0.28,
@@ -241,11 +235,10 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
       right: 0,
       child: Center(
         child: SizedBox(
-          width: 350,
-          height: 450,
+          width: screenWidth * 0.85,
+          height: screenHeight * 0.5,
           child: Stack(
             children: MascotMotion.values.map((motion) {
-              // 아직 파일이 없는 모션은 스킵
               if (!_motionFiles.containsKey(motion)) return const SizedBox.shrink();
 
               final isActive = _currentMotion == motion;
@@ -282,11 +275,9 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
       child: GestureDetector(
         onTap: () {
           setState(() => _step = 1);
-          // 나중에 nod 모션 추가하면 활성화
-          // _playMotion(MascotMotion.nod, returnToIdle: true);
         },
         child: SizedBox(
-          height: 180,
+          height: screenHeight * 0.2,
           child: Stack(
             children: [
               Image.asset(
@@ -340,11 +331,9 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
       child: GestureDetector(
         onTap: () {
           _focusNode.requestFocus();
-          // 나중에 nod 모션 추가하면 활성화
-          // _playMotion(MascotMotion.nod, returnToIdle: true);
         },
         child: SizedBox(
-          height: 180,
+          height: screenHeight * 0.2,
           child: Stack(
             children: [
               Image.asset(
@@ -355,9 +344,9 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
               Positioned.fill(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 34),
-                    child: Align(
-                    alignment: const Alignment(0, 0),
-                    child: const Text(
+                  child: const Align(
+                    alignment: Alignment(0, 0),
+                    child: Text(
                       '무엇을 도와드릴까요?',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -386,14 +375,11 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
           left: 20,
           right: 20,
           top: 15,
-          bottom: MediaQuery
-              .of(context)
-              .padding
-              .bottom + 8,
+          bottom: MediaQuery.of(context).padding.bottom + 8,
         ),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppColors.white,
-          borderRadius: const BorderRadius.vertical(
+          borderRadius: BorderRadius.vertical(
             top: Radius.circular(20),
           ),
         ),
@@ -405,7 +391,7 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                 focusNode: _focusNode,
                 decoration: InputDecoration(
                   hintText: '딸깍이에게 무엇이든 물어보세요.',
-                  hintStyle: TextStyle(color: AppColors.gray4, fontSize: 16),
+                  hintStyle: const TextStyle(color: AppColors.gray4, fontSize: 16),
                   filled: true,
                   fillColor: AppColors.gray2,
                   border: OutlineInputBorder(
@@ -418,12 +404,7 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                   ),
                 ),
                 onChanged: (text) {
-                  // 나중에 typing 모션 추가하면 활성화
-                  // if (text.isNotEmpty && _currentMotion != MascotMotion.typing) {
-                  //   _playMotion(MascotMotion.typing);
-                  // } else if (text.isEmpty && _currentMotion == MascotMotion.typing) {
-                  //   _playMotion(MascotMotion.idle);
-                  // }
+                  // 나중에 typing 모션 추가
                 },
                 onSubmitted: (value) {
                   _handleSendMessage(value);
@@ -450,12 +431,7 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   }
 
   void _handleSendMessage(String message) {
-    if (message
-        .trim()
-        .isEmpty) return;
-
-    // 나중에 wave 모션 추가하면 활성화
-    // _playMotion(MascotMotion.wave, returnToIdle: true);
+    if (message.trim().isEmpty) return;
 
     print('AI 챗봇에게 메시지 전송: $message');
 
@@ -470,20 +446,17 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
     _focusNode.unfocus();
   }
 
-  // 더보기 모달
   void _showAllMenuModal() {
     final authProvider = context.read<AuthProvider>();
     final isLoggedIn = authProvider.isLoggedIn;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery
-            .of(context)
-            .size
-            .height * 0.85,
+        height: screenHeight * 0.85,
         decoration: const BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -525,8 +498,7 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              ProductMainScreen(baseUrl: widget.baseUrl),
+                          builder: (_) => ProductMainScreen(baseUrl: widget.baseUrl),
                         ),
                       );
                     }),
@@ -544,8 +516,7 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              GameMenuScreen(baseUrl: widget.baseUrl),
+                          builder: (_) => GameMenuScreen(baseUrl: widget.baseUrl),
                         ),
                       );
                     }),
@@ -554,9 +525,7 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              NewsAnalysisMainScreen(
-                                  baseUrl: widget.baseUrl),
+                          builder: (_) => NewsAnalysisMainScreen(baseUrl: widget.baseUrl),
                         ),
                       );
                     }),
@@ -565,8 +534,7 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              PointHistoryScreen(baseUrl: widget.baseUrl),
+                          builder: (_) => PointHistoryScreen(baseUrl: widget.baseUrl),
                         ),
                       );
                     }),
@@ -622,11 +590,12 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
 
                     const SizedBox(height: 20),
 
-                    // 로그인/로그아웃
                     if (!isLoggedIn)
                       _tossLoginButton()
                     else
                       _tossLogoutButton(),
+
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),
@@ -638,6 +607,8 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   }
 
   Widget _tossMenuButton(String label, IconData icon, VoidCallback onPressed) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -655,7 +626,10 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(10),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+          padding: EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: screenHeight * 0.027,
+          ),
           child: Row(
             children: [
               Container(
@@ -741,62 +715,55 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
-
           final confirm = await showDialog<bool>(
             context: context,
-            builder: (dialogContext) =>
-                AlertDialog(
-
-                  // 25.12.30 스타일 수정 - 수빈
-                  backgroundColor: AppColors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-
-                  title: const Text(
-                    '로그아웃',
+            builder: (dialogContext) => AlertDialog(
+              backgroundColor: AppColors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              title: const Text(
+                '로그아웃',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.black,
+                ),
+              ),
+              content: const Text(
+                '로그아웃 하시겠습니까?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.gray5,
+                ),
+              ),
+              actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text(
+                    '취소',
                     style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.red,
                     ),
                   ),
-
-                  content: const Text(
-                    '로그아웃 하시겠습니까?',
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text(
+                    '로그아웃',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.gray5,
                     ),
                   ),
-
-                  actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogContext, false),
-                      child: const Text(
-                        '취소',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.red,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogContext, true),
-                      child: const Text(
-                        '로그아웃',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.gray5,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
+              ],
+            ),
           );
 
           if (confirm == true && mounted) {
@@ -835,7 +802,6 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   }
 }
 
-// 메뉴 아이템 클래스 (HomeScreen 밖에 추가)
 class _MenuItem {
   final String label;
   final IconData icon;
