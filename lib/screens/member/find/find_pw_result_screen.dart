@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:tkbank/screens/member/login_screen.dart';
+import 'package:tkbank/theme/app_colors.dart';
 
 class FindPwResultScreen extends StatelessWidget {
   const FindPwResultScreen({super.key});
@@ -67,17 +68,29 @@ class FindPwResultScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
               child: SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 56, // ✅ 통일 (기존 52 → 56 추천)
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    disabledBackgroundColor: AppColors.primary.withOpacity(0.3),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const LoginScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );
                   },
-                  child: const Text('로그인하러 가기'),
+                  child: const Text(
+                    '로그인하러 가기',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ),

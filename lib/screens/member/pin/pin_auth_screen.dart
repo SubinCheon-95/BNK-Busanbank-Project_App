@@ -2,6 +2,7 @@
   날짜: 2025/12/22
   내용: 로그인 시 pin 입력 화면
   작성자: 오서정
+  수정: 2025/01/04 - UI 수정 - 작성자: 오서정
 */
 
 import 'package:flutter/material.dart';
@@ -78,8 +79,8 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('간편 비밀번호'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: bnkPrimary,
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Column(

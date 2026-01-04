@@ -7,10 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tkbank/screens/member/find/find_id_result_screen.dart';
 import 'package:tkbank/services/member_service.dart';
+import 'package:tkbank/theme/app_colors.dart';
 import 'package:tkbank/utils/formatters/phone_number_formatter.dart';
 import 'package:tkbank/utils/validators.dart';
 
-const DEV_PHONE = '010-1111-1111';
+const DEV_PHONE = '010-8902-3754';
 
 class FindIdScreen extends StatefulWidget {
   const FindIdScreen({super.key});
@@ -194,13 +195,35 @@ class _FindIdScreenState extends State<FindIdScreen>
       backgroundColor: Colors.white,
 
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24), // ✅ 통일
         child: SizedBox(
-          height: 52,
+          height: 56, // ✅ 통일
           child: ElevatedButton(
-            onPressed: _findId,
-            child: const Text('아이디 찾기'),
+            onPressed: _findId, // 필요하면 여기 조건부로 바꿔도 됨
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              disabledBackgroundColor: AppColors.primary.withOpacity(0.3),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text(
+              '아이디 찾기',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
+        ),
+      ),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
 
@@ -218,13 +241,6 @@ class _FindIdScreenState extends State<FindIdScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new),
-                  onPressed: () => Navigator.pop(context),
-                ),
-
-                const SizedBox(height: 20),
                 const Text(
                   '아이디 찾기',
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
@@ -256,6 +272,19 @@ class _FindIdScreenState extends State<FindIdScreen>
                     SizedBox(
                       height: 48,
                       child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isPhoneVerified ? AppColors.gray3 : AppColors.primary,
+                          disabledBackgroundColor: AppColors.gray3, // ✅ 비활성도 회색
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          elevation: 0,
+                        ),
                         onPressed: isPhoneVerified ? null : _sendCode,
                         child: Text(isPhoneVerified ? '완료' : '인증하기'),
                       ),

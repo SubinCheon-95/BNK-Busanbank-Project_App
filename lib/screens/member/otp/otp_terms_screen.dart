@@ -1,24 +1,25 @@
 /*
-  날짜 : 2025/12/15
-  내용 : 약관 페이지 추가 (토스 스타일 UI 통일)
-  작성자 : 오서정
-  수정: 2025/01/04 - UI 수정 - 작성자: 오서정
+  날짜: 2025/01/04
+  내용: otp등록 약관 화면
+  작성자: 오서정
 */
 import 'package:flutter/material.dart';
 import 'package:tkbank/models/term.dart';
-import 'package:tkbank/screens/member/register/phone_verify_screen.dart';
 import 'package:tkbank/services/member_service.dart';
-import 'package:tkbank/widgets/register_step_indicator.dart';
-import 'term_webview_screen.dart';
+import 'package:tkbank/screens/member/register/term_webview_screen.dart';
 
-class TermsScreen extends StatefulWidget {
-  const TermsScreen({super.key});
+// ✅ OTP 등록 화면(원래 가던 화면)으로 바꿔 끼우기
+import 'package:tkbank/screens/member/otp/otp_register_screen.dart';
+
+
+class OtpTermsScreen extends StatefulWidget {
+  const OtpTermsScreen({super.key});
 
   @override
-  State<TermsScreen> createState() => _TermsScreenState();
+  State<OtpTermsScreen> createState() => _OtpTermsScreenState();
 }
 
-class _TermsScreenState extends State<TermsScreen> {
+class _OtpTermsScreenState extends State<OtpTermsScreen> {
   final MemberService _memberService = MemberService();
   late Future<List<Term>> _termsFuture;
 
@@ -34,17 +35,16 @@ class _TermsScreenState extends State<TermsScreen> {
   }
 
   void _openTerm(int termNo) {
+    // ✅ term 상세 조회 엔드포인트가 어디인지에 맞춰 통일
     final url = 'http://10.0.2.2:8080/busanbank/member/term/$termNo';
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => TermWebViewScreen(url: url),
-      ),
+      MaterialPageRoute(builder: (_) => TermWebViewScreen(url: url)),
     );
   }
 
   void _updateAllChecked() {
-    _allChecked = _agreeMap.values.every((v) => v == true);
+    _allChecked = _agreeMap.values.isNotEmpty && _agreeMap.values.every((v) => v == true);
   }
 
   Widget _card({required Widget child}) {
@@ -61,9 +61,13 @@ class _TermsScreenState extends State<TermsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('디지털OTP 약관 동의'),
+        backgroundColor: bnkPrimary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
 
-      /// ✅ 하단 버튼 (다음 단계)
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
         child: SizedBox(
@@ -71,28 +75,21 @@ class _TermsScreenState extends State<TermsScreen> {
           child: ElevatedButton(
             onPressed: _allChecked
                 ? () {
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const PhoneVerifyScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const OtpRegisterScreen()),
+                // 또는 OtpIssueIntroScreen() 등
               );
             }
                 : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryPurple,
               disabledBackgroundColor: primaryPurple.withOpacity(0.3),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
             child: const Text(
               '다음',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.white
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
             ),
           ),
         ),
@@ -105,15 +102,12 @@ class _TermsScreenState extends State<TermsScreen> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-
             if (snapshot.hasError || !snapshot.hasData) {
               return const Center(child: Text('약관 정보를 불러올 수 없습니다.'));
             }
 
-            // 2026/01/03 - 약관 출력 수정 - 작성자: 오서정
             final all = snapshot.data!;
-            final terms = all.where((t) => t.termType == '01' || t.termType == '02').toList();
-
+            final terms = all.where((t) => t.termType == '03').toList();
             for (var term in terms) {
               _agreeMap.putIfAbsent(term.termNo, () => false);
             }
@@ -121,46 +115,29 @@ class _TermsScreenState extends State<TermsScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// 🔙 뒤로가기
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                  onPressed: () => Navigator.pop(context),
-                ),
-
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      RegisterStepIndicator(step: 1),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
 
                       const Text(
-                        '회원가입을 위해',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        '디지털 OTP 발급을 위해',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
                       ),
                       const Text(
-                        '필요한 사항을 확인해 주세요.',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        '약관 동의가 필요해요.',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '서비스 이용을 위해 약관에 동의해주세요',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey.shade600,
-                        ),
+                        style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
                       ),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
 
-                      /// ✅ 전체 동의
                       _card(
                         child: CheckboxListTile(
                           value: _allChecked,
@@ -187,14 +164,12 @@ class _TermsScreenState extends State<TermsScreen> {
 
                 const SizedBox(height: 16),
 
-                /// ✅ 개별 약관 리스트
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
                     itemCount: terms.length,
                     itemBuilder: (context, index) {
                       final term = terms[index];
-
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _card(
@@ -216,16 +191,10 @@ class _TermsScreenState extends State<TermsScreen> {
                                 Expanded(
                                   child: Text(
                                     term.termTitle,
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                                   ),
                                 ),
-                                const Icon(
-                                  Icons.chevron_right,
-                                  color: Colors.grey,
-                                ),
+                                const Icon(Icons.chevron_right, color: Colors.grey),
                               ],
                             ),
                           ),

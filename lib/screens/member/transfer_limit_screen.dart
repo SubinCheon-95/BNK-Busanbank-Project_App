@@ -2,6 +2,7 @@
   날짜: 2025/12/29
   내용: 이체한도 변경 화면
   작성자: 오서정
+  수정: 2025/01/04 - UI 수정 - 작성자: 오서정
 */
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -502,7 +503,6 @@ class _TransferLimitScreenState extends State<TransferLimitScreen> {
               Expanded(
                 child: Container(
                   height: 56,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(12),
@@ -719,48 +719,57 @@ class _SimplePinVerifySheetState extends State<_SimplePinVerifySheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),
       child: Container(
+        width: double.infinity,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        clipBehavior: Clip.antiAlias, // ✅ 라운드 안 깨지게
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(99),
+            // ✅ 헤더 영역만 패딩 유지
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+              child: Column(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                  Text(
+                    widget.title,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    widget.subtitle,
+                    style: TextStyle(color: Colors.grey.shade700),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  PinDots(length: _pin.length),
+                  if (_error != null) ...[
+                    const SizedBox(height: 10),
+                    Text(_error!, style: const TextStyle(color: Colors.red)),
+                  ],
+                ],
               ),
             ),
-            Text(
-              widget.title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              widget.subtitle,
-              style: TextStyle(color: Colors.grey.shade700),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
 
-            PinDots(length: _pin.length),
-
-            if (_error != null) ...[
-              const SizedBox(height: 10),
-              Text(_error!, style: const TextStyle(color: Colors.red)),
-            ],
-
-            const SizedBox(height: 14),
-
-            PinKeypadPanel(
-              onNumber: _onNumber,
-              onDelete: _onDelete,
+            // ✅ 키패드 영역: 좌우 패딩 0, 전체 폭
+            SizedBox(
+              width: double.infinity,
+              child: PinKeypadPanel(
+                onNumber: _onNumber,
+                onDelete: _onDelete,
+              ),
             ),
           ],
         ),

@@ -2,6 +2,7 @@
   날짜: 2025/12/22
   내용: 인증센터 UI 수정
   이름: 오서정
+  수정: 2025/01/04 - UI 수정 - 작성자: 오서정
 */
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -92,6 +93,7 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: bnkPrimary,
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Padding(
@@ -171,26 +173,26 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
                   ? '● 등록됨 · 이체한도 변경 시 사용'
                   : '이체·한도 변경용 보안수단 등록',
               enabled: _otpRegistered,
-                onTap: () async {
-                  final before = _otpRegistered;
+              onTap: () async {
+                final before = _otpRegistered;
 
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OtpManageScreen()),
+                // ✅ 결과를 반드시 받아야 함
+                final changed = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(builder: (_) => const OtpManageScreen()),
+                );
+
+                await _loadSecurityStatus();
+
+                if (!mounted) return;
+
+                // ✅ 발급/재발급이 완료되어 true가 올라온 경우
+                if (changed == true && !before && _otpRegistered) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('OTP가 등록되었습니다')),
                   );
-
-                  await _loadSecurityStatus();
-
-                  if (!mounted) return;
-
-                  // ✅ false -> true로 바뀐 순간만
-                  if (!before && _otpRegistered) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('OTP가 등록되었습니다')),
-                    );
-                  }
-                },
-
+                }
+              },
             ),
 /*
             ListTile(

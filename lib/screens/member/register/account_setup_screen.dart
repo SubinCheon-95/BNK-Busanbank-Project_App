@@ -3,6 +3,7 @@
   내용 : 회원가입 계정 설정 구현
   작성자 : 오서정
   수정: 2025/12/29 - 이체 한도 추가 - 작성자: 오서정
+  수정: 2025/01/04 - UI 수정 - 작성자: 오서정
 */
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:tkbank/providers/register_provider.dart';
 import 'package:tkbank/screens/member/register/register_welcome_screen.dart';
 import 'package:tkbank/services/member_service.dart';
+import 'package:tkbank/theme/app_colors.dart';
 import 'package:tkbank/utils/formatters/money_formatter.dart';
 import 'package:tkbank/utils/validators.dart';
 import 'package:tkbank/widgets/register_step_indicator.dart';
@@ -164,6 +166,15 @@ class _AccountSetupScreenState extends State<AccountSetupScreen>
     accountPwConfirmFocus.addListener(() {
       if (!accountPwConfirmFocus.hasFocus) _validateAccountPwConfirm();
     });
+
+    void refresh() => setState(() {});
+    idCtrl.addListener(refresh);
+    pwCtrl.addListener(refresh);
+    pwConfirmCtrl.addListener(refresh);
+    accountPwCtrl.addListener(refresh);
+    accountPwConfirmCtrl.addListener(refresh);
+    dailyLimitCtrl.addListener(refresh);
+    onceLimitCtrl.addListener(refresh);
   }
 
   @override
@@ -237,6 +248,28 @@ class _AccountSetupScreenState extends State<AccountSetupScreen>
     return ok;
   }
 
+  bool get _canSubmit {
+    // ✅ 아이디: 형식 OK + 중복검사 완료 + 중복 아님
+    final idOk = Validators.isValidUserId(idCtrl.text.trim()) && idChecked && !idDuplicated;
+
+    // ✅ 비밀번호: 정책 OK + 확인 일치
+    final pwOk = Validators.isValidPassword(pwCtrl.text.trim()) &&
+        pwCtrl.text.trim() == pwConfirmCtrl.text.trim();
+
+    // ✅ 계좌 비밀번호: 숫자 4자리 + 확인 일치
+    final accPwOk = RegExp(r'^\d{4}$').hasMatch(accountPwCtrl.text.trim()) &&
+        accountPwCtrl.text.trim() == accountPwConfirmCtrl.text.trim();
+
+    // ✅ 이체한도: 숫자 변환 가능 + 최소/최대 범위 만족
+    final daily = int.tryParse(dailyLimitCtrl.text.replaceAll(',', '').trim());
+    final once  = int.tryParse(onceLimitCtrl.text.replaceAll(',', '').trim());
+
+    final dailyOk = daily != null && daily >= _minDailyLimit && daily <= _maxDailyLimit;
+    final onceOk  = once  != null && once  >= _minOnceLimit  && once  <= _maxOnceLimit;
+
+    return idOk && pwOk && accPwOk && dailyOk && onceOk;
+  }
+
   Future<bool> _validateAll() async {
     final idOk = await _validateId();
     final pwOk = _validatePw();
@@ -265,11 +298,12 @@ class _AccountSetupScreenState extends State<AccountSetupScreen>
       backgroundColor: Colors.white,
 
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24), // ✅ 통일
         child: SizedBox(
-          height: 56,
+          height: 56, // ✅ 통일
           child: ElevatedButton(
-            onPressed: () async {
+            onPressed: _canSubmit
+                ? () async {
               final ok = await _validateAllWithLimits();
               if (!ok) return;
 
@@ -291,14 +325,35 @@ class _AccountSetupScreenState extends State<AccountSetupScreen>
                   builder: (_) => const RegisterWelcomeScreen(),
                 ),
               );
-            },
-            child: const Text('회원가입 완료'),
+            }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              disabledBackgroundColor: AppColors.primary.withOpacity(0.3),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text(
+              '회원가입 완료',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-
         ),
-
       ),
 
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
         child: Padding(
@@ -314,11 +369,6 @@ class _AccountSetupScreenState extends State<AccountSetupScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new),
-                  onPressed: () => Navigator.pop(context),
-                ),
-
                 RegisterStepIndicator(step: 3),
                 const SizedBox(height: 32),
 
@@ -357,22 +407,55 @@ class _AccountSetupScreenState extends State<AccountSetupScreen>
                   error: pwConfirmError,
                 ),
 
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _accountPwLabel(context),
+                // ✅ 계좌 비밀번호 (컴팩트 버전)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _accountPwLabel(context),
 
-                    _field(
-                      label: '', // 라벨은 이미 위에서 처리
-                      ctrl: accountPwCtrl,
-                      focus: accountPwFocus,
-                      obscure: true,
-                      maxLength: 4,
-                      keyboard: TextInputType.number,
-                      error: accountPwError,
-                      required: false,
-                    ),
-                  ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: accountPwError != null ? Colors.red : Colors.transparent,
+                            width: 1.3,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: accountPwCtrl,
+                          focusNode: accountPwFocus,
+                          obscureText: true,
+                          maxLength: 4,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(4),
+                          ],
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            counterText: '',
+                            hintText: '숫자 4자리 입력',
+                          ),
+                        ),
+                      ),
+
+                      // ✅ 에러 메시지(필요 시만 표시) → 아래 확인 입력과 간격 깔끔
+                      if (accountPwError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            accountPwError!,
+                            style: const TextStyle(color: Colors.red, fontSize: 12),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
 
                 _field(
@@ -540,9 +623,9 @@ class _AccountSetupScreenState extends State<AccountSetupScreen>
             child: Text(
               error ??
                   (label == '아이디'
-                      ? '영문 + 숫자 조합, 5~20자 이내'
+                      ? '영문 소문자 시작, 영문 + 숫자 조합, 5~20자 이내'
                       : label == '비밀번호'
-                      ? '영문 + 숫자 + 특수문자 포함 8자 이상'
+                      ? '영문 + 숫자 + 특수문자 포함 8~16자 이내'
                       : ''),
               style: TextStyle(
                 fontSize: 12,

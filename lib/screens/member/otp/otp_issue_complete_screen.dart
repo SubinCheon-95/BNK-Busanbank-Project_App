@@ -2,6 +2,7 @@
   날짜: 2026/01/02
   내용: OCR 등록 완료 화면
   이름: 오서정
+  수정: 2025/01/04 - UI 수정 - 작성자: 오서정
 */
 
 import 'package:flutter/material.dart';
@@ -36,8 +37,8 @@ class OtpIssueCompleteScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('디지털OTP(재)발급'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: bnkPrimary,
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Column(

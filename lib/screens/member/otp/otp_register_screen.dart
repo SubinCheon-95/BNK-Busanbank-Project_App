@@ -2,6 +2,7 @@
   날짜: 2025/12/29
   내용: otp등록 화면
   작성자: 오서정
+  수정: 2025/01/04 - UI 수정 - 작성자: 오서정
 */
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,7 @@ import 'package:tkbank/screens/member/otp/id_verify_screen.dart';
 import 'package:tkbank/screens/member/otp/otp_issue_complete_screen.dart';
 import 'package:tkbank/screens/member/otp/otp_pin_register_screen.dart';
 import 'package:tkbank/services/member_service.dart';
+import 'package:tkbank/theme/app_colors.dart';
 import 'package:tkbank/utils/formatters/phone_number_formatter.dart';
 import 'package:tkbank/utils/validators.dart';
 
@@ -18,7 +20,7 @@ const Color bnkGrayText = Color(0xFF6B7280);
 
 const DEV_PHONE = '010-1111-1111';
 const DEV_PHONE_DIGITS = '01011111111';
-
+const bool DEV_ID_BYPASS = true;
 String _digitsOnly(String s) => s.replaceAll(RegExp(r'[^0-9]'), '');
 
 class OtpRegisterScreen extends StatefulWidget {
@@ -172,6 +174,18 @@ class _OtpRegisterScreenState extends State<OtpRegisterScreen> {
                           verified: idVerified,
                           onTap: phoneVerified
                               ? () async {
+                            final hpDigits = _digitsOnly(phoneCtrl.text.trim());
+
+                            // ✅ DEV 우회: 개발용 번호일 때 신분증 인증 완료 처리
+                            if (DEV_ID_BYPASS && hpDigits == DEV_PHONE_DIGITS) {
+                              setState(() => idVerified = true);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('DEV: 신분증 인증을 완료 처리했어요.')),
+                              );
+                              return;
+                            }
+
+                            // ✅ 정상 플로우
                             final ok = await Navigator.push<bool>(
                               context,
                               MaterialPageRoute(builder: (_) => const IdVerifyScreen()),
@@ -181,54 +195,67 @@ class _OtpRegisterScreenState extends State<OtpRegisterScreen> {
                               : null,
                         ),
 
+
                         // ✅ 스크롤 영역 끝에 약간 여백(버튼과 겹침 방지)
                         const SizedBox(height: 16),
                       ],
                     ),
                   ),
                 ),
-
-                // ✅ 하단 고정 버튼
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: (phoneVerified && idVerified)
-                        ? () async {
-                      final result = await Navigator.push<bool>(
-                        context,
-                        MaterialPageRoute(builder: (_) => const OtpPinRegisterScreen()),
-                      );
-
-                      if (result == true && mounted) {
-                        final ok = await Navigator.push<bool>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const OtpIssueCompleteScreen(
-                              oneLimit: 100000000,
-                              dayLimit: 500000000,
-                            ),
-                          ),
-                        );
-
-                        if (ok == true && mounted) {
-                          Navigator.pop(context, true); // ✅ 이게 핵심(상위로 성공 전달)
-                        }
-                      }
-                    }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: bnkPrimary,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('다음'),
-                  ),
-                ),
               ],
             ),
           ),
         ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        child: SizedBox(
+          height: 56,
+          child: ElevatedButton(
+            onPressed: (phoneVerified && idVerified)
+                ? () async {
+              final result = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const OtpPinRegisterScreen(),
+                ),
+              );
+
+              if (result == true && mounted) {
+                final ok = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const OtpIssueCompleteScreen(
+                      oneLimit: 100000000,
+                      dayLimit: 500000000,
+                    ),
+                  ),
+                );
+
+                if (ok == true && mounted) {
+                  Navigator.pop(context, true); // ✅ 상위로 성공 전달
+                }
+              }
+            }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              disabledBackgroundColor:
+              AppColors.primary.withOpacity(0.3),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text(
+              '다음',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
