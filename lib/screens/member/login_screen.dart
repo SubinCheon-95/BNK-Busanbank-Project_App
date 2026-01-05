@@ -148,30 +148,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
+                // 2025/01/05 - 지문인증 시 UI 위치 수정 - 작성자: 오서정
                 // ===== 아이디 로그인 입력 =====
                 if (_loginType == LoginType.id)
                   _sectionCard(
                     title: const Text(
                       '아이디',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
                     child: _idLoginForm(),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  _buildBottomLinks(),
 
                 if (_loginType == LoginType.biometric) ...[
                   const SizedBox(height: 20),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _biometricLoginView(),
+                    child: _biometricLoginView(), // <- 아래에서 Center 적용
                   ),
                 ],
+
+                // ✅ 링크는 무조건 "현재 화면 내용" 아래로 오게 여기 배치
+                const SizedBox(height: 8),
+                _buildBottomLinks(),
+
               ],
             ),
           ),
@@ -273,15 +272,19 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     }
 
-    return Column(
-      children: [
-        const Icon(Icons.fingerprint, size: 80, color: purple900),
-        const SizedBox(height: 20),
-        const Text('지문 인증 중입니다...'),
-      ],
+    // 2025/01/05 - 지문인증 시 UI 위치 수정 - 작성자: 오서정
+    return Center( // ✅ 핵심: 가운데 정렬
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(Icons.fingerprint, size: 80, color: purple900),
+          const SizedBox(height: 20),
+          const Text('지문 인증 중입니다...'),
+        ],
+      ),
     );
   }
-
   void _showGuideDialog(String title, String message) {
     showDialog(
       context: context,
