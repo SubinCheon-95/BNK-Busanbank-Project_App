@@ -33,7 +33,7 @@ class _BitcoinPredictionScreenState extends State<BitcoinPredictionScreen> {
       final result = await _bitcoinService.fetchResult();
 
       setState(() {
-        _previousClosePrice = '${result.yesterday} USD';
+        _previousClosePrice = '${result.today} USD';
         _loading = false;
       });
     } catch (e) {
@@ -255,7 +255,7 @@ class _BitcoinPredictionScreenState extends State<BitcoinPredictionScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            '전일 종가',
+            '현재가',
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey[500],
