@@ -4,7 +4,10 @@
   작성자 : 오서정
 
   날짜 : 2025/12/16
-  내용 : AuthProvider 병합  - 진원, 수진
+  내용 : AuthProvider 병합 - 진원, 수진
+
+  날짜 : 2026/01/05
+  내용 : UI 수정 - 수빈
 */
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +22,7 @@ import 'package:tkbank/screens/member/register/terms_screen.dart';
 import 'package:tkbank/services/biometric_auth_service.dart';
 import 'package:tkbank/services/biometric_storage_service.dart';
 import 'package:tkbank/services/pin_storage_service.dart';
+import 'package:tkbank/theme/app_colors.dart';
 
 // 25/12/21 - 간편 로그인 기능 추가 - 작성자: 오서정
 // 25/12/22 - 간편 비밀번호 입력 화면 분리 - 작성자: 오서정
@@ -107,126 +111,85 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F2F8),
-      appBar: AppBar(
-        title: const Text('로그인'),
-        centerTitle: true,
-        backgroundColor: purple900,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 10),
+    final h = MediaQuery.of(context).size.height;
 
-                // 로고 or 타이틀
-                const Text(
-                  '로그인', // 2025/12/21 - text 수정 - 작성자: 오서정
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: purple900,
-                    letterSpacing: 1.5,
+    return Scaffold(
+      backgroundColor: AppColors.gray1,
+
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 80),
+
+                // ===== 타이틀 =====
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: const Text(
+                    '로그인',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
 
                 const SizedBox(height: 30),
 
-                // 2025/12/21 - 로그인 방법 간편로그인 추가 - 작성자: 오서정
-                _loginTypeTabs(),
+                // ===== 로그인 방식 선택 =====
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _loginTypeTabs(),
+                ),
 
                 const SizedBox(height: 20),
 
-                //2025/12/22 - 간편비밀번호 입력 창 분리 - 작성자: 오서정
-                if (_loginType == LoginType.id) _idLoginForm(),
-                if (_loginType == LoginType.biometric) _biometricLoginView(),
-
-                
-                // 하단 메뉴 (아이디 찾기 | 회원가입 | 비밀번호 찾기)
-                // 오버플로우 수정 - 수진
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(  // ✅ 추가!
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const FindIdScreen()),
-                          );
-                        },
-                        child: const Text(
-                          '아이디 찾기',
-                          style: TextStyle(
-                            color: purple900,
-                            fontSize: 12,  // ✅ 14 → 12
-                          ),
-                        ),
+                // ===== 아이디 로그인 입력 =====
+                if (_loginType == LoginType.id)
+                  _sectionCard(
+                    title: const Text(
+                      '아이디',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                    child: _idLoginForm(),
+                  ),
 
-                    Expanded(  // ✅ 추가!
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const TermsScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          '회원가입',
-                          style: TextStyle(
-                            color: purple900,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,  // ✅ 14 → 12
-                          ),
-                        ),
-                      ),
-                    ),
+                  const SizedBox(height: 8),
 
-                    Expanded(  // ✅ 추가!
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => FindPwScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          '비밀번호 찾기',
-                          style: TextStyle(
-                            color: purple900,
-                            fontSize: 12,  // ✅ 14 → 12
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  _buildBottomLinks(),
+
+                if (_loginType == LoginType.biometric) ...[
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _biometricLoginView(),
+                  ),
+                ],
               ],
             ),
           ),
-        ),
+
+          // 뒤로가기 버튼
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 8,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_left, size: 34),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
       ),
+
+      // ===== 하단 로그인 버튼 =====
+      bottomNavigationBar: _buildBottomLoginCTA(h),
     );
   }
 
@@ -240,10 +203,8 @@ class _LoginScreenState extends State<LoginScreen> {
   //2025/12/21 - 간편 로그인 기능 추가 - 오서정
   Widget _loginTypeTabs() {
     return Container(
-      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: purple500.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
@@ -260,22 +221,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Expanded(
       child: GestureDetector(
-          onTap: () async {
-            _pendingLoginType = type;
-            _handleLoginTypeTap();
-          },
+        onTap: () async {
+          _pendingLoginType = type;
+          _handleLoginTypeTap();
+        },
         child: Container(
-          height: 44,
+          height: 50,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? Colors.white : Colors.transparent,
+            color: selected ? AppColors.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
             label,
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: selected ? purple900 : Colors.grey,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: selected ? AppColors.white : AppColors.gray5,
             ),
           ),
         ),
@@ -290,34 +252,13 @@ class _LoginScreenState extends State<LoginScreen> {
           controller: _idController,
           decoration: _inputDecoration('아이디'),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 15),
         TextField(
           controller: _pwController,
           obscureText: true,
           decoration: _inputDecoration('비밀번호'),
         ),
-        const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: _procLogin,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: purple900,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            child: const Text(
-              '로그인',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -360,7 +301,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-
   // 2025/12/22 - 간편비밀번호 화면 분리 - 작성자: 오서정
   Future<void> _handleLoginTypeTap() async {
     final type = _pendingLoginType;
@@ -368,7 +308,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final auth = context.read<AuthProvider>();
 
-    // 🔹 PIN 탭 → 바로 인증 화면
+    // PIN 탭 → 바로 인증 화면
     if (type == LoginType.pin) {
       final hasPin = await PinStorageService().hasPin();
       final hasBaseInfo = await auth.hasSimpleLoginBaseInfo();
@@ -393,13 +333,13 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success == true && mounted) {
-        // ⭐ LoginScreen까지 닫기
+        // LoginScreen까지 닫기
         Navigator.pop(context);
       }
       return;
     }
 
-    // 🔹 생체 인증 탭
+    // 생체 인증 탭
     if (type == LoginType.biometric) {
       final enabled = await BiometricStorageService().isEnabled();
       final hasBaseInfo = await auth.hasSimpleLoginBaseInfo();
@@ -421,7 +361,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // 🔹 아이디 로그인만 화면 전환
+    // 아이디 로그인만 화면 전환
     setState(() {
       _loginType = LoginType.id;
       _pendingLoginType = null;
@@ -473,5 +413,124 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildBottomLinks() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(5, 5, 5, 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: TextButton(
+              style: TextButton.styleFrom(
+                overlayColor: Colors.transparent,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FindIdScreen()),
+                );
+              },
+              child: const Text(
+                '아이디 찾기',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary),
+              ),
+            ),
+          ),
+          Expanded(
+            child: TextButton(
+              style: TextButton.styleFrom(
+                overlayColor: Colors.transparent,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TermsScreen()),
+                );
+              },
+              child: const Text(
+                '회원가입',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary),
+              ),
+            ),
+          ),
+          Expanded(
+            child: TextButton(
+              style: TextButton.styleFrom(
+                overlayColor: Colors.transparent,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => FindPwScreen()),
+                );
+              },
+              child: const Text(
+                '비밀번호 찾기',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildBottomLoginCTA(double h) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 25, 20, 20),
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          height: h * 0.09,
+          child: ElevatedButton(
+            onPressed: _procLogin,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              '로그인',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionCard({
+    required Widget title,
+    required Widget child,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          title,
+          const SizedBox(height: 15),
+          child,
+        ],
+      ),
+    );
+  }
 }
