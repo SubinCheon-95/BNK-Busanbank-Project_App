@@ -58,9 +58,9 @@ class _NewsResultScreenState extends State<NewsResultScreen> {
   }
 
   Color _getSentimentColor() {
-    if (result.sentiment.label.contains('긍정')) {
+    if (widget.result.sentiment.label.contains('긍정')) {
       return Colors.blue.shade900;
-    } else if (result.sentiment.label.contains('부정')) {
+    } else if (widget.result.sentiment.label.contains('부정')) {
       return Colors.red.shade900;
     } else {
       return Colors.green.shade900;
