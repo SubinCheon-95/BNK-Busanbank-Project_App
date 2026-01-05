@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-/// 🔥 둥둥 떠다니는 단어 위젯 (색상 구분!)
+/// 둥둥 떠다니는 단어 위젯 (색상 구분)
 ///
 /// - Positioned.fill()로 전체 영역 차지
 /// - 10개 위치에 골고루 배치
@@ -11,14 +11,14 @@ class FloatingWordsOverlay extends StatefulWidget {
   final List<String> words;
   final Color color;
   final int maxWords;
-  final int startIndex;  // ✅ 추가!
+  final int startIndex;  // 추가!
 
   const FloatingWordsOverlay({
     super.key,
     required this.words,
     required this.color,
     this.maxWords = 10,
-    this.startIndex = 0,  // ✅ 기본값 0
+    this.startIndex = 0,  // 기본값 0
   });
 
   @override
@@ -84,7 +84,7 @@ class _FloatingWordsOverlayState extends State<FloatingWordsOverlay>
       return const SizedBox.shrink();
     }
 
-    // ✅ Positioned.fill()로 전체 영역 차지!
+    // Positioned.fill()로 전체 영역 차지!
     return Positioned.fill(
       child: IgnorePointer(
         child: Stack(
@@ -95,23 +95,23 @@ class _FloatingWordsOverlayState extends State<FloatingWordsOverlay>
                 alignment: _getAlignment(index),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                    horizontal: 10,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: widget.color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    color: widget.color.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(15),
                     border: Border.all(
-                      color: widget.color.withOpacity(0.3),
-                      width: 1.5,
+                      color: widget.color.withOpacity(0.5),
+                      width: 2,
                     ),
                   ),
                   child: Text(
                     displayWords[index],
                     style: TextStyle(
                       color: widget.color,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -124,12 +124,12 @@ class _FloatingWordsOverlayState extends State<FloatingWordsOverlay>
   }
 
   Alignment _getAlignment(int index) {
-    // ✅ 10개 위치 - 골고루!
+    // 10개 위치 - 골고루!
     final positions = [
-      Alignment(-1.2, -0.9),   // 0: 왼쪽 위
-      Alignment(0.9, -0.5),    // 1: 오른쪽 위 중간
-      Alignment(0.0, -1.25),   // 2: 중앙 위
-      Alignment(1.1, -1.0),    // 3: 오른쪽 위
+      Alignment(-1.0, -0.7),   // 0: 왼쪽 위
+      Alignment(1.0, -0.6),    // 1: 오른쪽 위 중간
+      Alignment(-0.5, -1.2),  // 2: 중앙 위
+      Alignment(1.3, -1.1),    // 3: 오른쪽 위
       Alignment(-1.0, 0.2),    // 4: 왼쪽 중간
       Alignment(-0.9, -0.3),   // 5: 왼쪽 상단
       Alignment(0.8, 0.0),     // 6: 오른쪽 중간
@@ -138,7 +138,7 @@ class _FloatingWordsOverlayState extends State<FloatingWordsOverlay>
       Alignment(1.1, 0.8),     // 9: 오른쪽 아래
     ];
 
-    // ✅ startIndex를 더해서 위치 결정!
+    // startIndex를 더해서 위치 결정!
     final posIndex = (widget.startIndex + index) % positions.length;
     return positions[posIndex];
   }

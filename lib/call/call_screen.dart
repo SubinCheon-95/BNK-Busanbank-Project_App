@@ -19,8 +19,6 @@ class _CallScreenState extends State<CallScreen> {
 
   String _log = '';
 
-  // ✅ 에뮬레이터면 10.0.2.2, 실기기면 PC IP
-  static const String baseUrl = 'http://10.0.2.2:8080/busanbank';
   final String baseUrl = ApiConfig.baseUrl;
   final String baseWs  = ApiConfig.wsBase;
 
