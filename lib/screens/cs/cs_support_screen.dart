@@ -134,12 +134,12 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
                       children: [
                         Text(
                           '무엇을 도와드릴까요?',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         SizedBox(height: 4),
                         Text(
                           '자주 묻는 질문부터 1:1 채팅 상담까지\n원하시는 상담 방식을 선택해 주세요.',
-                          style: TextStyle(fontSize: 14),
+                          style: TextStyle(fontSize: 16),
                         ),
                       ],
                     ),
@@ -188,7 +188,7 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
 
           // 상담/문의
           Text('상담/문의', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
           Card(
             elevation: 1,
