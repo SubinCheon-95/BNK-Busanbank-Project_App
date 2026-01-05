@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:tkbank/main.dart';
+import 'package:tkbank/navigator_key.dart';
+import 'package:tkbank/screens/home/easy_home_screen.dart';
 import 'package:tkbank/screens/member/login_screen.dart';
 
 class RegisterWelcomeScreen extends StatefulWidget {
@@ -19,10 +22,16 @@ class _RegisterWelcomeScreenState extends State<RegisterWelcomeScreen> {
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
 
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const EasyHomeScreen(baseUrl: MyApp.baseUrl)),
+          (route) => false,
       );
+
+      WidgetsBinding.instance.addPostFrameCallback((_){
+        navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      });
     });
   }
 
