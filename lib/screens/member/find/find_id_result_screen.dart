@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
+import 'package:tkbank/main.dart';
+import 'package:tkbank/screens/home/easy_home_screen.dart';
 import 'package:tkbank/screens/member/find/find_pw_screen.dart';
 import 'package:tkbank/screens/member/login_screen.dart';
 import 'package:tkbank/theme/app_colors.dart'; // ✅ 추가
@@ -160,10 +162,17 @@ class FindIdResultScreen extends StatelessWidget {
                       child: ElevatedButton(
                         style: primaryBtnStyle,
                         onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (_)=> const EasyHomeScreen(baseUrl: MyApp.baseUrl)),
+                              (route)=>false
                           );
+                          WidgetsBinding.instance.addPostFrameCallback((_){
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_)=>const LoginScreen()),
+                            );
+                          });
                         },
                         child: const Text('아이디로 로그인'),
                       ),
