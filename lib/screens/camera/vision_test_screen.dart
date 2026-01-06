@@ -9,10 +9,10 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:tkbank/services/camera_point_service.dart';
 
+import '../../config/app_config.dart';
 import '../../providers/auth_provider.dart';
 
 class VisionTestScreen extends StatefulWidget { //카메라, 갤러리 이미지를 이용해 일치시 포인트 획득 - 작성자: 윤종인
-  final String baseUrl = 'http://10.0.2.2:8080/busanbank/api';
   const VisionTestScreen({super.key});
 
   @override
@@ -32,7 +32,7 @@ class _VisionTestScreenState extends State<VisionTestScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    cameraPointService = CameraPointService(baseUrl: widget.baseUrl);
+    cameraPointService = CameraPointService(baseUrl: '${AppConfig.baseUrl}/api');
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -83,7 +83,7 @@ class _VisionTestScreenState extends State<VisionTestScreen> with SingleTickerPr
               child: Column(
                 children: [
                   const Text(
-                    'BNK 부산은행 로고를 촬영하고\n포인트를 받으세요!',
+                    'BNK 금융그룹 로고를 촬영하고\n포인트를 받으세요!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 18,
