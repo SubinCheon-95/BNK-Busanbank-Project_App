@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:tkbank/screens/btc/Bitcoin_prediction_screen.dart';
+import '../config/app_config.dart';
 import '../firebase_options.dart';
 import '../main.dart';
 import '../navigator_key.dart';
@@ -22,7 +23,6 @@ import 'package:tkbank/screens/home/easy_home_screen.dart';
 
 class FcmService { // 푸시 알림 서비스
   static final BitcoinService _bitcoinService = BitcoinService();
-  static const String baseUrl = 'http://10.0.2.2:8080/busanbank/api';
 
   static final FlutterLocalNotificationsPlugin _local =
   FlutterLocalNotificationsPlugin();
@@ -177,19 +177,19 @@ class FcmService { // 푸시 알림 서비스
     switch(route) {
         case '/product' :
         navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (_) => const ProductMainScreen(baseUrl: baseUrl)),
+          MaterialPageRoute(builder: (_) => const ProductMainScreen(baseUrl: '${AppConfig.baseUrl}/api')),
         ); // 지금 가입하면 혜택있는 상품이 있어요 - 고객님께 적합한 상품을 확인해 보세요.
         break;
 
       case '/ai' :
         navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (_) => const NewsAnalysisMainScreen(baseUrl: baseUrl)),
+          MaterialPageRoute(builder: (_) => const NewsAnalysisMainScreen(baseUrl: '${AppConfig.baseUrl}/api')),
         ); // 오늘의 금융 알림 - AI가 분석한 최신 금리 동향을 확인해보세요
         break;
 
       case '/event':
         navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (_) => const GameMenuScreen(baseUrl: baseUrl)),
+          MaterialPageRoute(builder: (_) => const GameMenuScreen(baseUrl: '${AppConfig.baseUrl}/api')),
         ); // 포인트를 모아 금리 혜택을 받아보세요 - 게임 이벤트로 포인트를 적립할 수 있어요
         break;
 
@@ -225,7 +225,7 @@ class FcmService { // 푸시 알림 서비스
 
       default:
         navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (_) => const EasyHomeScreen(baseUrl: baseUrl)),
+          MaterialPageRoute(builder: (_) => const EasyHomeScreen(baseUrl: '${AppConfig.baseUrl}/api')),
         );
     }
   }
