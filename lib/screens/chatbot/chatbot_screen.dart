@@ -2,10 +2,13 @@
   날짜: 2025/12/19
   내용: ai 챗봇 연동 페이지
   작성자: 오서정
+  
+  날짜: 2026/01/07
+  내용: ai 챗봇 대화 연결 및 UI 전체 수정
+  작성자: 천수빈
 */
 import 'package:flutter/material.dart';
 import 'package:tkbank/config/app_config.dart';
-import 'package:tkbank/main.dart';
 import 'package:tkbank/models/chatbot_message.dart';
 import 'package:tkbank/screens/camera/vision_test_screen.dart';
 import 'package:tkbank/screens/cs/cs_support_screen.dart';
@@ -18,37 +21,56 @@ import 'package:tkbank/screens/product/interest_calculator_screen.dart';
 import 'package:tkbank/screens/product/news_analysis_screen.dart';
 import 'package:tkbank/screens/product/product_main_screen.dart';
 import 'package:tkbank/services/chatbot_service.dart';
+import 'package:tkbank/theme/app_colors.dart';
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({super.key});
+  final String? initialMessage;
+
+  const ChatbotScreen({
+    super.key,
+    this.initialMessage,
+  });
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
-
-  bool _showDialogue = false;
   bool _showIntro = true;
   bool _removeIntro = false;
+
+  late final DateTime _chatStartedAt;
+  final ScrollController _scrollController = ScrollController();
+
+  void _addIntroMessage() {
+    _messages.add(
+      ChatbotMessage(
+        text: '안녕하세요! 딸깍은행 상담챗봇 딸깍이에요.\n궁금한 내용을 질문해 주시면 빠르게 안내해 드릴게요.',
+        isUser: false,
+      ),
+    );
+    _scrollToBottom();
+  }
+
   @override
   void initState() {
     super.initState();
 
-    // 3초 후 fade-out
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
+    _chatStartedAt = DateTime.now();
+
+    // 딸깍이 예약 인사 먼저
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        _showIntro = false;
+        _addIntroMessage();
       });
 
-      // fade-out 끝난 뒤 완전 제거
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (!mounted) return;
-        setState(() {
-          _removeIntro = true;
+      // AR에서 넘어온 질문이 있다면, 인사 후 답변
+      if (widget.initialMessage != null &&
+          widget.initialMessage!.trim().isNotEmpty) {
+        Future.delayed(const Duration(milliseconds: 600), () {
+          _sendMessageFromOutside(widget.initialMessage!);
         });
-      });
+      }
     });
   }
 
@@ -135,6 +157,71 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  // AR에서 상담 챗봇으로 연결하기 (26.01.07 수빈)
+  void _sendMessageFromOutside(String text) async {
+    setState(() {
+      _isLoading = true;
+
+      // AR에서 넘어온 질문을 사용자 말풍선처럼 표시
+      _messages.add(
+        ChatbotMessage(
+          text: text,
+          isUser: true,
+        ),
+      );
+    });
+
+    _scrollToBottom();
+
+    try {
+      final result = await _service.ask(text);
+
+      setState(() {
+        _messages.add(
+          ChatbotMessage(
+            text: result["answer"],
+            isUser: false,
+            actions: result["actions"],
+          ),
+        );
+        _isLoading = false;
+      });
+
+      _scrollToBottom();
+
+    } catch (e) {
+      setState(() {
+        _messages.add(
+          ChatbotMessage(
+            text: "해당 내용은 바로 안내드리기 어려워요.\n조금 더 구체적으로 질문해 주시면 도와드릴게요 😊",
+            isUser: false,
+          ),
+        );
+        _isLoading = false;
+      });
+    }
+  }
+
+  // 무조건 맨 아래로 자동 스크롤 (26.01.07 수빈)
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   final TextEditingController _controller = TextEditingController();
   final ChatbotService _service = ChatbotService();
 
@@ -151,13 +238,49 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    if (text.length < 2) {
+      setState(() {
+        _messages.add(
+          ChatbotMessage(
+            text: "조금만 더 자세히 말씀해 주시면 제가 더 잘 도와드릴 수 있어요 😊",
+            isUser: false,
+          ),
+        );
+      });
+      return;
+    }
+
+    final invalidPatterns = ['ㅋㅋ', 'ㅎㅎ', '...', '???'];
+
+    if (invalidPatterns.any((p) => text.contains(p))) {
+      setState(() {
+        _messages.add(
+          ChatbotMessage(
+            text: "앗, 이 표현은 제가 이해하기 조금 어려워요. \n다른 방식으로 한 번만 말씀해 주세요!",
+            isUser: false,
+          ),
+        );
+      });
+      return;
+    }
+
     FocusScope.of(context).unfocus();
 
     setState(() {
       _isLoading = true;
+
+      // 사용자 말풍선 추가
+      _messages.add(
+        ChatbotMessage(
+          text: text,
+          isUser: true,
+        ),
+      );
+
       _controller.clear();
-      _showInput = false;
     });
+
+    _scrollToBottom(); //
 
     try {
       final result = await _service.ask(text);
@@ -170,34 +293,36 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             actions: result["actions"],
           ),
         );
-        _showDialogue = true;
+        _isLoading = false;
       });
 
-      // ⏳ 8초 뒤 답변 말풍선 숨기기
-      Future.delayed(const Duration(seconds: 8), () {
-        if (!mounted) return;
-        setState(() {
-          _showDialogue = false;
-        });
-      });
+      _scrollToBottom(); //
 
     } catch (e) {
+      String errorMessage;
+
+      if (e.toString().contains('SocketException')) {
+        // 네트워크 오류
+        errorMessage =
+        "지금 인터넷 연결이 불안정한 것 같아요. \n잠시 후 다시 시도해 주세요!";
+      } else if (e.toString().contains('timeout')) {
+        // 서버 응답 지연
+        errorMessage =
+        "답변이 조금 늦어지고 있어요. \n잠시만 기다렸다가 다시 질문해 주세요!";
+      } else {
+        // 기타 (AI 이해 불가 포함)
+        errorMessage =
+        "이 질문은 제가 바로 답변하기 어려워요. 🐧\n조금만 다르게 질문해 주실 수 있을까요?";
+      }
+
       setState(() {
         _messages.add(
           ChatbotMessage(
-            text: "오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+            text: errorMessage,
             isUser: false,
           ),
         );
-        _showDialogue = true;
-      });
-
-      // 오류 메시지도 동일하게 숨김
-      Future.delayed(const Duration(seconds: 5), () {
-        if (!mounted) return;
-        setState(() {
-          _showDialogue = false;
-        });
+        _isLoading = false;
       });
     }
   }
@@ -205,238 +330,295 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SizedBox.expand(
-        child: Stack(
-          children: [
-            /// 🔙 뒤로가기
-            Positioned(
-              top: 40,
-              left: 12,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                onPressed: () => Navigator.pop(context),
+      backgroundColor: AppColors.gray1,
+      body: Stack(
+        children: [
+          // 본문
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 80),
+
+              _buildChatTitle(),   // 타이틀
+              _buildDateDivider(), // 날짜
+
+              Expanded(
+                child: _buildChatList(),
               ),
+            ],
+          ),
+
+          // 뒤로가기 버튼
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 8,
+            child: IconButton(
+              icon: const Icon(
+                Icons.chevron_left,
+                size: 34,
+                color: AppColors.black,
+              ),
+              onPressed: () => Navigator.pop(context),
             ),
-            const SizedBox(height: 12),
+          ),
 
-
-            // 🐧 인트로 말풍선
-            if (!_removeIntro)
-              Positioned(
-                bottom: 40,
-                left: 20,
-                right: 20,
-                child: AnimatedOpacity(
-                  opacity: _showIntro ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: _buildIntroBubble(),
-                ),
-              ),
-
-
-
-            // 💬 메시지 버튼 (펭귄맨 옆)
-            Positioned(
-              bottom: 200,
-              left: MediaQuery.of(context).size.width / 2 + 36, // 👉 펭귄맨 옆으로 이동
-              child: GestureDetector(
-                onTap: _toggleInput,
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.blueGrey.shade50,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      )
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.chat_bubble_outline,
-                    size: 26,
-                    color: Colors.blueGrey,
-                  ),
-                ),
-              ),
-            ),
-
-            // 💬 말풍선 영역
-            Positioned(
-              bottom: _showInput ?110 : 40,
-              left: 20,
-              right: 20,
-              child: AnimatedOpacity(
-                opacity: _showDialogue ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 500),
-                child: _buildDialogueArea(),
-              ),
-            ),
-
-            // ⌨ 입력창 (숨김/표시)
-            if (_showInput)
-              Positioned(
-                bottom: 20,
-                left: 16,
-                right: 16,
-                child: _buildInputBar(),
-              ),
-
-          ],
-        ),
+          // 하단 입력창
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildInputBar(),
+          ),
+        ],
       ),
-
     );
   }
 
-  Widget _buildDialogueArea() {
-    if (_messages.isEmpty) return const SizedBox();
+  Widget _buildChatTitle() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: const Text(
+        'AI 상담 챗봇',
+        style: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
+          color: AppColors.primary,
+        ),
+      ),
+    );
+  }
 
-    final msg = _messages.last;
+  Widget _buildDateDivider() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      child: Row(
+        children: [
+          const Expanded(child: Divider()),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '${_chatStartedAt.year}년 ${_chatStartedAt.month}월 ${_chatStartedAt.day}일',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.gray4,
+              ),
+            ),
+          ),
+          const Expanded(child: Divider()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatList() {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        140, // 입력창 높이만큼 여유 공간 줘야함
+      ),
+      itemCount: _messages.length,
+      itemBuilder: (context, index) {
+        final msg = _messages[index];
+
+        // 사용자 메시지
+        if (msg.isUser) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  constraints: const BoxConstraints(maxWidth: 260),
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    msg.text,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.black,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // 딸깍이 메시지
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 딸깍이 이미지
+              Container(
+                width: 50,
+                height: 50,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                    ),
+                  ],
+                  image: const DecorationImage(
+                    image: AssetImage(
+                      'assets/images/penguinman_smile.png',
+                    ),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+
+              // 말풍선
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '딸깍이 · AI 상담원',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        msg.text,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+
+                    if (msg.actions != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Wrap(
+                          spacing: 8,
+                          children: msg.actions!.map((code) {
+                            return OutlinedButton(
+                              onPressed: () => _handleAction(code),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: AppColors.white,
+                                side: const BorderSide(
+                                  color: AppColors.primary, // 테두리
+                                  width: 1,
+                                ),
+                                foregroundColor: AppColors.primary, // 텍스트 색
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: Text(
+                                _actionLabels[code]!,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            );
+
+                          }).toList(),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // 하단 입력창 (26.01.07 수빈)
+  Widget _buildInputBar() {
+    final hasText = _controller.text.trim().isNotEmpty;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.75), // 🔥 반투명
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 15,
+        bottom: MediaQuery.of(context).padding.bottom + 15,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black12,
             blurRadius: 8,
-            offset: const Offset(0, 4),
+            offset: Offset(0, -2),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "딸깍이",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.blueGrey.shade700,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          Text(
-            msg.text,
-            style: const TextStyle(
-              fontSize: 15,
-              height: 1.4,
-            ),
-          ),
-
-          // 🎯 Quick Action 버튼
-          if (msg.actions != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Wrap(
-                spacing: 8,
-                children: msg.actions!.map((code) {
-                  return _buildPenguinButton(code);
-                }).toList(),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPenguinButton(String code) {
-    return GestureDetector(
-      onTap: () {
-        _handleAction(code);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.lightBlue.shade100.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.lightBlue.shade300),
-        ),
-        child: Text(
-          _actionLabels[code] ?? "이동",
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: Colors.blueGrey,
-          ),
-        ),
-      ),
-    );
-  }
-  Widget _buildInputBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 8,
-          )
         ],
       ),
       child: Row(
         children: [
+          // 입력창
           Expanded(
             child: TextField(
               controller: _controller,
-              decoration: const InputDecoration(
-                hintText: "딸깍이에게 말을 걸어보세요...",
-                border: InputBorder.none,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: '딸깍이에게 메시지를 입력해 주세요',
+                hintStyle: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 16,
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade200,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
               ),
-              onSubmitted: (_) => _sendMessage(),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.send, color: Colors.blueGrey),
-            onPressed: _sendMessage,
-          )
-        ],
-      ),
-    );
-  }
 
-  Widget _buildIntroBubble() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.75),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "딸깍이",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.blueGrey.shade700,
+          const SizedBox(width: 8),
+
+          // Send 버튼
+          Container(
+            decoration: BoxDecoration(
+              color: hasText ? AppColors.primary : AppColors.gray3,
+              shape: BoxShape.circle,
             ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            "안녕! 나는 딸각은행의 딸깍이야 \n반가워!",
-            style: TextStyle(fontSize: 15, height: 1.4),
+            child: IconButton(
+              icon: const Icon(Icons.send),
+              color: AppColors.white,
+              onPressed: hasText ? _sendMessage : null,
+            ),
           ),
         ],
       ),
     );
   }
-
 }

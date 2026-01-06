@@ -43,6 +43,8 @@ class ArHomeScreen extends StatefulWidget {
 
 class _ArHomeScreenState extends State<ArHomeScreen> {
   int _step = 0;
+  bool _highlightInput = false;
+
   CameraController? _cameraController;
   bool _isCameraInitialized = false;
 
@@ -144,8 +146,14 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
     final authProvider = context.watch<AuthProvider>();
     final isLoggedIn = authProvider.isLoggedIn;
     // 👇 화면 크기
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -158,7 +166,10 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
 
           // 뒤로가기 버튼
           Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
+            top: MediaQuery
+                .of(context)
+                .padding
+                .top + 16,
             left: 20,
             child: Container(
               decoration: BoxDecoration(
@@ -185,7 +196,10 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
 
           // 하단 슬라이드 메뉴
           Positioned(
-            bottom: screenHeight * 0.05 + MediaQuery.of(context).padding.bottom,
+            bottom: screenHeight * 0.05 + MediaQuery
+                .of(context)
+                .padding
+                .bottom,
             left: 0,
             right: 0,
             child: HomeMenuBar(
@@ -226,20 +240,27 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   }
 
   Widget _buildMascot() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     return Positioned(
-      top: screenHeight * 0.28,
+      top: screenHeight * 0.2,
       left: 0,
       right: 0,
       child: Center(
         child: SizedBox(
-          width: screenWidth * 0.85,
-          height: screenHeight * 0.5,
+          width: screenWidth * 1.05,
+          height: screenHeight * 0.65,
           child: Stack(
             children: MascotMotion.values.map((motion) {
-              if (!_motionFiles.containsKey(motion)) return const SizedBox.shrink();
+              if (!_motionFiles.containsKey(motion))
+                return const SizedBox.shrink();
 
               final isActive = _currentMotion == motion;
               return AnimatedOpacity(
@@ -255,6 +276,10 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                     autoRotate: false,
                     cameraControls: false,
                     backgroundColor: Colors.transparent,
+
+                    scale: '0.5 0.5 0.5',
+                    cameraOrbit: "0deg 80deg 3m",
+                    fieldOfView: "30deg",
                   ),
                 ),
               );
@@ -266,7 +291,10 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   }
 
   Widget _buildGreeting() {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     return Positioned(
       top: screenHeight * 0.10,
@@ -274,7 +302,17 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
       right: 24,
       child: GestureDetector(
         onTap: () {
-          setState(() => _step = 1);
+          setState(() {
+            _step = 1;
+          });
+
+          // 0.6초 후 원래 색으로 복귀
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (mounted) {
+              setState(() => _highlightInput = false);
+            }
+          });
+
         },
         child: SizedBox(
           height: screenHeight * 0.2,
@@ -322,16 +360,28 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
   }
 
   Widget _buildQuestion() {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
 
     return Positioned(
-      top: screenHeight * 0.1,
+      top: screenHeight * 0.10,
       left: 24,
       right: 24,
       child: GestureDetector(
         onTap: () {
-          _focusNode.requestFocus();
+          setState(() {
+            _highlightInput = true;
+          });
+
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (mounted) {
+              setState(() => _highlightInput = false); // 다시 원래 색
+            }
+          });
         },
+
         child: SizedBox(
           height: screenHeight * 0.2,
           child: Stack(
@@ -343,18 +393,30 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
               ),
               Positioned.fill(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 34),
-                  child: const Align(
-                    alignment: Alignment(0, 0),
-                    child: Text(
-                      '무엇을 도와드릴까요?',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.black,
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        '무엇을 도와드릴까요?',
+                        style: TextStyle(
+                          fontSize: 26, // 🔽 기존 32 → 26
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.black,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '탭하여 계속',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.gray4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -365,21 +427,26 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
     );
   }
 
+
   Widget _buildMessageInput() {
     return Positioned(
       bottom: 0,
       left: 0,
       right: 0,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOut,
         padding: EdgeInsets.only(
           left: 20,
           right: 20,
           top: 15,
           bottom: MediaQuery.of(context).padding.bottom + 8,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: _highlightInput
+              ? AppColors.primary
+              : AppColors.white,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(20),
           ),
         ),
@@ -391,7 +458,10 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                 focusNode: _focusNode,
                 decoration: InputDecoration(
                   hintText: '딸깍이에게 무엇이든 물어보세요.',
-                  hintStyle: const TextStyle(color: AppColors.gray4, fontSize: 16),
+                  hintStyle: const TextStyle(
+                    color: AppColors.gray4,
+                    fontSize: 16,
+                  ),
                   filled: true,
                   fillColor: AppColors.gray2,
                   border: OutlineInputBorder(
@@ -403,12 +473,6 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
                     vertical: 14,
                   ),
                 ),
-                onChanged: (text) {
-                  // 나중에 typing 모션 추가
-                },
-                onSubmitted: (value) {
-                  _handleSendMessage(value);
-                },
               ),
             ),
             const SizedBox(width: 8),
@@ -438,7 +502,9 @@ class _ArHomeScreenState extends State<ArHomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const ChatbotScreen(),
+        builder: (_) => ChatbotScreen(
+          initialMessage: message,
+        ),
       ),
     );
 
