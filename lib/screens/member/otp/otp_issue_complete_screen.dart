@@ -82,8 +82,8 @@ class OtpIssueCompleteScreen extends StatelessWidget {
               height: 52,
               child: ElevatedButton(
                 onPressed: () {
-                  // ✅ 여기서 SecurityCenterScreen으로 복귀 + 결과 전달
-                  Navigator.pop(context, true);
+                  Navigator.popUntil(context, (route)=>route.settings.name == 'OtpManage');
+                  Navigator.pop(context,true);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: bnkPrimary,

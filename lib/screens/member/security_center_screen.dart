@@ -179,7 +179,9 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
                 // ✅ 결과를 반드시 받아야 함
                 final changed = await Navigator.push<bool>(
                   context,
-                  MaterialPageRoute(builder: (_) => const OtpManageScreen()),
+                  MaterialPageRoute(
+                      settings: const RouteSettings(name:'OtpManage'),
+                      builder: (_) => const OtpManageScreen()),
                 );
 
                 await _loadSecurityStatus();

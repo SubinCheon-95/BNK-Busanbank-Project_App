@@ -78,10 +78,11 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: Color.alphaBlend(
-        AppColors.white.withOpacity(0.6),
-        AppColors.primary,
-      ),
+      backgroundColor: AppColors.gray1,
+      // backgroundColor: Color.alphaBlend(
+        // AppColors.white.withOpacity(0.9),
+        // AppColors.gray1,
+      // ),
 
       body: Stack(
         children: [
@@ -200,7 +201,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
             child: IconButton(
               icon: const Icon(Icons.chevron_left, size: 34),
               onPressed: () => Navigator.pop(context),
-              color: AppColors.gray1,
+              color: AppColors.gray4,
             ),
           ),
         ],
@@ -221,10 +222,10 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
         });
       },
       style: OutlinedButton.styleFrom(
-        backgroundColor: isSelected ? AppColors.primary : AppColors.white,
-        foregroundColor: isSelected ? AppColors.white : AppColors.primary,
+        backgroundColor: isSelected ? AppColors.blue : AppColors.white,
+        foregroundColor: isSelected ? AppColors.white : AppColors.blue,
         side: BorderSide(
-          color: const Color(0xFF6A1B9A),
+          color: AppColors.blue,
           width: isSelected ? 2 : 1,
         ),
         padding: const EdgeInsets.symmetric(vertical: 18),
@@ -287,7 +288,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.pink, AppColors.primary],
+          colors: [AppColors.yellow, AppColors.deepRed],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -362,7 +363,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
           '$value원',
           style: TextStyle(
             fontSize: isTotal ? 24 : 18,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             color: isHighlight
                 ? AppColors.yellowGreen
                 : (isTotal ? AppColors.white : AppColors.white),
@@ -426,7 +427,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
         fontWeight: FontWeight.w500,
       ),
       floatingLabelStyle: const TextStyle(
-        color: AppColors.primary,
+        color: AppColors.blue,
         fontWeight: FontWeight.w700,
       ),
       enabledBorder: OutlineInputBorder(
@@ -439,7 +440,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(
-          color: AppColors.primary,
+          color: AppColors.blue,
           width: 2,
         ),
       ),
@@ -511,7 +512,7 @@ class _InterestCalculatorScreenState extends State<InterestCalculatorScreen> {
                 child: ElevatedButton(
                   onPressed: _calculate,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.blue,
                     foregroundColor: AppColors.white,
                     disabledBackgroundColor: AppColors.gray4.withOpacity(0.3),
                     shape: RoundedRectangleBorder(

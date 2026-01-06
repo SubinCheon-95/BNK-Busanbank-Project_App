@@ -871,7 +871,7 @@ class _JoinStep4ScreenState extends State<JoinStep4Screen> {
               ),
             )
                 : const Text(
-              '가입 완료',
+              '가입하기',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,

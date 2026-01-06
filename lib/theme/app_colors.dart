@@ -13,11 +13,13 @@ class AppColors {
 
   // Secondary Colors
   static const pink   = Color(0xFFF184BF);
-  static const blue   = Color(0xFF58BFF9);
+  static const blue   = Color(0xFF3A8FFF);
   static const red    = Color(0xFFFF7473);
   static const yellow = Color(0xFFFFC952);
   static const green  = Color(0xFF67D5B5);
-  static const yellowGreen  = Color(0xFFB0E75E);
+  static const yellowGreen = Color(0xFFB0E75E);
+
+  static const deepRed = Color(0xFFE21313);
 
   // Grayscale
   static const gray2 = Color(0xFFF5F5F5);

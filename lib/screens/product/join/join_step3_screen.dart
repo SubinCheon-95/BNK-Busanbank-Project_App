@@ -180,7 +180,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
                       const SizedBox(height: 20),
 
                       _sectionCard(
-                        title: '계약 동의',
+                        title: '금융 상품계약서 전자서명 동의',
                         child: _buildContractSection(),
                       ),
                     ],
@@ -620,7 +620,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
 
         SwitchListTile(
           title: const Text(
-            '예금상품계약서 동의',
+            '금융상품 계약서 전자 서명 동의',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -663,7 +663,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
                 borderRadius: BorderRadius.circular(16),
               ),
               title: const Text(
-                '예금상품 계약서',
+                '금융상품 전자서명 계약서',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
@@ -677,12 +677,12 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
 
                     // 계약 체결 안내
                     const Text(
-                      '■ 예금상품 계약 체결에 관한 사항',
+                      '■ 금융상품 계약 체결에 관한 사항',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '본인은 위 예금상품의 중요한 사항을 충분히 설명받고 이해하였습니까?',
+                      '본인은 위 금융상품의 중요한 사항을 충분히 설명받고 이해하였습니까?',
                       style: TextStyle(fontSize: 13),
                     ),
 
@@ -714,7 +714,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
 
                     // 중요 내용 요약
                     const Text(
-                      '■ 예금상품의 중요 내용 요약',
+                      '■ 금융상품의 중요 내용 요약',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
@@ -735,7 +735,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
-                        '이 예금 상품 계약서에 명시된 모든 내용을 충분히 읽고 이해하였으며, 이 계약에 동의합니다.',
+                        '이 금융 상품 계약서에 명시된 모든 내용을 충분히 읽고 이해하였으며, 이 계약에 동의합니다.',
                         style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -850,7 +850,7 @@ class _JoinStep3ScreenState extends State<JoinStep3Screen> {
   void _goToStep4() {
     if (!_contractAgreed) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('예금상품계약서를 확인하고 동의해주세요.')),
+        const SnackBar(content: Text('금융상품계약서를 확인하고 동의해주세요.')),
       );
       return;
     }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tkbank/screens/home/easy_home_screen.dart';
+import '../../config/app_config.dart';
 import '../../main.dart';
 
 class BitcoinFailPage extends StatelessWidget {
-  static const String baseUrl = 'http://10.0.2.2:8080/busanbank/api';
 
   final int yesterday;
   final int today;
@@ -123,7 +123,7 @@ class BitcoinFailPage extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const EasyHomeScreen(baseUrl: baseUrl)), // 이동할 메인 화면
+                      MaterialPageRoute(builder: (context) => const EasyHomeScreen(baseUrl: '${AppConfig.baseUrl}/api')), // 이동할 메인 화면
                           (route) => false, // 기존의 모든 경로(route)를 제거
                     );
                   },

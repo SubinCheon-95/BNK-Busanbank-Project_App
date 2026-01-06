@@ -133,8 +133,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             MaterialPageRoute(builder: (_) => const VisionTestScreen()));
         break;
     }
-
-    }
+  }
 
   final TextEditingController _controller = TextEditingController();
   final ChatbotService _service = ChatbotService();
@@ -206,89 +205,89 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: SizedBox.expand(
-          child: Stack(
-            children: [
-          /// 🔙 뒤로가기
+      body: SizedBox.expand(
+        child: Stack(
+          children: [
+            /// 🔙 뒤로가기
+            Positioned(
+              top: 40,
+              left: 12,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+
+            // 🐧 인트로 말풍선
+            if (!_removeIntro)
               Positioned(
-                top: 40,
-                left: 12,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                  onPressed: () => Navigator.pop(context),
+                bottom: 40,
+                left: 20,
+                right: 20,
+                child: AnimatedOpacity(
+                  opacity: _showIntro ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: _buildIntroBubble(),
                 ),
               ),
-          const SizedBox(height: 12),
 
 
-          // 🐧 인트로 말풍선
-          if (!_removeIntro)
+
+            // 💬 메시지 버튼 (펭귄맨 옆)
             Positioned(
-              bottom: 40,
+              bottom: 200,
+              left: MediaQuery.of(context).size.width / 2 + 36, // 👉 펭귄맨 옆으로 이동
+              child: GestureDetector(
+                onTap: _toggleInput,
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey.shade50,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      )
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.chat_bubble_outline,
+                    size: 26,
+                    color: Colors.blueGrey,
+                  ),
+                ),
+              ),
+            ),
+
+            // 💬 말풍선 영역
+            Positioned(
+              bottom: _showInput ?110 : 40,
               left: 20,
               right: 20,
               child: AnimatedOpacity(
-                opacity: _showIntro ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: _buildIntroBubble(),
+                opacity: _showDialogue ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 500),
+                child: _buildDialogueArea(),
               ),
             ),
 
-
-
-          // 💬 메시지 버튼 (펭귄맨 옆)
-          Positioned(
-            bottom: 200,
-            left: MediaQuery.of(context).size.width / 2 + 36, // 👉 펭귄맨 옆으로 이동
-            child: GestureDetector(
-              onTap: _toggleInput,
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.blueGrey.shade50,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    )
-                  ],
-                ),
-                child: const Icon(
-                  Icons.chat_bubble_outline,
-                  size: 26,
-                  color: Colors.blueGrey,
-                ),
+            // ⌨ 입력창 (숨김/표시)
+            if (_showInput)
+              Positioned(
+                bottom: 20,
+                left: 16,
+                right: 16,
+                child: _buildInputBar(),
               ),
-            ),
-          ),
 
-          // 💬 말풍선 영역
-          Positioned(
-            bottom: _showInput ?110 : 40,
-            left: 20,
-            right: 20,
-            child: AnimatedOpacity(
-              opacity: _showDialogue ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 500),
-              child: _buildDialogueArea(),
-            ),
-          ),
-
-          // ⌨ 입력창 (숨김/표시)
-          if (_showInput)
-            Positioned(
-              bottom: 20,
-              left: 16,
-              right: 16,
-              child: _buildInputBar(),
-            ),
-
-        ],
+          ],
+        ),
       ),
-    ),
 
     );
   }

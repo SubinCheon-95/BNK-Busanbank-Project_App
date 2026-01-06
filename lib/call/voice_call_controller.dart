@@ -11,26 +11,21 @@ class VoiceCallController extends ChangeNotifier {
   final VoiceCallApi api;
   final VoiceWebSocketService ws;
 
-  VoiceCallController({
-    required this.api,
-    required this.ws,
-  });
+  VoiceCallController({required this.api, required this.ws});
 
   UiVoiceCallState state = UiVoiceCallState.idle;
   String sessionId = '';
   String errorMsg = '';
 
-  // accept 되었을 때 서버가 내려주는 값 저장
   String agoraChannel = '';
   String consultantId = '';
 
   StreamSubscription<String>? _wsSub;
+  bool _ending = false;
 
-  /// 화면 이동은 Controller가 직접 하지 말고, UI에서 콜백으로 처리
   VoidCallback? onAccepted;
   VoidCallback? onEnded;
 
-  /// baseWs: ws://10.0.2.2:8080/busanbank
   void attachWs({required String baseWs}) {
     if (sessionId.isEmpty) return;
 
@@ -43,24 +38,20 @@ class VoiceCallController extends ChangeNotifier {
 
         if (type == 'VOICE_ACCEPTED') {
           consultantId = (m['consultantId'] ?? '').toString();
-          agoraChannel = (m['agoraChannel'] ?? '').toString();
+          agoraChannel  = (m['agoraChannel'] ?? '').toString();
 
           state = UiVoiceCallState.accepted;
           notifyListeners();
-
           onAccepted?.call();
         }
 
         if (type == 'VOICE_ENDED') {
+          // ✅ 서버가 END push한 경우: 상태만 종료로 만들고, end API는 다시 호출하지 않음
           state = UiVoiceCallState.ended;
           notifyListeners();
           onEnded?.call();
         }
-      } catch (_) {
-        // 다른 메시지는 무시
-      }
-    }, onError: (e) {
-      // WS 에러는 치명적 아니면 무시(원하면 state=error로 바꿔도 됨)
+      } catch (_) {}
     });
   }
 
@@ -69,6 +60,7 @@ class VoiceCallController extends ChangeNotifier {
       sessionId = newSessionId;
       state = UiVoiceCallState.requesting;
       errorMsg = '';
+      _ending = false;
       notifyListeners();
 
       await api.enqueue(sessionId: sessionId);
@@ -82,14 +74,17 @@ class VoiceCallController extends ChangeNotifier {
     }
   }
 
-  Future<void> endCall() async {
+  Future<void> endCall({String reason = ''}) async {
+    if (_ending) return;
+    _ending = true;
+
     try {
       if (sessionId.isEmpty) return;
-      await api.end(sessionId: sessionId);
+
+      await api.end(sessionId: sessionId, reason: reason);
 
       state = UiVoiceCallState.ended;
       notifyListeners();
-
       onEnded?.call();
     } catch (e) {
       errorMsg = e.toString();
